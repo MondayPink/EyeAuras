@@ -3,7 +3,7 @@
     <PropertyGroup>
         <UseWPF>true</UseWPF>
         <TargetFramework>net461</TargetFramework>
-        <Configurations>Debug</Configurations>
+        <Configurations>Debug;Release</Configurations>
         <Platforms>AnyCPU</Platforms>
         <WarningsAsErrors />
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>

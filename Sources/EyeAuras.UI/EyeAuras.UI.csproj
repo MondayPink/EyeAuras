@@ -10,7 +10,7 @@
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <ApplicationIcon>Resources/mainIcon.ico</ApplicationIcon>
         <ApplicationManifest>EyeAuras.exe.manifest</ApplicationManifest>
-        <Configurations>Debug;Debug.Plus</Configurations>
+        <Configurations>Debug;Debug.Plus;Release;Release.Plus</Configurations>
         <Platforms>AnyCPU</Platforms>
         <StartupObject>EyeAuras.UI.App</StartupObject>
         <OutputPath>..\bin\</OutputPath>
@@ -30,7 +30,7 @@
     </ItemGroup>
 
     <Choose>
-        <When Condition="'$(Configuration)' == 'Debug.Plus'">
+        <When Condition="'$(Configuration)' == 'Debug.Plus' Or '$(Configuration)' == 'Release.Plus'">
             <ItemGroup>
                 <ProjectReference Include="..\EyeAuras.Loader\EyeAuras.Loader.csproj" />
                 <ProjectReference Include="..\EyeAuras.OpenCVAuras\EyeAuras.OpenCVAuras.csproj" />

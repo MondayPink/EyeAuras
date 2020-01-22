@@ -5,7 +5,7 @@
         <UseWPF>true</UseWPF>
         <IsPackable>false</IsPackable>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-        <Configurations>Debug</Configurations>
+        <Configurations>Debug;Release</Configurations>
         <Platforms>AnyCPU</Platforms>
         <LangVersion>latest</LangVersion>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>

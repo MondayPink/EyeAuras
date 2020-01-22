@@ -4,7 +4,7 @@
         <TargetFramework>netcoreapp3.0</TargetFramework>
         <UseWPF>true</UseWPF>
         <IsPackable>false</IsPackable>
-        <Configurations>Debug</Configurations>
+        <Configurations>Debug;Release</Configurations>
         <Platforms>AnyCPU</Platforms>
         <WarningsAsErrors />
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
