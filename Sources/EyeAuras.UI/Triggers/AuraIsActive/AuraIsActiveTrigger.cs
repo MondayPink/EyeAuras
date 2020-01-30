@@ -20,6 +20,7 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
 
         private string auraId;
         private IEyeAuraViewModel aura;
+        private bool isInverted;
 
         public AuraIsActiveTrigger([NotNull] ISharedContext sharedContext)
         {
@@ -32,12 +33,12 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
                 .Subscribe(x => Aura = x)
                 .AddTo(Anchors);
             
-            this.WhenAnyValue(x => x.Aura)
-                .Select(x => x == null 
+            this.WhenAnyValue(x => x.Aura, x => x.IsInverted)
+                .Select(_ => Aura == null 
                     ? Observable.Return(false) 
-                    : x.WhenAnyValue(y => y.IsActive).Do(y => Log.Debug($"Child Aura {x.TabName}({x.Id}) IsActive changed to {x.IsActive}")))
+                    : Aura.WhenAnyValue(y => y.IsActive).Do(y => Log.Debug($"Child Aura {Aura.TabName}({Aura.Id}) IsActive changed to {Aura.IsActive}")))
                 .Switch()
-                .Subscribe(isActive => IsActive = isActive, Log.HandleUiException)
+                .Subscribe(isActive => IsActive = isActive ^ IsInverted, Log.HandleUiException)
                 .AddTo(Anchors);
         }
 
@@ -53,6 +54,12 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
             set => this.RaiseAndSetIfChanged(ref auraId, value);
         }
 
+        public bool IsInverted    
+        {
+            get => isInverted;
+            set => this.RaiseAndSetIfChanged(ref isInverted, value);
+        }
+
         public override string TriggerName { get; } = "Aura Is Active";
 
         public override string TriggerDescription { get; } = "Checks whether specified Aura is active or not";
@@ -60,13 +67,15 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
         protected override void Load(AuraIsActiveTriggerProperties source)
         {
             AuraId = source.AuraId;
+            IsInverted = source.IsInverted;
         }
 
         protected override AuraIsActiveTriggerProperties Save()
         {
             return new AuraIsActiveTriggerProperties
             {
-                AuraId = auraId
+                AuraId = auraId,
+                IsInverted = IsInverted
             };
         }
     }
