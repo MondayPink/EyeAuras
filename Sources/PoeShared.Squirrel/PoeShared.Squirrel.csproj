@@ -30,7 +30,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\PoeShared.Core\PoeShared.csproj" />
+      <ProjectReference Include="..\PoeShared\PoeShared.csproj" />
+      <ProjectReference Include="..\PoeShared.Native\PoeShared.Native.csproj" />
       <ProjectReference Include="..\PoeShared.Wpf\PoeShared.Wpf.csproj" />
     </ItemGroup>
 

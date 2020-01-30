@@ -10,7 +10,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\PoeShared.Core\PoeShared.csproj" />
+      <ProjectReference Include="..\PoeShared.Native\PoeShared.Native.csproj" />
+      <ProjectReference Include="..\PoeShared\PoeShared.csproj" />
     </ItemGroup>
 
     <ItemGroup>

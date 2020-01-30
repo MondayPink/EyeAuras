@@ -229,3 +229,5 @@ Sources/EyeAuras.Loader
 Sources/EyeAuras.Web
 
 *.nuspec
+
+/Sources/PoeShared.Native

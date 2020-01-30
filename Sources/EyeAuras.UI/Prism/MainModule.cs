@@ -33,7 +33,10 @@ namespace EyeAuras.UI.Prism
 
         public void RegisterTypes(IContainerRegistry containerRegistry)
         {
-            container.AddExtension(new UiRegistrations());
+            container.AddNewExtension<UiRegistrations>();
+            container.AddNewExtension<WpfCommonRegistrations>();
+            container.AddNewExtension<NativeRegistrations>();
+            container.AddNewExtension<CommonRegistrations>();
         }
 
         public void OnInitialized(IContainerProvider containerProvider)

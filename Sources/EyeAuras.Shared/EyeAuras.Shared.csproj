@@ -11,7 +11,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\EyeAuras.OnTopReplica\EyeAuras.OnTopReplica.csproj" />
-      <ProjectReference Include="..\PoeShared.Core\PoeShared.csproj" />
+      <ProjectReference Include="..\PoeShared\PoeShared.csproj" />
     </ItemGroup>
 
     <ItemGroup>
