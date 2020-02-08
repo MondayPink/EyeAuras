@@ -1,5 +1,4 @@
 ﻿using JetBrains.Annotations;
-using Prism.Modularity;
 
 namespace EyeAuras.Shared.Services
 {
