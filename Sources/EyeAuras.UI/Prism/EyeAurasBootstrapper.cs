@@ -103,30 +103,12 @@ namespace EyeAuras.UI.Prism
 
         protected override void ConfigureModuleCatalog()
         {
-            var poeSharedModule = typeof(PoeSharedModule);
-            ModuleCatalog.AddModule(
-                new ModuleInfo
-                {
-                    ModuleName = poeSharedModule.Name,
-                    ModuleType = poeSharedModule.AssemblyQualifiedName
-                });
-            
-            var poeSharedWpfModule = typeof(PoeSharedWpfModule);
-            ModuleCatalog.AddModule(
-                new ModuleInfo
-                {
-                    ModuleName = poeSharedWpfModule.Name,
-                    ModuleType = poeSharedWpfModule.AssemblyQualifiedName,
-                    DependsOn = new[] { poeSharedModule.Name }.ToObservableCollection(),
-                });
-
             var mainModule = typeof(MainModule);
             ModuleCatalog.AddModule(
                 new ModuleInfo
                 {
                     ModuleName = mainModule.Name,
                     ModuleType = mainModule.AssemblyQualifiedName,
-                    DependsOn = new[] { poeSharedWpfModule.Name }.ToObservableCollection(),
                 });
             
             var updaterModule = typeof(UpdaterModule);
@@ -135,7 +117,7 @@ namespace EyeAuras.UI.Prism
                 {
                     ModuleName = updaterModule.Name,
                     ModuleType = updaterModule.AssemblyQualifiedName,
-                    DependsOn = new[] { mainModule.Name, poeSharedModule.Name, poeSharedWpfModule.Name }.ToObservableCollection(),
+                    DependsOn = new[] { mainModule.Name }.ToObservableCollection(),
                 });
         }
 

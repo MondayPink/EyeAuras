@@ -1,4 +1,3 @@
-using EyeAuras.UI.Prism.Modularity;
 using log4net;
 using NUnit.Framework;
 using PoeShared.Modularity;
