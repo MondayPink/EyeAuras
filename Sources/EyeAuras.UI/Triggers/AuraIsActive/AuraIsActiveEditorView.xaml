@@ -1,19 +1,43 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:auraIsActive="clr-namespace:EyeAuras.UI.Triggers.AuraIsActive"
-                    xmlns:viewModels="clr-namespace:EyeAuras.UI.Core.ViewModels">
+                    xmlns:viewModels="clr-namespace:EyeAuras.UI.Core.ViewModels"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/materialdesigntheme.button.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/materialdesigntheme.textbox.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
     <DataTemplate DataType="{x:Type auraIsActive:AuraIsActiveTriggerEditor}">
-        <ComboBox ItemsSource="{Binding AuraList}" SelectedItem="{Binding Aura}">
-            <ComboBox.ItemTemplate>
-                <DataTemplate DataType="{x:Type viewModels:IEyeAuraViewModel}">
-                    <TextBlock Text="{Binding TabName}"/>
-                </DataTemplate>
-            </ComboBox.ItemTemplate>
-        </ComboBox>
+        <DockPanel>
+            <Grid DockPanel.Dock="Right" >
+                <StackPanel Orientation="Horizontal"
+                            Visibility="{Binding Source.IsInverted, Converter={StaticResource TrueToHiddenFalseToVisibleConverter}}">
+                    <TextBlock Text="aura must" />
+                    <TextBlock Text=" BE ACTIVE " Foreground="{StaticResource PositiveBrush}" />
+                    <materialDesign:PackIcon Margin="2.5,0"  VerticalAlignment="Center"
+                                             Foreground="{StaticResource PositiveBrush}"
+                                             Kind="CheckboxMarkedCircleOutline" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" 
+                            Visibility="{Binding Source.IsInverted, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}">
+                    <TextBlock Text="aura must" />
+                    <TextBlock Text=" NOT BE ACTIVE " Foreground="{StaticResource NegativeBrush}" />
+                    <materialDesign:PackIcon Margin="2.5,0" VerticalAlignment="Center"
+                                             Foreground="{StaticResource NegativeBrush}"
+                                             Kind="CheckboxBlankCircleOutline" />
+                </StackPanel>
+            </Grid>
+            <CheckBox IsChecked="{Binding Source.IsInverted}">Invert</CheckBox>
+            <ComboBox DockPanel.Dock="Left" 
+                      Margin="5, 0"
+                      ItemsSource="{Binding AuraList}" SelectedItem="{Binding Aura}">
+                <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type viewModels:IEyeAuraViewModel}">
+                        <TextBlock Text="{Binding TabName}"/>
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </DockPanel>
     </DataTemplate>
 </ResourceDictionary>
