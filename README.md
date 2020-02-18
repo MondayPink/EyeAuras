@@ -57,8 +57,9 @@
 1. git clone https://github.com/iXab3r/EyeAuras.git
 2. cd EyeAuras
 3. git submodule init
-4. InitSymlinks.cmd
-5. dotnet build
+4. git submodule update --checkout
+5. InitSymlinks.cmd
+6. dotnet build
 That's it. Working version will be in **Sources/bin** folder
 
 ## Licensing 
