@@ -65,17 +65,21 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private readonly TabablzPositionMonitor<IEyeAuraViewModel> positionMonitor = new TabablzPositionMonitor<IEyeAuraViewModel>();
         private readonly CircularBuffer<OverlayAuraProperties> recentlyClosedQueries = new CircularBuffer<OverlayAuraProperties>(UndoStackDepth);
         private readonly IRegionSelectorService regionSelectorService;
+        private readonly IAppArguments appArguments;
+
         private double height;
         private double left;
-
         private GridLength listWidth;
-
         private IEyeAuraViewModel selectedTab;
         private double top;
         private double width;
         private WindowState windowState;
+        private Visibility visibility;
+        private bool showInTaskbar;
 
         public MainWindowViewModel(
+            [NotNull] IViewController viewController,
+            [NotNull] IAppArguments appArguments,
             [NotNull] IFactory<IOverlayAuraViewModel, OverlayAuraProperties> auraViewModelFactory,
             [NotNull] IApplicationUpdaterViewModel appUpdater,
             [NotNull] IClipboardManager clipboardManager,
@@ -94,11 +98,38 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
             using var unused = new OperationTimer(elapsed => Log.Debug($"{nameof(MainWindowViewModel)} initialization took {elapsed.TotalMilliseconds:F0}ms"));
-
+            viewController
+                .WhenLoaded
+                .Take(1)
+                .Select(() => configProvider.ListenTo(y => y.StartMinimized))
+                .Switch()
+                .Take(1)
+                .ObserveOn(uiScheduler)
+                .Subscribe(
+                    x =>
+                    {
+                        if (x)
+                        {
+                            Log.Debug($"StartMinimized option is active - minimizing window, current state: {WindowState}");
+                            viewController.Hide();
+                        }
+                        else
+                        {
+                            Log.Debug($"StartMinimized option is not active - showing window as Normal, current state: {WindowState}");
+                            viewController.Show();
+                        }
+                        
+                    }, Log.HandleUiException)
+                .AddTo(Anchors);
+            
+            this.WhenAnyValue(x => x.WindowState)
+                .Subscribe(x => ShowInTaskbar = x != WindowState.Minimized, Log.HandleUiException)
+                .AddTo(Anchors);
+            
             TabsList = new ReadOnlyObservableCollection<IEyeAuraViewModel>(sharedContext.AuraList);
             ModuleStatus = moduleStatus.AddTo(Anchors);
             var executingAssemblyName = Assembly.GetExecutingAssembly().GetName();
-            Title = $"{(AppArguments.Instance.IsDebugMode ? "[D]" : "")} {executingAssemblyName.Name} v{executingAssemblyName.Version}";
+            Title = $"{(appArguments.IsDebugMode ? "[D]" : "")} {executingAssemblyName.Name} v{executingAssemblyName.Version}";
             Disposable.Create(() => Log.Info("Disposing Main view model")).AddTo(Anchors);
 
             ApplicationUpdater = appUpdater.AddTo(Anchors);
@@ -106,6 +137,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             Settings = settingsViewModel.AddTo(Anchors);
             StatusBarItems = mainWindowBlocksProvider.StatusBarItems;
 
+            this.appArguments = appArguments;
             this.auraViewModelFactory = auraViewModelFactory;
             this.configProvider = configProvider;
             this.sharedContext = sharedContext;
@@ -115,6 +147,25 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             this.hotkeyConverter = hotkeyConverter;
             this.hotkeyTriggerFactory = hotkeyTriggerFactory;
 
+            ExitAppCommand = CommandWrapper.Create(
+                () =>
+                {
+                    Log.Debug("Closing application");
+                    configProvider.Save(configProvider.ActualConfig);
+                    System.Windows.Application.Current.Shutdown();
+                });
+            ShowAppCommand = CommandWrapper.Create(
+                () =>
+                {
+                    if (Visibility != Visibility.Visible)
+                    {
+                        viewController.Show();
+                    }
+                    else
+                    {
+                        viewController.Hide();
+                    }
+                });
             CreateNewTabCommand = CommandWrapper.Create(() => AddNewCommandExecuted(OverlayAuraProperties.Default));
             CloseTabCommand = CommandWrapper
                 .Create<IOverlayAuraViewModel>(CloseTabCommandExecuted, CloseTabCommandCanExecute)
@@ -278,7 +329,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         public string Title { get; }
 
-        public bool IsElevated => AppArguments.Instance.IsElevated;
+        public bool IsElevated => appArguments.IsElevated;
 
         public HotkeyIsActiveTrigger GlobalHotkeyTrigger { get; }
 
@@ -291,7 +342,11 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         public PositionMonitor PositionMonitor => positionMonitor;
 
         public CommandWrapper OpenAppDataDirectoryCommand { get; }
-
+        
+        public CommandWrapper ShowAppCommand { get; }
+        
+        public CommandWrapper ExitAppCommand { get; }
+        
         public IGenericSettingsViewModel Settings { get; }
 
         public Size MinSize { get; } = new Size(950, 650);
@@ -337,6 +392,18 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             get => windowState;
             set => RaiseAndSetIfChanged(ref windowState, value);
         }
+        
+        public bool ShowInTaskbar
+        {
+            get => showInTaskbar;
+            set => this.RaiseAndSetIfChanged(ref showInTaskbar, value);
+        }
+        
+        public Visibility Visibility
+        {
+            get => visibility;
+            set => this.RaiseAndSetIfChanged(ref visibility, value);
+        }
 
         public CommandWrapper CreateNewTabCommand { get; }
 
@@ -351,7 +418,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         public CommandWrapper PasteTabCommand { get; }
 
         public CommandWrapper SelectRegionCommand { get; }
-
+        
         public override void Dispose()
         {
             Log.Debug("Disposing viewmodel...");
@@ -429,14 +496,14 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             await Task.Run(
                 () =>
                 {
-                    Log.Debug($"Opening App directory: {AppArguments.Instance.AppDataDirectory}");
-                    if (!Directory.Exists(AppArguments.Instance.AppDataDirectory))
+                    Log.Debug($"Opening App directory: {appArguments.AppDataDirectory}");
+                    if (!Directory.Exists(appArguments.AppDataDirectory))
                     {
-                        Log.Debug($"App directory does not exist, creating dir: {AppArguments.Instance.AppDataDirectory}");
-                        Directory.CreateDirectory(AppArguments.Instance.AppDataDirectory);
+                        Log.Debug($"App directory does not exist, creating dir: {appArguments.AppDataDirectory}");
+                        Directory.CreateDirectory(appArguments.AppDataDirectory);
                     }
 
-                    Process.Start(ExplorerExecutablePath, AppArguments.Instance.AppDataDirectory);
+                    Process.Start(ExplorerExecutablePath, appArguments.AppDataDirectory);
                 });
         }
 

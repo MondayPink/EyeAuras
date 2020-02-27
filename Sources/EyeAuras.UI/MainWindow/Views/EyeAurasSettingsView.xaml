@@ -14,13 +14,15 @@
                 <RowDefinition Height="Auto" MinHeight="40" />
                 <RowDefinition Height="Auto" MinHeight="40" />
                 <RowDefinition Height="Auto" MinHeight="40" />
+                <RowDefinition Height="Auto" MinHeight="40" />
+                <RowDefinition Height="Auto" MinHeight="40" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" SharedSizeGroup="LabelColumn" />
                 <ColumnDefinition Width="*" SharedSizeGroup="DataColumn" />
             </Grid.ColumnDefinitions>
 
-            <TextBlock Grid.Row="0" Grid.Column="0" Text="Freeze(disable) all auras: " HorizontalAlignment="Right" />
+            <TextBlock Grid.Row="0" Grid.Column="0" Text="Freeze(disable) all auras:" HorizontalAlignment="Right" />
             <DockPanel Grid.Row="0" Grid.Column="1">
                 <ComboBox DockPanel.Dock="Right" DisplayMemberPath="Description" Margin="5,0,0,0"
                           SelectedValuePath="Value"
@@ -31,7 +33,7 @@
                                    VerticalAlignment="Center" />
             </DockPanel>
 
-            <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Text="Unlock all auras: " />
+            <TextBlock Grid.Row="1" Grid.Column="0" HorizontalAlignment="Right" Text="Unlock all auras:" />
             <DockPanel Grid.Row="1" Grid.Column="1">
                 <ComboBox DockPanel.Dock="Right" DisplayMemberPath="Description" Margin="5,0,0,0"
                           SelectedValuePath="Value"
@@ -42,11 +44,27 @@
                                    VerticalAlignment="Center" />
             </DockPanel>
 
-            <TextBlock Grid.Row="2" Grid.Column="0" HorizontalAlignment="Right" Text="Select region: " />
+            <TextBlock Grid.Row="2" Grid.Column="0" HorizontalAlignment="Right" Text="Select region:" />
             <DockPanel Grid.Row="2" Grid.Column="1">
                 <ContentControl DockPanel.Dock="Right" MinWidth="70" Margin="5,0,0,0" />
                 <hotkeys:HotKeyBox DockPanel.Dock="Right" Margin="5,0,0,0" HotKey="{Binding SelectRegionHotkey}" MinWidth="120"
                                    VerticalAlignment="Center" />
+            </DockPanel>
+            
+            <TextBlock Grid.Row="3" Grid.Column="0" HorizontalAlignment="Right" Text="Run at start:" />
+            <DockPanel Grid.Row="3" Grid.Column="1">
+                <ToggleButton
+                    DockPanel.Dock="Left" Margin="5,0,0,0" HorizontalAlignment="Left"
+                    IsChecked="{Binding RunAtLogin, Mode=OneWay}"
+                    Command="{Binding RunAtLoginToggleCommand}"
+                    CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}" />
+            </DockPanel>
+            
+            <TextBlock Grid.Row="4" Grid.Column="0" HorizontalAlignment="Right" Text="Start Minimized:" />
+            <DockPanel Grid.Row="4" Grid.Column="1">
+                <ToggleButton
+                    DockPanel.Dock="Left" Margin="5,0,0,0" HorizontalAlignment="Left"
+                    IsChecked="{Binding StartMinimized}" />
             </DockPanel>
         </Grid>
     </DataTemplate>

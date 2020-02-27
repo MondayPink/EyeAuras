@@ -20,6 +20,7 @@ using Prism.Modularity;
 using Prism.Unity;
 using Unity;
 using Unity.Lifetime;
+using Unity.Resolution;
 
 namespace EyeAuras.UI.Prism
 {
@@ -104,20 +105,12 @@ namespace EyeAuras.UI.Prism
         protected override void ConfigureModuleCatalog()
         {
             var mainModule = typeof(MainModule);
+            
             ModuleCatalog.AddModule(
                 new ModuleInfo
                 {
                     ModuleName = mainModule.Name,
                     ModuleType = mainModule.AssemblyQualifiedName,
-                });
-            
-            var updaterModule = typeof(UpdaterModule);
-            ModuleCatalog.AddModule(
-                new ModuleInfo
-                {
-                    ModuleName = updaterModule.Name,
-                    ModuleType = updaterModule.AssemblyQualifiedName,
-                    DependsOn = new[] { mainModule.Name }.ToObservableCollection(),
                 });
         }
 
@@ -150,8 +143,10 @@ namespace EyeAuras.UI.Prism
             
             var sw = Stopwatch.StartNew();
             Log.Info("Initializing Main window...");
-            var viewModel = Container.Resolve<IMainWindowViewModel>();
-            window.DataContext = viewModel.AddTo(anchors);
+            var viewController = new WindowViewController(window);
+            var viewModelFactory = Container.Resolve<IFactory<IMainWindowViewModel, IViewController>>();
+            var viewModel = viewModelFactory.Create(viewController).AddTo(anchors);
+            window.DataContext = viewModel;
             sw.Stop();
             Log.Info($"Main window initialization took {sw.ElapsedMilliseconds}ms...");
         }

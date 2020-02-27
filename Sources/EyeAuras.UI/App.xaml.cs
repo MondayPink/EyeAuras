@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reflection;
@@ -8,13 +7,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Threading;
-using EyeAuras.UI.ExceptionViewer;
 using EyeAuras.UI.Prism;
 using log4net;
 using PoeShared;
 using PoeShared.Native;
 using PoeShared.Scaffolding;
+using PoeShared.Wpf.UI.ExceptionViewer;
 using ReactiveUI;
+using Unity;
 
 namespace EyeAuras.UI
 {
@@ -183,54 +183,8 @@ namespace EyeAuras.UI
             AppDomain.CurrentDomain.UnhandledException -= CurrentDomainOnUnhandledException;
             TaskScheduler.UnobservedTaskException -= TaskSchedulerOnUnobservedTaskException;
             Dispatcher.CurrentDispatcher.UnhandledException -= DispatcherOnUnhandledException;
-            
-            var appDispatcher = Application.Current?.Dispatcher;
-            if (appDispatcher != null && Dispatcher.CurrentDispatcher != appDispatcher)
-            {
-                Log.Warn("Exception occurred on non-UI thread, rescheduling to UI");
-                appDispatcher.BeginInvoke(() => ReportCrash(exception, developerMessage), DispatcherPriority.Send);
-                Log.Debug($"Sent signal to UI thread to report crash related to exception {exception.Message}");
-
-                return;
-            }
-            
-            try
-            {
-                var reporter = new ExceptionDialog();
-
-                var config = new ExceptionDialogConfig()
-                {
-                    AppName = AppArguments.Instance.AppName,
-                    Title = $"{AppArguments.Instance.AppName} Error Report"
-                };
-
-                var configurationFilesToInclude = Directory
-                    .EnumerateFiles(AppArguments.Instance.AppDataDirectory, "*.cfg", SearchOption.TopDirectoryOnly);
-
-                var logFilesToInclude = new DirectoryInfo(AppArguments.Instance.AppDataDirectory)
-                    .GetFiles("*.log", SearchOption.AllDirectories)
-                    .OrderByDescending(x => x.LastWriteTime)
-                    .Take(2)
-                    .Select(x => x.FullName)
-                    .ToArray();
-
-                config.FilesToAttach = new[]
-                    {
-                        logFilesToInclude,
-                        configurationFilesToInclude
-                    }.SelectMany(x => x)
-                    .ToArray();
-                reporter.Config = config;
-                
-                reporter.Show(exception);
-                
-                Log.Warn($"Forcefully terminating Environment due to unrecoverable error");
-                Environment.Exit(-1);
-            }
-            catch (Exception e)
-            {
-                Log.HandleException(new ApplicationException("Exception in ExceptionReporter :-(", e));
-            }
+            var reporter = aurasBootstrapper.Container.Resolve<IExceptionDialogDisplayer>();
+            reporter.ShowDialogAndTerminate(exception);
         }
     }
 }

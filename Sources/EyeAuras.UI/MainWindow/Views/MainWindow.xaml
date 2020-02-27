@@ -7,6 +7,7 @@
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:viewModels="clr-namespace:EyeAuras.UI.MainWindow.ViewModels"
     xmlns:eye="http://coderush.net/poeeye/"
+    xmlns:tb="http://www.hardcodet.net/taskbar"
     xmlns:utilities="clr-namespace:EyeAuras.UI.Core.Utilities"
     xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz"
     xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
@@ -26,6 +27,8 @@
     WindowState="{Binding WindowState, Mode=TwoWay}"
     MinWidth="{Binding MinSize.Width, Mode=OneWay}"
     MinHeight="{Binding MinSize.Height, Mode=OneWay}"
+    Visibility="{Binding Visibility, Mode=TwoWay}"
+    ShowInTaskbar="{Binding ShowInTaskbar, Mode=TwoWay}"
     x:Name="MainWindowRoot"
     Background="{StaticResource MaterialDesignPaper}"
     Title="{Binding Title}"
@@ -55,8 +58,23 @@
         <KeyBinding Gesture="CTRL+C" Command="{Binding CopyTabToClipboardCommand}" CommandParameter="{Binding SelectedTab}" />
         <KeyBinding Gesture="CTRL+Z" Command="{Binding UndoCloseTabCommand}" />
     </Window.InputBindings>
+    
+    
 
     <DockPanel>
+        <tb:TaskbarIcon Visibility="Visible"
+                        ToolTipText="{Binding Title}"
+                        DoubleClickCommand="{Binding ShowAppCommand}"
+                        IconSource="pack://application:,,,/Resources/mainIcon.ico">
+            <tb:TaskbarIcon.ContextMenu>
+                <ContextMenu>
+                    <MenuItem Header="Show main window" Command="{Binding ShowAppCommand}" />
+                    <Separator />
+                    <MenuItem Header="Exit app" Command="{Binding ExitAppCommand}" />
+                </ContextMenu>
+            </tb:TaskbarIcon.ContextMenu>
+        </tb:TaskbarIcon>
+        
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem DockPanel.Dock="Left">
                 <ItemsControl ItemsSource="{Binding StatusBarItems}">

@@ -28,7 +28,7 @@ namespace EyeAuras.UI.Prism
                 .RegisterSingleton<IRegionSelectorService, RegionSelectorService>()
                 .RegisterSingleton<IUniqueIdGenerator, UniqueIdGenerator>()
                 .RegisterSingleton<IPrismModuleStatusViewModel, PrismModuleStatusViewModel>()
-                .RegisterSingleton<MainWindowViewModel>(typeof(IMainWindowViewModel));
+                .RegisterSingleton<IMainWindowViewModel, MainWindowViewModel>();
 
             Container
                 .RegisterType<ISelectionAdornerViewModel, SelectionAdornerViewModel>()
