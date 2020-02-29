@@ -144,7 +144,7 @@ namespace EyeAuras.UI.Prism
             var sw = Stopwatch.StartNew();
             Log.Info("Initializing Main window...");
             var viewController = new WindowViewController(window);
-            var viewModelFactory = Container.Resolve<IFactory<IMainWindowViewModel, IViewController>>();
+            var viewModelFactory = Container.Resolve<IFactory<IMainWindowViewModel, IWindowViewController>>();
             var viewModel = viewModelFactory.Create(viewController).AddTo(anchors);
             window.DataContext = viewModel;
             sw.Stop();

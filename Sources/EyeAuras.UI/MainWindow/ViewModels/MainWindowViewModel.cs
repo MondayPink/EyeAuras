@@ -78,7 +78,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private bool showInTaskbar;
 
         public MainWindowViewModel(
-            [NotNull] IViewController viewController,
+            [NotNull] IWindowViewController viewController,
             [NotNull] IAppArguments appArguments,
             [NotNull] IFactory<IOverlayAuraViewModel, OverlayAuraProperties> auraViewModelFactory,
             [NotNull] IApplicationUpdaterViewModel appUpdater,
@@ -99,7 +99,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         {
             using var unused = new OperationTimer(elapsed => Log.Debug($"{nameof(MainWindowViewModel)} initialization took {elapsed.TotalMilliseconds:F0}ms"));
             viewController
-                .WhenLoaded
+                .WhenRendered
                 .Take(1)
                 .Select(() => configProvider.ListenTo(y => y.StartMinimized))
                 .Switch()
