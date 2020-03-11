@@ -1,10 +1,19 @@
 using System;
+using System.Reactive.Disposables;
+using log4net;
 using PoeShared.Scaffolding;
 
 namespace EyeAuras.Shared
 {
     public abstract class AuraModelBase : DisposableReactiveObject, IAuraModel
     {
+        private static readonly ILog Log = LogManager.GetLogger(typeof(AuraModelBase));
+
+        protected AuraModelBase()
+        {
+            Disposable.Create(() => Log.Debug($"Disposing AuraModel of type {GetType()}, instance: {this}")).AddTo(Anchors);
+        }
+
         public IAuraProperties Properties
         {
             get => SaveProperties();

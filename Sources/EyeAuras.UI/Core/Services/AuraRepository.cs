@@ -49,9 +49,12 @@ namespace EyeAuras.UI.Core.Services
 
         public void Register<TAuraModel>() where TAuraModel : IAuraModel
         {
+            Log.Debug($"Registering Model of type {typeof(TAuraModel)}");
             var sample = CreateModel<TAuraModel>(typeof(TAuraModel));
+            sample.Dispose();
             var propertiesType = GetPropertiesType(sample);
-            Log.Debug($"Registering Model of type {typeof(TAuraModel)}, propertiesType: {propertiesType}");
+            Log.Debug($"Resolved properties of type {propertiesType} for Model {typeof(TAuraModel)}");
+
             modelTypeByAuraProperties[propertiesType] = sample.GetType();
             knownEntities.Add(sample);
         }

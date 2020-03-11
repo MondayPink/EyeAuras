@@ -178,8 +178,19 @@ namespace EyeAuras.UI.MainWindow
                             reason =>
                             {
                                 ThumbnailUpdateArgs args;
-                                var sourceWindow = SourceWindow.Handle;
-                                var ownerWindow = new WindowInteropHelper(Owner).Handle;
+                                IntPtr ownerWindow;
+                                IntPtr sourceWindow;
+                                if (SourceWindow != null)
+                                {
+                                    sourceWindow = SourceWindow.Handle;
+                                    ownerWindow = new WindowInteropHelper(Owner).EnsureHandle();
+                                }
+                                else
+                                {
+                                    sourceWindow = IntPtr.Zero;
+                                    ownerWindow = IntPtr.Zero;
+                                }
+                                
                                 if (sourceWindow != IntPtr.Zero && ownerWindow != IntPtr.Zero && CanUpdateThumbnail(thumbnail))
                                 {
                                     var sourceArgs = PrepareSourceRegion(thumbnail, sourceWindow, ownerWindow, SourceRegion);

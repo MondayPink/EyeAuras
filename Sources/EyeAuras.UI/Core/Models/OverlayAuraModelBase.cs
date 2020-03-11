@@ -146,18 +146,18 @@ namespace EyeAuras.UI.Core.Models
                     OnEnterActions.ToObservableChangeSet().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName} Action property changed"))
                 .Subscribe(reason => RaisePropertyChanged(nameof(Properties)))
                 .AddTo(Anchors);
-            
-            Disposable.Create(() =>
-            {
-                Log.Debug(
-                    $"Disposed Aura {Name}({Id}) (aka {defaultAuraName}), triggers: {Triggers.Count}, actions: {OnEnterActions.Count}");
-                OnEnterActions.Clear();
-                Triggers.Clear();
-            }).AddTo(Anchors);
             sw.Step($"Overlay model properties initialized");
 
             overlayController.RegisterChild(overlayViewModel).AddTo(Anchors);
             sw.Step($"Overlay registration completed: {this}");
+            
+            auraTriggers.AddTo(Anchors);
+            auraActions.AddTo(Anchors);
+            Disposable.Create(() =>
+            {
+                Log.Debug(
+                    $"Disposed Aura {Name}({Id}) (aka {defaultAuraName}), triggers: {Triggers.Count}, actions: {OnEnterActions.Count}");
+            }).AddTo(Anchors);
         }
 
         private void ExecuteOnEnterActions()

@@ -5,11 +5,15 @@ using DynamicData;
 using DynamicData.Binding;
 using PoeShared.Scaffolding;
 using System;
+using System.Reactive.Disposables;
+using log4net;
 
 namespace EyeAuras.Shared
 {
     public abstract class ComplexAuraTrigger<T> : AuraTriggerBase<T>, IComplexAuraTrigger where T : class, IAuraProperties
     {
+        private static readonly ILog Log = LogManager.GetLogger(typeof(ComplexAuraTrigger));
+
         private readonly ISourceList<IAuraTrigger> triggers = new SourceList<IAuraTrigger>();
         
         public override string TriggerName { get; } = "Boolean AND Trigger";
@@ -20,6 +24,12 @@ namespace EyeAuras.Shared
 
         protected ComplexAuraTrigger()
         {
+            Disposable.Create(() =>
+            {
+                Log.Debug($"Disposing ComplexAura, items: {Triggers.Count}");
+                Triggers.ForEach(x => x.Dispose());
+            }).AddTo(Anchors);
+            
             var triggerList = new ObservableCollectionExtended<IAuraTrigger>();
             triggers
                 .Connect()
