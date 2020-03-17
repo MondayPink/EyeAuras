@@ -8,5 +8,6 @@
         <ResourceDictionary Source="pack://application:,,,/EyeAuras.DefaultAuras;component/Actions/PlaySound/PlaySoundActionEditorView.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras.DefaultAuras;component/Actions/Delay/DelayActionEditorView.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras.DefaultAuras;component/Actions/WinActivate/WinActivateActionEditorView.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras.DefaultAuras;component/Actions/SendInput/SendInputActionEditorView.xaml" />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>

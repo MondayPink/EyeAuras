@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <PackageReference Include="Extended.Wpf.Toolkit" Version="3.6.0" />
+      <PackageReference Include="InputSimulatorPlus" Version="1.0.7" />
       <PackageReference Include="JetBrains.Annotations" Version="2019.1.3" />
       <PackageReference Include="log4net" Version="2.0.8" />
       <PackageReference Include="MaterialDesignColors" Version="1.2.0" />

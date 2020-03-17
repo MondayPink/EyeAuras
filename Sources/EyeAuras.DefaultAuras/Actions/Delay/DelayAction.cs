@@ -8,7 +8,7 @@ namespace EyeAuras.DefaultAuras.Actions.Delay
 {
     internal sealed class DelayAction : AuraActionBase<DelayActionProperties>
     {
-        private static readonly ILog Log = LogManager.GetLogger(typeof(PlaySoundAction));
+        private static readonly ILog Log = LogManager.GetLogger(typeof(DelayAction));
         private TimeSpan delay;
 
         public DelayAction()
