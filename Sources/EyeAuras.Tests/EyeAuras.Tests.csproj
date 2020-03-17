@@ -21,4 +21,8 @@
       <ProjectReference Include="..\PoeShared.Native\PoeShared.Native.csproj" />
     </ItemGroup>
 
+    <ItemGroup>
+      <Folder Include="Modularity" />
+    </ItemGroup>
+
 </Project>
