@@ -7,5 +7,9 @@ namespace EyeAuras.Shared
         public abstract string ActionDescription { get; }
 
         public abstract void Execute();
+
+        protected override void VisitSave(TAuraProperties source)
+        {
+        }
     }
 }

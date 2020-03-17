@@ -2,10 +2,8 @@ using EyeAuras.Shared;
 
 namespace EyeAuras.DefaultAuras.Triggers.Default
 {
-    public sealed class DefaultTriggerProperties : IAuraProperties
+    public sealed class DefaultTriggerProperties : AuraTriggerPropertiesBase
     {
         public bool TriggerValue { get; set; } = true;
-
-        public int Version { get; set; } = 1;
     }
 }

@@ -4,6 +4,7 @@ using System.Windows.Input;
 using WindowsInput;
 using WindowsInput.Native;
 using EyeAuras.Shared;
+using JetBrains.Annotations;
 using log4net;
 using PoeShared.UI.Hotkeys;
 
@@ -11,13 +12,19 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
 {
     internal sealed class SendInputAction : AuraActionBase<SendInputProperties>
     {
+        private readonly IHotkeyConverter hotkeyConverter;
         private static readonly ILog Log = LogManager.GetLogger(typeof(SendInputAction));
         private TimeSpan keyStrokeDelay;
         private HotkeyGesture hotkey;
         private static readonly TimeSpan DefaultModifierKeyStrokeDelay = TimeSpan.FromMilliseconds(100);
-        private static readonly TimeSpan DefaultKeyStrokeDelay = TimeSpan.FromMilliseconds(500);
         
         private readonly IKeyboardSimulator keyboardSimulator = new InputSimulator().Keyboard;
+
+        public SendInputAction(
+            [NotNull] IHotkeyConverter hotkeyConverter)
+        {
+            this.hotkeyConverter = hotkeyConverter;
+        }
 
         public TimeSpan KeyStrokeDelay
         {
@@ -33,12 +40,16 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
 
         protected override void Load(SendInputProperties source)
         {
+            KeyStrokeDelay = source.KeyStrokeDelay;
+            Hotkey = hotkeyConverter.ConvertFromString(source.Hotkey);
         }
 
         protected override SendInputProperties Save()
         {
             return new SendInputProperties()
             {
+                KeyStrokeDelay = KeyStrokeDelay,
+                Hotkey = hotkeyConverter.ConvertToString(Hotkey)
             };
         }
 
@@ -69,7 +80,10 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
                 Thread.Sleep(DefaultModifierKeyStrokeDelay);
             }
             keyboardSimulator.KeyDown(vk);
-            Thread.Sleep(keyStrokeDelay <= TimeSpan.Zero ? DefaultKeyStrokeDelay : keyStrokeDelay);
+            if (keyStrokeDelay > TimeSpan.Zero)
+            {
+                Thread.Sleep(keyStrokeDelay);
+            }
             keyboardSimulator.KeyUp(vk);
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Control))
             {

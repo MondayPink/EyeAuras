@@ -1,13 +1,13 @@
 namespace EyeAuras.Shared
 {
-    public sealed class ComplexAuraTrigger : ComplexAuraTrigger<EmptyAuraProperties>
+    public sealed class ComplexAuraTrigger : ComplexAuraTrigger<EmptyAuraTriggerProperties>
     {
-        protected override void Load(EmptyAuraProperties source)
+        protected override void Load(EmptyAuraTriggerProperties source)
         {
             throw new System.NotImplementedException();
         }
 
-        protected override EmptyAuraProperties Save()
+        protected override EmptyAuraTriggerProperties Save()
         {
             throw new System.NotImplementedException();
         }

@@ -4,7 +4,7 @@ using PoeShared.UI.Hotkeys;
 
 namespace EyeAuras.DefaultAuras.Triggers.HotkeyIsActive
 {
-    public sealed class HotkeyIsActiveProperties : IAuraProperties
+    public sealed class HotkeyIsActiveProperties : AuraTriggerPropertiesBase
     {
         public string Hotkey { get; set; } = Keys.None.ToString();
 
@@ -13,7 +13,5 @@ namespace EyeAuras.DefaultAuras.Triggers.HotkeyIsActive
         public bool SuppressKey { get; set; } = true;
         
         public bool TriggerValue { get; set; } = true;
-
-        public int Version { get; set; } = 1;
     }
 }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Concurrency;
@@ -39,6 +40,7 @@ namespace EyeAuras.UI.Core.Models
 
         private readonly IAuraRepository repository;
         private readonly IConfigSerializer configSerializer;
+        private readonly IClock clock;
         private readonly string defaultAuraName;
 
         private ICloseController closeController;
@@ -54,6 +56,7 @@ namespace EyeAuras.UI.Core.Models
             [NotNull] IAuraRepository repository,
             [NotNull] IConfigSerializer configSerializer,
             [NotNull] IUniqueIdGenerator idGenerator,
+            [NotNull] IClock clock,
             [NotNull] IFactory<IEyeOverlayViewModel, IOverlayWindowController, IAuraModelController> overlayViewModelFactory,
             [NotNull] IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory,
             [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory,
@@ -79,6 +82,7 @@ namespace EyeAuras.UI.Core.Models
             
             this.repository = repository;
             this.configSerializer = configSerializer;
+            this.clock = clock;
             var matcher = new RegexStringMatcher().AddToWhitelist(".*");
             var windowTracker = windowTrackerFactory
                 .Create(matcher)
@@ -139,8 +143,8 @@ namespace EyeAuras.UI.Core.Models
                     triggerDeactivates.ToUnit(), 
                     this.WhenAnyValue(x => x.WhileActiveActionsTimeout).ToUnit())
                 .Select(
-                    x => IsActive && WhileActiveActionsTimeout > TimeSpan.Zero && Triggers.Count > 0
-                        ? Observable.Timer(DateTimeOffset.Now, WhileActiveActionsTimeout).ToUnit()
+                    x => IsActive && Triggers.Count > 0
+                        ? Observable.Timer(DateTimeOffset.Now, TimeSpan.FromMilliseconds(1)).ToUnit()
                         : Observable.Empty(Unit.Default))
                 .Switch()
                 .Subscribe(ExecuteWhileActiveActions, Log.HandleUiException)
@@ -210,7 +214,15 @@ namespace EyeAuras.UI.Core.Models
         
         private void ExecuteWhileActiveActions()
         {
+            var sw = Stopwatch.StartNew();
             WhileActiveActions.ForEach(action => action.Execute());
+            sw.Stop();
+            var elapsed = sw.ElapsedMilliseconds;
+            var timeToSleep = WhileActiveActionsTimeout.TotalMilliseconds - elapsed;
+            if (timeToSleep > 0)
+            {
+                Thread.Sleep((int)timeToSleep);
+            }
         }
         
         public bool IsActive

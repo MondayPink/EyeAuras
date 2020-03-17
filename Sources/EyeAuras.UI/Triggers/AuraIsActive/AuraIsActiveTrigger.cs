@@ -20,7 +20,6 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
 
         private string auraId;
         private IEyeAuraViewModel aura;
-        private bool isInverted;
 
         public AuraIsActiveTrigger([NotNull] ISharedContext sharedContext)
         {
@@ -52,12 +51,6 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
         {
             get => auraId;
             set => this.RaiseAndSetIfChanged(ref auraId, value);
-        }
-
-        public bool IsInverted    
-        {
-            get => isInverted;
-            set => this.RaiseAndSetIfChanged(ref isInverted, value);
         }
 
         public override string TriggerName { get; } = "Aura Is Active";

@@ -10,6 +10,6 @@
         protected override EmptyAuraProperties Save()
         {
             throw new System.NotImplementedException();
-        }
+        }    
     }
 }

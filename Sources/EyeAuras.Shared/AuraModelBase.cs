@@ -37,9 +37,15 @@ namespace EyeAuras.Shared
 
         protected abstract T Save();
 
+        protected virtual void VisitSave(T source)
+        {
+        }
+
         protected override IAuraProperties SaveProperties()
         {
-            return Save();
+            var result = Save();
+            VisitSave(result);
+            return result;
         }
 
         protected override void LoadProperties(IAuraProperties source)

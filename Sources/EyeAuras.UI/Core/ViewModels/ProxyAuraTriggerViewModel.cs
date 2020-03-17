@@ -14,6 +14,8 @@ namespace EyeAuras.UI.Core.ViewModels
             private set => RaiseAndSetIfChanged(ref triggerDescription, value);
         }
 
+        public bool IsInverted { get; } = false;
+
         public bool IsActive { get; } = false;
 
         protected override void LoadProperties(IAuraProperties source)
