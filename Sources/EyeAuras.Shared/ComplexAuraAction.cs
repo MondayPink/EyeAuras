@@ -2,14 +2,12 @@
 {
     public sealed class ComplexAuraAction : ComplexAuraAction<EmptyAuraProperties>
     {
-        protected override void Load(EmptyAuraProperties source)
+        protected override void VisitSave(EmptyAuraProperties source)
         {
-            throw new System.NotImplementedException();
         }
 
-        protected override EmptyAuraProperties Save()
+        protected override void VisitLoad(EmptyAuraProperties source)
         {
-            throw new System.NotImplementedException();
-        }    
+        }
     }
 }

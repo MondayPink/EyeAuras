@@ -4,7 +4,7 @@ using PoeShared.Scaffolding;
 
 namespace EyeAuras.Shared
 {
-    public abstract class AuraTriggerBase<TAuraProperties> : AuraModelBase<TAuraProperties>, IAuraTrigger where TAuraProperties : class, IAuraTriggerProperties
+    public abstract class AuraTriggerBase<TAuraProperties> : AuraModelBase<TAuraProperties>, IAuraTrigger where TAuraProperties : class, IAuraTriggerProperties, new()
     {
         private bool isActive;
         private bool isInverted;
@@ -32,7 +32,7 @@ namespace EyeAuras.Shared
             set => RaiseAndSetIfChanged(ref isActive, value);
         }
 
-        protected override void Load(TAuraProperties source)
+        protected override void VisitLoad(TAuraProperties source)
         {
             IsInverted = source.IsInverted;
         }

@@ -21,17 +21,14 @@ namespace EyeAuras.DefaultAuras.Actions.Delay
             set => this.RaiseAndSetIfChanged(ref delay, value);
         }
 
-        protected override void Load(DelayActionProperties source)
+        protected override void VisitLoad(DelayActionProperties source)
         {
             Delay = source.Delay;
         }
 
-        protected override DelayActionProperties Save()
+        protected override void VisitSave(DelayActionProperties source)
         {
-            return new DelayActionProperties()
-            {
-                Delay = delay
-            };
+            source.Delay = delay;
         }
 
         public override string ActionName { get; } = "Delay";

@@ -70,17 +70,16 @@ namespace EyeAuras.DefaultAuras.Triggers.WinActive
                 .Subscribe(x => IsActive = x.IsActive);
         }
 
-        protected override void Load(WinActiveTriggerProperties source)
+        protected override void VisitLoad(WinActiveTriggerProperties source)
         {
+            base.VisitLoad(source);
             TargetWindow = source.WindowMatchParams;
         }
 
-        protected override WinActiveTriggerProperties Save()
+        protected override void VisitSave(WinActiveTriggerProperties source)
         {
-            return new WinActiveTriggerProperties
-            {
-                WindowMatchParams = TargetWindow
-            };
+            source.WindowMatchParams = TargetWindow;
+            base.VisitSave(source);
         }
     }
 }

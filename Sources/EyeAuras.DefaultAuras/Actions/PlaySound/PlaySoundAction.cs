@@ -24,17 +24,14 @@ namespace EyeAuras.DefaultAuras.Actions.PlaySound
             set => this.RaiseAndSetIfChanged(ref notification, value);
         }
 
-        protected override void Load(PlaySoundActionProperties source)
+        protected override void VisitLoad(PlaySoundActionProperties source)
         {
             Notification = source.Notification;
         }
 
-        protected override PlaySoundActionProperties Save()
+        protected override void VisitSave(PlaySoundActionProperties source)
         {
-            return new PlaySoundActionProperties()
-            {
-                Notification = notification
-            };
+            source.Notification = notification;
         }
 
         public override string ActionName { get; } = "Play Sound";

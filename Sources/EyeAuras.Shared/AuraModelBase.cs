@@ -25,7 +25,7 @@ namespace EyeAuras.Shared
         protected abstract IAuraProperties SaveProperties();
     }
 
-    public abstract class AuraModelBase<T> : AuraModelBase, IAuraModel<T> where T : class, IAuraProperties
+    public abstract class AuraModelBase<T> : AuraModelBase, IAuraModel<T> where T : class, IAuraProperties, new()
     {
         public new T Properties
         {
@@ -33,14 +33,22 @@ namespace EyeAuras.Shared
             set => Load(value);
         }
 
-        protected abstract void Load(T source);
-
-        protected abstract T Save();
-
-        protected virtual void VisitSave(T source)
+        private void Load(T source)
         {
+            VisitLoad(source);
         }
 
+        private T Save()
+        {
+            var result = new T();
+            VisitSave(result);
+            return result;
+        }
+
+        protected abstract void VisitSave(T source);
+
+        protected abstract void VisitLoad(T source);
+        
         protected override IAuraProperties SaveProperties()
         {
             var result = Save();

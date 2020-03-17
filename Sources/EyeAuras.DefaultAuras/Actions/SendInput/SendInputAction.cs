@@ -38,19 +38,16 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
             set => RaiseAndSetIfChanged(ref hotkey, value);
         }
 
-        protected override void Load(SendInputProperties source)
+        protected override void VisitLoad(SendInputProperties source)
         {
             KeyStrokeDelay = source.KeyStrokeDelay;
             Hotkey = hotkeyConverter.ConvertFromString(source.Hotkey);
         }
 
-        protected override SendInputProperties Save()
+        protected override void VisitSave(SendInputProperties source)
         {
-            return new SendInputProperties()
-            {
-                KeyStrokeDelay = KeyStrokeDelay,
-                Hotkey = hotkeyConverter.ConvertToString(Hotkey)
-            };
+            source.KeyStrokeDelay = KeyStrokeDelay;
+            source.Hotkey = hotkeyConverter.ConvertToString(Hotkey);
         }
 
         public override string ActionName { get; } = "Send Input";

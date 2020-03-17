@@ -57,19 +57,17 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
 
         public override string TriggerDescription { get; } = "Checks whether specified Aura is active or not";
 
-        protected override void Load(AuraIsActiveTriggerProperties source)
+        protected override void VisitLoad(AuraIsActiveTriggerProperties source)
         {
+            base.VisitLoad(source);
             AuraId = source.AuraId;
-            IsInverted = source.IsInverted;
         }
 
-        protected override AuraIsActiveTriggerProperties Save()
+        protected override void VisitSave(AuraIsActiveTriggerProperties source)
         {
-            return new AuraIsActiveTriggerProperties
-            {
-                AuraId = auraId,
-                IsInverted = IsInverted
-            };
+            source.AuraId = auraId;
+            source.IsInverted = IsInverted;
+            base.VisitSave(source);
         }
     }
 }

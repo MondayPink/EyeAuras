@@ -28,17 +28,14 @@ namespace EyeAuras.DefaultAuras.Actions.WinActivate
 
         public override string ActionDescription { get; } = "activates selected window";
 
-        protected override void Load(WinActivateActionProperties source)
+        protected override void VisitLoad(WinActivateActionProperties source)
         {
             TargetWindow = source.WindowMatchParams;
         }
 
-        protected override WinActivateActionProperties Save()
+        protected override void VisitSave(WinActivateActionProperties source)
         {
-            return new WinActivateActionProperties
-            {
-                WindowMatchParams = TargetWindow
-            };
+            source.WindowMatchParams = TargetWindow;
         }
 
         public override void Execute()

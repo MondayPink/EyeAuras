@@ -109,23 +109,22 @@ namespace EyeAuras.DefaultAuras.Triggers.HotkeyIsActive
 
         public override string TriggerDescription { get; } = "Checks that hotkey is Held or Clicked";
 
-        protected override void Load(HotkeyIsActiveProperties source)
+        protected override void VisitLoad(HotkeyIsActiveProperties source)
         {
+            base.VisitLoad(source);
             HotkeyMode = source.HotkeyMode;
             Hotkey = hotkeyConverter.ConvertFromString(source.Hotkey);
             SuppressKey = source.SuppressKey;
             IsActive = source.TriggerValue;
         }
 
-        protected override HotkeyIsActiveProperties Save()
+        protected override void VisitSave(HotkeyIsActiveProperties source)
         {
-            return new HotkeyIsActiveProperties
-            {
-                HotkeyMode = hotkeyMode,
-                Hotkey = hotkeyConverter.ConvertToString(hotkey),
-                SuppressKey = suppressKey,
-                TriggerValue = IsActive
-            };
+            base.VisitSave(source);
+            source.HotkeyMode = hotkeyMode;
+            source.Hotkey = hotkeyConverter.ConvertToString(hotkey);
+            source.SuppressKey = suppressKey;
+            source.TriggerValue = IsActive;
         }
 
         private bool IsConfiguredHotkey(HotkeyData data)

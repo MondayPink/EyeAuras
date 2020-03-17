@@ -316,7 +316,7 @@ namespace EyeAuras.UI.Core.Models
                 .ForEach(x => WhileActiveActions.Add(x));
         }
 
-        protected override void Load(OverlayAuraProperties source)
+        protected override void VisitLoad(OverlayAuraProperties source)
         {
             if (!string.IsNullOrEmpty(source.Id))
             {
@@ -345,28 +345,24 @@ namespace EyeAuras.UI.Core.Models
             Overlay.Width = bounds.Width;
         }
 
-        protected override OverlayAuraProperties Save()
+        protected override void VisitSave(OverlayAuraProperties properties)
         {
-            var save = new OverlayAuraProperties
-            {
-                Name = Name,
-                TriggerProperties = Triggers.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList(),
-                OnEnterActionProperties = OnEnterActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList(),
-                OnExitActionProperties = OnExitActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList(),
-                WhileActiveActionProperties = WhileActiveActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList(),
-                WhileActiveActionsTimeout = WhileActiveActionsTimeout,
-                SourceRegionBounds = Overlay.Region.Bounds,
-                OverlayBounds = Overlay.NativeBounds,
-                WindowMatch = TargetWindow,
-                IsClickThrough = Overlay.IsClickThrough,
-                ThumbnailOpacity = Overlay.ThumbnailOpacity,
-                MaintainAspectRatio = Overlay.MaintainAspectRatio,
-                BorderColor = Overlay.BorderColor,
-                BorderThickness = Overlay.BorderThickness,
-                IsEnabled = IsEnabled,
-                Id = Id,
-            };
-            return save;
+            properties.Name = Name;
+            properties.TriggerProperties = Triggers.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
+            properties.OnEnterActionProperties = OnEnterActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
+            properties.OnExitActionProperties = OnExitActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
+            properties.WhileActiveActionProperties = WhileActiveActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
+            properties.WhileActiveActionsTimeout = WhileActiveActionsTimeout;
+            properties.SourceRegionBounds = Overlay.Region.Bounds;
+            properties.OverlayBounds = Overlay.NativeBounds;
+            properties.WindowMatch = TargetWindow;
+            properties.IsClickThrough = Overlay.IsClickThrough;
+            properties.ThumbnailOpacity = Overlay.ThumbnailOpacity;
+            properties.MaintainAspectRatio = Overlay.MaintainAspectRatio;
+            properties.BorderColor = Overlay.BorderColor;
+            properties.BorderThickness = Overlay.BorderThickness;
+            properties.IsEnabled = IsEnabled;
+            properties.Id = Id;
         }
 
         private IAuraProperties ToAuraProperties(PoeConfigMetadata<IAuraProperties> metadata)

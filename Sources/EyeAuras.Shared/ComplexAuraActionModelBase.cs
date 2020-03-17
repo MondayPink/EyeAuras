@@ -8,7 +8,7 @@ using System;
 
 namespace EyeAuras.Shared
 {
-    public abstract class ComplexAuraAction<T> : AuraActionBase<T>, IComplexAuraAction where T : class, IAuraProperties
+    public abstract class ComplexAuraAction<T> : AuraActionBase<T>, IComplexAuraAction where T : class, IAuraProperties, new()
     {
         private readonly ISourceList<IAuraAction> actions = new SourceList<IAuraAction>();
         

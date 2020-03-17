@@ -10,7 +10,7 @@ using log4net;
 
 namespace EyeAuras.Shared
 {
-    public abstract class ComplexAuraTrigger<T> : AuraTriggerBase<T>, IComplexAuraTrigger where T : class, IAuraTriggerProperties
+    public abstract class ComplexAuraTrigger<T> : AuraTriggerBase<T>, IComplexAuraTrigger where T : class, IAuraTriggerProperties, new()
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(ComplexAuraTrigger));
 
