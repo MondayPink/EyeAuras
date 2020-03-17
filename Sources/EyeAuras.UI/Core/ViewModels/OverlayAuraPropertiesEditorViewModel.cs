@@ -29,10 +29,11 @@ namespace EyeAuras.UI.Core.ViewModels
         private readonly SerialDisposable activeSourceAnchors = new SerialDisposable();
 
         private readonly DelegateCommand<object> addTriggerCommand;
-        private readonly DelegateCommand<object> addActionCommand;
         
         private ReadOnlyObservableCollection<IPropertyEditorViewModel> triggerEditors;
-        private ReadOnlyObservableCollection<IPropertyEditorViewModel> actionEditors;
+        private ReadOnlyObservableCollection<IPropertyEditorViewModel> onEnterActionEditors;
+        private ReadOnlyObservableCollection<IPropertyEditorViewModel> whileActiveActionEditors;
+        private ReadOnlyObservableCollection<IPropertyEditorViewModel> onExitActionEditors;
 
         public OverlayAuraPropertiesEditorViewModel(
             [NotNull] IAuraRepository repository,
@@ -47,7 +48,9 @@ namespace EyeAuras.UI.Core.ViewModels
             activeSourceAnchors.AddTo(Anchors);
             
             addTriggerCommand = new DelegateCommand<object>(AddTriggerCommandExecuted);
-            addActionCommand = new DelegateCommand<object>(AddOnEnterActionCommandExecuted);
+            AddOnEnterActionCommand = CommandWrapper.Create<object>(x => AddAction(x, Source.OnEnterActions));
+            AddOnExitActionCommand = CommandWrapper.Create<object>(x => AddAction(x, Source.OnExitActions));
+            AddWhileActiveActionCommand = CommandWrapper.Create<object>(x => AddAction(x, Source.WhileActiveActions));
 
             repository.KnownEntities
                 .ToObservableChangeSet()
@@ -72,6 +75,12 @@ namespace EyeAuras.UI.Core.ViewModels
                 .AddTo(Anchors);
         }
 
+        public int WhileActiveActionsTimeoutInMilliseconds
+        {
+            get => (int)Source.WhileActiveActionsTimeout.TotalMilliseconds;
+            set => Source.WhileActiveActionsTimeout = TimeSpan.FromMilliseconds(value);
+        }
+
         public IWindowSelectorViewModel WindowSelector { get; }
         
         public ReadOnlyObservableCollection<IAuraTrigger> KnownTriggers { get; }
@@ -84,22 +93,38 @@ namespace EyeAuras.UI.Core.ViewModels
             private set => this.RaiseAndSetIfChanged(ref triggerEditors, value);
         }
 
-        public ReadOnlyObservableCollection<IPropertyEditorViewModel> ActionEditors
+        public ReadOnlyObservableCollection<IPropertyEditorViewModel> OnEnterActionEditors
         {
-            get => actionEditors;
-            private set => this.RaiseAndSetIfChanged(ref actionEditors, value);
+            get => onEnterActionEditors;
+            private set => this.RaiseAndSetIfChanged(ref onEnterActionEditors, value);
+        }
+        
+        public ReadOnlyObservableCollection<IPropertyEditorViewModel> WhileActiveActionEditors
+        {
+            get => whileActiveActionEditors;
+            set => this.RaiseAndSetIfChanged(ref whileActiveActionEditors, value);
+        }
+
+        public ReadOnlyObservableCollection<IPropertyEditorViewModel> OnExitActionEditors
+        {
+            get => onExitActionEditors;
+            set => this.RaiseAndSetIfChanged(ref onExitActionEditors, value);
         }
         
         public ICommand AddTriggerCommand => addTriggerCommand;
         
-        public ICommand AddActionCommand => addActionCommand;
+        public CommandWrapper AddOnEnterActionCommand { get; }
         
-        private void AddOnEnterActionCommandExecuted(object obj)
-        {
-            Guard.ArgumentNotNull(obj, nameof(obj));
+        public CommandWrapper AddOnExitActionCommand { get; }
+        
+        public CommandWrapper AddWhileActiveActionCommand { get; }
 
-            var model = repository.CreateModel<IAuraAction>(obj.GetType());
-            Source.OnEnterActions.Add(model);
+        private void AddAction(object actionSample, ObservableCollection<IAuraAction> actions)
+        {
+            Guard.ArgumentNotNull(actionSample, nameof(actionSample));
+
+            var model = repository.CreateModel<IAuraAction>(actionSample.GetType());
+            actions.Add(model);
         }
 
         private void AddTriggerCommandExecuted(object obj)
@@ -122,7 +147,7 @@ namespace EyeAuras.UI.Core.ViewModels
             Disposable.Create(() =>
             {
                 Source = null;
-                ActionEditors = null;
+                OnEnterActionEditors = null;
                 TriggerEditors = null;
             }).AddTo(sourceAnchors);
             
@@ -147,27 +172,39 @@ namespace EyeAuras.UI.Core.ViewModels
                 .ObserveOn(uiScheduler)
                 .Bind(out var triggersSource)
                 .Subscribe()
-                .AddTo(Anchors);
+                .AddTo(sourceAnchors);
 
             TriggerEditors = triggersSource;
+
+            SubscribeAndCreate(Source.OnEnterActions, out var onEnterActionsSource).AddTo(sourceAnchors);
+            OnEnterActionEditors = onEnterActionsSource;
             
-            Source.OnEnterActions
+            SubscribeAndCreate(Source.OnExitActions, out var onExitActionsSource).AddTo(sourceAnchors);
+            OnExitActionEditors = onExitActionsSource;
+            
+            SubscribeAndCreate(Source.WhileActiveActions, out var whileActiveActionsSource).AddTo(sourceAnchors);
+            WhileActiveActionEditors = whileActiveActionsSource;
+        }
+
+        private IDisposable SubscribeAndCreate<TAuraModel>(
+            ObservableCollection<TAuraModel> collection, 
+            out ReadOnlyObservableCollection<IPropertyEditorViewModel> editorCollection) where TAuraModel : IAuraModel
+        {
+            return collection
                 .ToObservableChangeSet()
                 .Transform(
                     x =>
                     {
                         var editor = propertiesEditorFactory.Create();
-                        var closeController = new RemoveItemController<IAuraAction>(x, Source.OnEnterActions);
+                        var closeController = new RemoveItemController<TAuraModel>(x, collection);
                         editor.SetCloseController(closeController);
                         editor.Value = x;
                         return editor;
                     })
                 .DisposeMany()
                 .ObserveOn(uiScheduler)
-                .Bind(out var onEnterActionsSource)
-                .Subscribe()
-                .AddTo(Anchors);
-            ActionEditors = onEnterActionsSource;
+                .Bind(out editorCollection)
+                .Subscribe();
         }
     }
 }

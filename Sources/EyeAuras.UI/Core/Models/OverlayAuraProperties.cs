@@ -29,10 +29,18 @@ namespace EyeAuras.UI.Core.Models
 
         public IList<PoeConfigMetadata<IAuraProperties>> OnEnterActionProperties { [CanBeNull] get; [CanBeNull] set; } =
             new List<PoeConfigMetadata<IAuraProperties>>();
+        
+        public IList<PoeConfigMetadata<IAuraProperties>> WhileActiveActionProperties { [CanBeNull] get; [CanBeNull] set; } =
+            new List<PoeConfigMetadata<IAuraProperties>>();
+        
+        public IList<PoeConfigMetadata<IAuraProperties>> OnExitActionProperties { [CanBeNull] get; [CanBeNull] set; } =
+            new List<PoeConfigMetadata<IAuraProperties>>();
 
         public string Id { get; set; }
 
         public string Name { get; set; }
+        
+        public TimeSpan WhileActiveActionsTimeout { get; set; }
 
         public WindowMatchParams WindowMatch { get; set; }
 
