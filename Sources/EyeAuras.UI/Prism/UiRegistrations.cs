@@ -1,4 +1,5 @@
-﻿using EyeAuras.Shared;
+﻿using EyeAuras.Controls.ViewModels;
+using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
 using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.Services;

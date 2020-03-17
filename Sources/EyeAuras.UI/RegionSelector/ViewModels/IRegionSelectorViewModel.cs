@@ -1,4 +1,6 @@
 using System;
+using EyeAuras.Controls.ViewModels;
+using EyeAuras.Shared.Services;
 using EyeAuras.UI.RegionSelector.Services;
 using JetBrains.Annotations;
 using PoeShared.Scaffolding;

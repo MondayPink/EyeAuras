@@ -4,15 +4,13 @@
                     xmlns:eye="http://coderush.net/poeeye/"
                     xmlns:viewModels="clr-namespace:EyeAuras.UI.Overlay.ViewModels"
                     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-                    xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-                    xmlns:converters="http://schemas.kent.boogaart.com/converters"
-                    xmlns:ui="clr-namespace:PoeShared.UI;assembly=PoeShared.Wpf"
-                    xmlns:scaffolding="clr-namespace:PoeShared.Scaffolding;assembly=PoeShared">
+                    xmlns:ui="clr-namespace:PoeShared.UI;assembly=PoeShared.Wpf">
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Generic.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Styles.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras.Controls;component/Themes/Styles.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
 

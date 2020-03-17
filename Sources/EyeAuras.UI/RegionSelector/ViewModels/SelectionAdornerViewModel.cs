@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
@@ -10,11 +11,13 @@ using System.Windows.Forms;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Shapes;
+using EyeAuras.Controls.ViewModels;
 using JetBrains.Annotations;
 using log4net;
 using PoeShared.Native;
 using PoeShared.Prism;
 using PoeShared.Scaffolding;
+using ReactiveUI;
 using Unity;
 using Control = System.Windows.Forms.Control;
 using MouseEventArgs = System.Windows.Forms.MouseEventArgs;
@@ -28,8 +31,10 @@ namespace EyeAuras.UI.RegionSelector.ViewModels
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(SelectionAdornerViewModel));
         private static readonly TimeSpan DesiredRedrawRate = TimeSpan.FromMilliseconds(1000 / 60f);
+        private static readonly int CurrentProcessId = Process.GetCurrentProcess().Id;
 
         private readonly IKeyboardEventsSource keyboardEventsSource;
+        private readonly IWindowTracker mainWindowTracker;
         private readonly IScheduler uiScheduler;
         private readonly DoubleCollection lineDashArray = new DoubleCollection {2, 2};
 
@@ -38,13 +43,16 @@ namespace EyeAuras.UI.RegionSelector.ViewModels
         private Rect selection;
         private bool isVisible;
         private UIElement owner;
+        private bool stopWhenFocusLost;
 
         public SelectionAdornerViewModel(
             [NotNull] IKeyboardEventsSource keyboardEventsSource,
+            [NotNull] [Dependency(WellKnownWindows.MainWindow)] IWindowTracker mainWindowTracker,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler,
             [NotNull] [Dependency(WellKnownSchedulers.Background)] IScheduler bgScheduler)
         {
             this.keyboardEventsSource = keyboardEventsSource;
+            this.mainWindowTracker = mainWindowTracker;
             this.uiScheduler = uiScheduler;
 
             this.RaiseWhenSourceValue(x => x.ScreenMousePosition, this, x => x.MousePosition).AddTo(Anchors);
@@ -72,11 +80,19 @@ namespace EyeAuras.UI.RegionSelector.ViewModels
             private set => RaiseAndSetIfChanged(ref isVisible, value);
         }
 
+        public bool StopWhenFocusLost
+        {
+            get => stopWhenFocusLost;
+            set => this.RaiseAndSetIfChanged(ref stopWhenFocusLost, value);
+        }
+
         public ObservableCollection<Shape> CanvasElements { get; } = new ObservableCollection<Shape>();
 
         public double StrokeThickness { get; } = 2;
 
         public Brush Stroke { get; } = Brushes.Lime;
+
+        public Size Size => Owner?.RenderSize ?? Size.Empty;
 
         public Point AnchorPoint
         {
@@ -112,9 +128,10 @@ namespace EyeAuras.UI.RegionSelector.ViewModels
                     MousePosition = owner.PointFromScreen(Control.MousePosition.ToWpfPoint());
 
                     Observable.Merge(
+                            mainWindowTracker.WhenAnyValue(x => x.ActiveProcessId).Where(x => StopWhenFocusLost).Where(x => x != CurrentProcessId).Select(x => $"main window lost focus - processId changed"),
                             keyboardEventsSource.WhenKeyUp.Where(x => x.KeyData == Keys.Escape).Select(x => $"{x.KeyData} pressed"),
                             keyboardEventsSource.WhenMouseUp.Where(x => x.Button != MouseButtons.Left).Select(x => $"mouse {x.Button} pressed"))
-                        .Do(reason => Log.Info($"Closing SelectionAdorner, reason: {reason}"))
+                        .Do(reason => Log.Info($"Closing SelectionAdorner, reason: {reason}, activeWindow: {mainWindowTracker.ActiveWindowTitle}, activeProcess: {mainWindowTracker.ActiveProcessId}, currentProcess: {CurrentProcessId}"))
                         .ObserveOn(uiScheduler)
                         .Subscribe(subscriber.OnCompleted)
                         .AddTo(selectionAnchors);

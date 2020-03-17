@@ -8,6 +8,7 @@ using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Input;
 using System.Windows.Media;
+using EyeAuras.Controls.ViewModels;
 using EyeAuras.OnTopReplica;
 using EyeAuras.Shared.Services;
 using EyeAuras.UI.Core.Models;

@@ -1,9 +1,9 @@
 using System;
 using JetBrains.Annotations;
 
-namespace EyeAuras.UI.RegionSelector.Services
+namespace EyeAuras.Shared.Services
 {
-    internal interface IRegionSelectorService
+    public interface IRegionSelectorService
     {
         [NotNull] 
         IObservable<RegionSelectorResult> SelectRegion();

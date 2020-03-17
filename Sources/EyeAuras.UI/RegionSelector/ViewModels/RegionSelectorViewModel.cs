@@ -15,6 +15,7 @@ using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Windows.Input;
+using EyeAuras.Controls.ViewModels;
 using EyeAuras.OnTopReplica.WindowSeekers;
 using JetBrains.Annotations;
 using log4net;

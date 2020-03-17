@@ -1,8 +1,7 @@
-using System.Drawing;
 using EyeAuras.OnTopReplica;
-using PoeShared.Scaffolding;
+using System.Drawing;
 
-namespace EyeAuras.UI.RegionSelector.Services
+namespace EyeAuras.Shared.Services
 {
     public sealed class RegionSelectorResult
     {
@@ -14,7 +13,7 @@ namespace EyeAuras.UI.RegionSelector.Services
         
         public string Reason { get; set; }
 
-        public bool IsValid => GeometryExtensions.IsNotEmpty(Selection) && Window != null;
+        public bool IsValid => Selection.Width > 0 && Selection.Height > 0 && Window != null;
 
         public override string ToString()
         {

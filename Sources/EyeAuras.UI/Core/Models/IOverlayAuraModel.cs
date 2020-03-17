@@ -18,7 +18,7 @@ namespace EyeAuras.UI.Core.Models
         ObservableCollection<IAuraTrigger> Triggers { [NotNull] get; }
         
         ObservableCollection<IAuraAction> OnEnterActions { get; }
-
+        
         IEyeOverlayViewModel Overlay { [NotNull] get; }
         
         void SetCloseController([NotNull] ICloseController closeController);
