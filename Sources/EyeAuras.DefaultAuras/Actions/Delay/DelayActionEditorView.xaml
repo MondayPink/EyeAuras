@@ -1,0 +1,33 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:default="clr-namespace:EyeAuras.DefaultAuras.Actions.PlaySound"
+                    xmlns:delay="clr-namespace:EyeAuras.DefaultAuras.Actions.Delay"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
+    
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Converters.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Colors.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Styles.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/CommandWrapperView.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras.Controls;component/Themes/Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+    
+    <DataTemplate DataType="{x:Type delay:DelayActionEditor}">
+        <DockPanel DockPanel.Dock="Left" Margin="10,0,0,0" >
+            <StackPanel Margin="5,0" Orientation="Horizontal">
+                <TextBlock Margin="5,0" Text="Delay, ms" />
+                <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" Width="80"
+                                    Margin="0,5,0,0"
+                                    DefaultValue="0"
+                                    Increment="100"
+                                    Minimum="0"
+                                    Maximum="86400000"
+                                    materialDesign:HintAssist.IsFloating="false"
+                                    Style="{StaticResource MaterialNumericUpDownStyleKey}"
+                                    Value="{Binding Delay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            </StackPanel>
+        </DockPanel>
+        
+    </DataTemplate>
+</ResourceDictionary>

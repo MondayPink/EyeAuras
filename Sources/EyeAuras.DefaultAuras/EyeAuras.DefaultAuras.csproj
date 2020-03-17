@@ -12,6 +12,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Extended.Wpf.Toolkit" Version="3.6.0" />
       <PackageReference Include="JetBrains.Annotations" Version="2019.1.3" />
       <PackageReference Include="log4net" Version="2.0.8" />
       <PackageReference Include="MaterialDesignColors" Version="1.2.0" />
@@ -25,6 +26,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <ProjectReference Include="..\EyeAuras.Controls\EyeAuras.Controls.csproj" />
       <ProjectReference Include="..\EyeAuras.OnTopReplica\EyeAuras.OnTopReplica.csproj" />
       <ProjectReference Include="..\EyeAuras.Shared\EyeAuras.Shared.csproj" />
       <ProjectReference Include="..\PoeShared.Native\PoeShared.Native.csproj" />

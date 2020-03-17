@@ -6,6 +6,7 @@
         <ResourceDictionary Source="pack://application:,,,/EyeAuras.DefaultAuras;component/Triggers/Default/DefaultTriggerEditorView.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras.DefaultAuras;component/Triggers/HotkeyIsActive/HotkeyIsActiveTriggerEditorView.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras.DefaultAuras;component/Actions/PlaySound/PlaySoundActionEditorView.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras.DefaultAuras;component/Actions/Delay/DelayActionEditorView.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras.DefaultAuras;component/Actions/WinActivate/WinActivateActionEditorView.xaml" />
     </ResourceDictionary.MergedDictionaries>
 </ResourceDictionary>
