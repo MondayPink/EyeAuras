@@ -164,6 +164,7 @@
                                         <DockPanel DockPanel.Dock="Top" VerticalAlignment="Top">
                                             <xctk:DoubleUpDown DockPanel.Dock="Left" Margin="5,0,0,0"
                                                                materialDesign:HintAssist.Hint="Border Thickness"
+                                                               materialDesign:HintAssist.IsFloating="True"
                                                                Style="{StaticResource MaterialNumericUpDownStyleKey}"
                                                                DisplayDefaultValueOnEmptyText="True"
                                                                DefaultValue="0"
@@ -332,7 +333,7 @@
                         
                         <StackPanel Grid.Column="3" Margin="5,0" Orientation="Horizontal">
                             <TextBlock Margin="5,0" Text="Delay, ms" />
-                            <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" Width="80"
+                            <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="60"
                                                 Margin="5,0,0,0"
                                                 DefaultValue="1000"
                                                 Increment="100"
