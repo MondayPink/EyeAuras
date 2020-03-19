@@ -52,6 +52,7 @@ namespace EyeAuras.UI.Core.Models
         private WindowMatchParams targetWindow;
         private string uniqueId;
         private TimeSpan whileActiveActionsTimeout;
+        private DateTime lastWhileActiveTimestamp;
 
         public OverlayAuraModelBase(
             [NotNull] ISharedContext sharedContext,
@@ -128,15 +129,18 @@ namespace EyeAuras.UI.Core.Models
                 .WithPrevious((prev, curr) => new {prev, curr})
                 .Where(x => x.prev == false && x.curr)
                 .Where(x => Triggers.Count > 0);
-            triggerActivates
-                .Subscribe(ExecuteOnEnterActions, Log.HandleUiException)
-                .AddTo(Anchors);
             
             var triggerDeactivates = auraTriggers.WhenAnyValue(x => x.IsActive)
                 .WithPrevious((prev, curr) => new {prev, curr})
                 .Where(x => x.prev == true && x.curr == false)
                 .Where(x => Triggers.Count > 0);
+            
+            triggerActivates
+                .ObserveOn(bgScheduler)
+                .Subscribe(ExecuteOnEnterActions, Log.HandleUiException)
+                .AddTo(Anchors);
             triggerDeactivates
+                .ObserveOn(bgScheduler)
                 .Subscribe(ExecuteOnExitActions, Log.HandleUiException)
                 .AddTo(Anchors);
 
@@ -146,9 +150,11 @@ namespace EyeAuras.UI.Core.Models
                     this.WhenAnyValue(x => x.WhileActiveActionsTimeout).ToUnit())
                 .Select(
                     x => IsActive && Triggers.Count > 0
-                        ? Observable.Timer(DateTimeOffset.Now, TimeSpan.FromMilliseconds(1)).ToUnit()
+                        ? Observable.Timer(DateTimeOffset.Now, TimeSpan.FromMilliseconds(50), bgScheduler).ToUnit()
                         : Observable.Empty(Unit.Default))
                 .Switch()
+                .Where(x => clock.Now - lastWhileActiveTimestamp > WhileActiveActionsTimeout)
+                .ObserveOn(bgScheduler)
                 .Subscribe(ExecuteWhileActiveActions, Log.HandleUiException)
                 .AddTo(Anchors);
             
@@ -216,21 +222,28 @@ namespace EyeAuras.UI.Core.Models
         
         private void ExecuteWhileActiveActions()
         {
-            var sw = Stopwatch.StartNew();
-            WhileActiveActions.ForEach(action => action.Execute());
-            sw.Stop();
-            var elapsed = sw.ElapsedMilliseconds;
-            var timeToSleep = WhileActiveActionsTimeout.TotalMilliseconds - elapsed;
-            if (timeToSleep > 0)
+            foreach (var action in WhileActiveActions)
             {
-                Thread.Sleep((int)timeToSleep);
+                if (!IsActive)
+                {
+                    break;
+                }
+                action.Execute();
             }
+
+            LastWhileActiveTimestamp = clock.Now;
         }
         
         public bool IsActive
         {
             get => isActive;
             private set => RaiseAndSetIfChanged(ref isActive, value);
+        }
+
+        public DateTime LastWhileActiveTimestamp
+        {
+            get => lastWhileActiveTimestamp;
+            private set => this.RaiseAndSetIfChanged(ref lastWhileActiveTimestamp, value);
         }
 
         public WindowMatchParams TargetWindow
