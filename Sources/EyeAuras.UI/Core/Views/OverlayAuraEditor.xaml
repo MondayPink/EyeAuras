@@ -5,7 +5,10 @@
                     xmlns:converters="http://schemas.kent.boogaart.com/converters"
                     xmlns:eye="http://coderush.net/poeeye/"
                     xmlns:shared="clr-namespace:EyeAuras.Shared;assembly=EyeAuras.Shared"
-                    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
+                    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+                    xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz"
+                    xmlns:utilities="clr-namespace:EyeAuras.UI.Core.Utilities"
+                    xmlns:fa="http://schemas.fontawesome.io/icons/">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Styles.xaml" />
@@ -17,26 +20,55 @@
         <converters:Mapping From="{StaticResource FalseValue}" To="0.1" />
     </converters:MapConverter>
     
+    <Style x:Key="AuraDragablzControlThumbStyle" TargetType="{x:Type Thumb}">
+        <Setter Property="dragablz:DragablzItem.IsCustomThumb" Value="True"></Setter>
+        <Setter Property="Cursor" Value="{x:Static Cursors.SizeNS}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <fa:FontAwesome Icon="Arrows"
+                                    Margin="5,0"
+                                    Foreground="{TemplateBinding Foreground}"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Drag to rearrange items"
+                                    FontSize="12" />
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Foreground" Value="{StaticResource SecondaryAccentBrush}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+    
+    <Style x:Key="AuraDragablzItemStyle" TargetType="{x:Type dragablz:DragablzItem}" BasedOn="{StaticResource DragablzTabItemVerticalStyle}">
+    </Style>
+    
+    <Style x:Key="AuraDragablzControlStyle" TargetType="{x:Type dragablz:DragablzItemsControl}" BasedOn="{StaticResource DragablzVerticalItemsControl}">
+        <Setter Property="ItemContainerStyle" Value="{StaticResource AuraDragablzItemStyle}"></Setter>
+    </Style>
+    
     <DataTemplate x:Key="AuraTriggerHeaderTemplateKey" DataType="{x:Type shared:IAuraTrigger}">
-        <DockPanel TextBlock.Foreground="WhiteSmoke">
-            <materialDesign:PackIcon
-                DockPanel.Dock="Left"
-                VerticalAlignment="Center"
-                Foreground="{StaticResource NegativeBrush}"
-                ToolTip="Aura is NOT active"
-                Visibility="{Binding IsActive, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"
-                Kind="CheckboxBlankCircleOutline" />
-            <materialDesign:PackIcon
-                DockPanel.Dock="Left"
-                VerticalAlignment="Center"
-                Foreground="{StaticResource PositiveBrush}"
-                ToolTip="Aura is active"
-                Visibility="{Binding IsActive, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
-                Kind="CheckboxMarkedCircleOutline" />
-            <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="{Binding TriggerName}" />
-            <TextBlock Margin="5,0" FontSize="10" VerticalAlignment="Center" Text="{Binding TriggerDescription}" />
-            <CheckBox Margin="5,0" IsChecked="{Binding IsInverted}">Invert</CheckBox>
-        </DockPanel>
+            <DockPanel TextBlock.Foreground="WhiteSmoke">
+                <materialDesign:PackIcon
+                    DockPanel.Dock="Left"
+                    VerticalAlignment="Center"
+                    Foreground="{StaticResource NegativeBrush}"
+                    ToolTip="Aura is NOT active"
+                    Visibility="{Binding IsActive, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"
+                    Kind="CheckboxBlankCircleOutline" />
+                <materialDesign:PackIcon
+                    DockPanel.Dock="Left"
+                    VerticalAlignment="Center"
+                    Foreground="{StaticResource PositiveBrush}"
+                    ToolTip="Aura is active"
+                    Visibility="{Binding IsActive, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                    Kind="CheckboxMarkedCircleOutline" />
+                <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="{Binding TriggerName}" />
+                <TextBlock Margin="5,0" FontSize="10" VerticalAlignment="Center" Text="{Binding TriggerDescription}" />
+                <CheckBox Margin="5,0" IsChecked="{Binding IsInverted}">Invert</CheckBox>
+            </DockPanel>
     </DataTemplate>
 
     <DataTemplate x:Key="AuraTriggerSelectorTemplateKey" DataType="{x:Type shared:IAuraTrigger}">
@@ -53,12 +85,37 @@
         </DockPanel>
     </DataTemplate>
     
+    <DataTemplate x:Key="AuraTriggerItemTemplateKey" DataType="{x:Type viewModels:IPropertyEditorViewModel}">
+        <Border Padding="5" 
+                BorderThickness="0 1 0 1" 
+                Background="{StaticResource OverlayTitleBackgroundBrushKey}"
+                BorderBrush="{StaticResource SecondaryAccentBrush}" 
+                Margin="0,5,0,0">
+            <DockPanel>
+                <DockPanel Dock="Top" Margin="0, 2.5">
+                    <ContentControl DockPanel.Dock="Right"
+                                    Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}"
+                                    Content="{Binding CloseCommand}"
+                                    ToolTip="Remove trigger" x:Name="RemoveTriggerButton"
+                                    eye:CommandWrapperHelper.Icon="&#xf00d;"
+                                    ContentTemplate="{StaticResource CommandWrapperIcon}" />
+                    <Thumb DockPanel.Dock="Right" Margin="5,0" Style="{StaticResource AuraDragablzControlThumbStyle}"
+                           Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}"/>
+                    <ContentControl DockPanel.Dock="Left" Content="{Binding Value}"
+                                    x:Name="TriggerHeader"
+                                    ContentTemplate="{StaticResource AuraTriggerHeaderTemplateKey}" />
+                </DockPanel>
+                <ContentControl DockPanel.Dock="Top" x:Name="TriggerBody" Content="{Binding }" />
+            </DockPanel>
+        </Border>
+    </DataTemplate>
+
     <DataTemplate x:Key="AuraActionItemTemplateKey" DataType="{x:Type viewModels:IPropertyEditorViewModel}">
-        <Border Background="{StaticResource OverlayWindowTitleLightBackgroundBrushKey}"
-                BorderBrush="{StaticResource SecondaryAccentBrush}"
-                Padding="5"
-                Margin="0,5,0,0"
-                BorderThickness="0,1,0,1">
+        <Border Padding="5" 
+                BorderThickness="0 1 0 1" 
+                Background="{StaticResource OverlayTitleBackgroundBrushKey}"
+                BorderBrush="{StaticResource SecondaryAccentBrush}" 
+                Margin="0,5,0,0">
             <DockPanel>
                 <DockPanel Dock="Top" Margin="0, 2.5">
                     <ContentControl DockPanel.Dock="Right"
@@ -67,6 +124,8 @@
                                     ToolTip="Remove action" x:Name="RemoveActionButton"
                                     eye:CommandWrapperHelper.Icon="&#xf00d;"
                                     ContentTemplate="{StaticResource CommandWrapperIcon}" />
+                    <Thumb DockPanel.Dock="Right" Margin="10,0" Style="{StaticResource AuraDragablzControlThumbStyle}"
+                           Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}"/>
 
                     <ContentControl DockPanel.Dock="Left" Content="{Binding Value}"
                                     x:Name="ActionHeader"
@@ -213,7 +272,7 @@
                 </GroupBox.Header>
             </GroupBox>
 
-            <GroupBox DockPanel.Dock="Top" BorderThickness="0" Margin="0,0,0,10" Padding="0">
+            <GroupBox DockPanel.Dock="Top" BorderThickness="0" Margin="0,5,0,0" Padding="0">
                 <GroupBox.Header>
                     <Grid Margin="4">
                         <Grid.ColumnDefinitions>
@@ -230,6 +289,7 @@
                                                  StaysOpen="False" Height="22" Margin="0,-2,0,1"
                                                  x:Name="TriggerList">
                             <Grid>
+                                
                                 <ItemsControl ItemsSource="{Binding KnownTriggers}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate DataType="{x:Type shared:IAuraTrigger}">
@@ -247,39 +307,16 @@
                 </GroupBox.Header>
 
                 <DockPanel x:Name="TriggerListBody">
-                    <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding TriggerEditors}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type viewModels:IPropertyEditorViewModel}">
-
-                                <Border Background="{StaticResource OverlayWindowTitleLightBackgroundBrushKey}"
-                                        BorderBrush="{StaticResource SecondaryAccentBrush}"
-                                        Padding="5"
-                                        Margin="0,5,0,0"
-                                        BorderThickness="0,1,0,1">
-                                    <DockPanel>
-                                        <DockPanel Dock="Top" Margin="0, 2.5">
-                                            <ContentControl DockPanel.Dock="Right"
-                                                            Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}"
-                                                            Content="{Binding CloseCommand}"
-                                                            ToolTip="Remove trigger" x:Name="RemoveTriggerButton"
-                                                            eye:CommandWrapperHelper.Icon="&#xf00d;"
-                                                            ContentTemplate="{StaticResource CommandWrapperIcon}" />
-
-                                            <ContentControl DockPanel.Dock="Left" Content="{Binding Value}"
-                                                            x:Name="TriggerHeader"
-                                                            ContentTemplate="{StaticResource AuraTriggerHeaderTemplateKey}" />
-                                        </DockPanel>
-
-                                        <ContentControl DockPanel.Dock="Top" x:Name="TriggerBody" Content="{Binding }" />
-                                    </DockPanel>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        <dragablz:DragablzItemsControl DockPanel.Dock="Top"
+                                                       Style="{StaticResource AuraDragablzControlStyle}"
+                                                       x:Name="Triggers"
+                                                       ItemsSource="{Binding TriggerEditors}"
+                                                       PositionMonitor="{Binding TriggersPositionMonitor}"
+                                                       ItemTemplate="{StaticResource AuraTriggerItemTemplateKey}"/>
                 </DockPanel>
             </GroupBox>
 
-            <GroupBox x:Name="OnEnterActions"  DockPanel.Dock="Top" BorderThickness="0" Margin="0,0,0,10" Padding="0">
+            <GroupBox x:Name="OnEnterActions"  DockPanel.Dock="Top" BorderThickness="0" Margin="0,5,0,0" Padding="0">
                 <GroupBox.Header>
                     <Grid Margin="4">
                         <Grid.ColumnDefinitions>
@@ -313,11 +350,16 @@
                 </GroupBox.Header>
 
                 <DockPanel x:Name="ActionListBody">
-                    <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding OnEnterActionEditors}" ItemTemplate="{StaticResource AuraActionItemTemplateKey}"/>
+                    <dragablz:DragablzItemsControl DockPanel.Dock="Top"
+                                                   Style="{StaticResource AuraDragablzControlStyle}"
+                                                   x:Name="OnEnterAction"
+                                                   ItemsSource="{Binding OnEnterActionEditors}"
+                                                   PositionMonitor="{Binding OnEnterActionsPositionMonitor}"
+                                                   ItemTemplate="{StaticResource AuraActionItemTemplateKey}"/>
                 </DockPanel>
             </GroupBox>
             
-            <GroupBox x:Name="WhileActiveActions"  DockPanel.Dock="Top" BorderThickness="0" Margin="0,0,0,10" Padding="0">
+            <GroupBox x:Name="WhileActiveActions"  DockPanel.Dock="Top" BorderThickness="0" Margin="0,5,0,0" Padding="0">
                 <GroupBox.Header>
                     <Grid Margin="4">
                         <Grid.ColumnDefinitions>
@@ -364,11 +406,15 @@
                 </GroupBox.Header>
 
                 <DockPanel x:Name="WhileActiveActionListBody">
-                    <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding WhileActiveActionEditors}" ItemTemplate="{StaticResource AuraActionItemTemplateKey}"/>
+                    <dragablz:DragablzItemsControl DockPanel.Dock="Top"
+                                                   Style="{StaticResource AuraDragablzControlStyle}"
+                                                   ItemsSource="{Binding WhileActiveActionEditors}"
+                                                   PositionMonitor="{Binding WhileActiveActionsPositionMonitor}"
+                                                   ItemTemplate="{StaticResource AuraActionItemTemplateKey}"/>
                 </DockPanel>
             </GroupBox>
             
-            <GroupBox x:Name="OnExitActions" DockPanel.Dock="Top" BorderThickness="0" Margin="0,0,0,10" Padding="0">
+            <GroupBox x:Name="OnExitActions" DockPanel.Dock="Top" BorderThickness="0" Margin="0,5,0,5" Padding="0">
                 <GroupBox.Header>
                     <Grid Margin="4">
                         <Grid.ColumnDefinitions>
@@ -402,7 +448,11 @@
                 </GroupBox.Header>
 
                 <DockPanel x:Name="OnExitActionListBody">
-                    <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding OnExitActionEditors}" ItemTemplate="{StaticResource AuraActionItemTemplateKey}"/>
+                    <dragablz:DragablzItemsControl DockPanel.Dock="Top"
+                                                   Style="{StaticResource AuraDragablzControlStyle}"
+                                                   ItemsSource="{Binding OnExitActionEditors}"
+                                                   PositionMonitor="{Binding OnExitActionsPositionMonitor}"
+                                                   ItemTemplate="{StaticResource AuraActionItemTemplateKey}"/>
                 </DockPanel>
             </GroupBox>
         </StackPanel>

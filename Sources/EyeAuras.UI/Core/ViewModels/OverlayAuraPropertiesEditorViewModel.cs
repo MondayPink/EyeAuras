@@ -1,14 +1,17 @@
 using System;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
+using Dragablz;
 using DynamicData;
 using DynamicData.Binding;
 using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
 using EyeAuras.UI.Core.Models;
+using EyeAuras.UI.Core.Utilities;
 using JetBrains.Annotations;
 using PoeShared;
 using PoeShared.Prism;
@@ -25,6 +28,7 @@ namespace EyeAuras.UI.Core.ViewModels
     {
         private readonly IAuraRepository repository;
         private readonly IFactory<IPropertyEditorViewModel> propertiesEditorFactory;
+        private readonly IFactory<LinkedPositionMonitor<IPropertyEditorViewModel>> positionMonitorFactory;
         private readonly IScheduler uiScheduler;
         private readonly SerialDisposable activeSourceAnchors = new SerialDisposable();
 
@@ -35,14 +39,21 @@ namespace EyeAuras.UI.Core.ViewModels
         private ReadOnlyObservableCollection<IPropertyEditorViewModel> whileActiveActionEditors;
         private ReadOnlyObservableCollection<IPropertyEditorViewModel> onExitActionEditors;
 
+        private PositionMonitor triggersPositionMonitor;
+        private PositionMonitor onEnterActionsPositionMonitor;
+        private PositionMonitor whileActiveActionsPositionMonitor;
+        private PositionMonitor onExitActionsPositionMonitor;
+        
         public OverlayAuraPropertiesEditorViewModel(
             [NotNull] IAuraRepository repository,
             [NotNull] IFactory<IPropertyEditorViewModel> propertiesEditorFactory,
             [NotNull] IWindowSelectorViewModel windowSelector,
+            [NotNull] IFactory<LinkedPositionMonitor<IPropertyEditorViewModel>> positionMonitorFactory,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
             this.repository = repository;
             this.propertiesEditorFactory = propertiesEditorFactory;
+            this.positionMonitorFactory = positionMonitorFactory;
             this.uiScheduler = uiScheduler;
             WindowSelector = windowSelector.AddTo(Anchors);
             activeSourceAnchors.AddTo(Anchors);
@@ -119,6 +130,30 @@ namespace EyeAuras.UI.Core.ViewModels
         
         public CommandWrapper AddWhileActiveActionCommand { get; }
 
+        public PositionMonitor TriggersPositionMonitor
+        {
+            get => triggersPositionMonitor;
+            private set => this.RaiseAndSetIfChanged(ref triggersPositionMonitor, value);
+        }
+
+        public PositionMonitor OnEnterActionsPositionMonitor
+        {
+            get => onEnterActionsPositionMonitor;
+            private set => this.RaiseAndSetIfChanged(ref onEnterActionsPositionMonitor, value);
+        }
+
+        public PositionMonitor WhileActiveActionsPositionMonitor
+        {
+            get => whileActiveActionsPositionMonitor;
+            private set => this.RaiseAndSetIfChanged(ref whileActiveActionsPositionMonitor, value);
+        }
+
+        public PositionMonitor OnExitActionsPositionMonitor
+        {
+            get => onExitActionsPositionMonitor;
+            private set => this.RaiseAndSetIfChanged(ref onExitActionsPositionMonitor, value);
+        }
+
         private void AddAction(object actionSample, ObservableCollection<IAuraAction> actions)
         {
             Guard.ArgumentNotNull(actionSample, nameof(actionSample));
@@ -184,6 +219,11 @@ namespace EyeAuras.UI.Core.ViewModels
             
             SubscribeAndCreate(Source.WhileActiveActions, out var whileActiveActionsSource).AddTo(sourceAnchors);
             WhileActiveActionEditors = whileActiveActionsSource;
+            
+            TriggersPositionMonitor = positionMonitorFactory.Create().SyncWith(Source.Triggers, (x, y) => ReferenceEquals(x.Value, y));
+            OnEnterActionsPositionMonitor = positionMonitorFactory.Create().SyncWith(Source.OnEnterActions, (x, y) => ReferenceEquals(x.Value, y));
+            WhileActiveActionsPositionMonitor = positionMonitorFactory.Create().SyncWith(Source.WhileActiveActions, (x, y) => ReferenceEquals(x.Value, y));
+            OnExitActionsPositionMonitor = positionMonitorFactory.Create().SyncWith(Source.OnExitActions, (x, y) => ReferenceEquals(x.Value, y));
         }
 
         private IDisposable SubscribeAndCreate<TAuraModel>(

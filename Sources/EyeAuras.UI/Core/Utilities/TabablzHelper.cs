@@ -25,6 +25,22 @@ namespace EyeAuras.UI.Core.Utilities
             typeof(TabablzHelper),
             new FrameworkPropertyMetadata(default(ICommand), FrameworkPropertyMetadataOptions.Inherits));
 
+        public static readonly DependencyProperty HighlightOnMouseOverProperty = DependencyProperty.RegisterAttached(
+            "HighlightOnMouseOver",
+            typeof(bool),
+            typeof(TabablzHelper),
+            new FrameworkPropertyMetadata(true, FrameworkPropertyMetadataOptions.Inherits));
+
+        public static void SetHighlightOnMouseOver(DependencyObject element, bool value)
+        {
+            element.SetValue(HighlightOnMouseOverProperty, value);
+        }
+
+        public static bool GetHighlightOnMouseOver(DependencyObject element)
+        {
+            return (bool) element.GetValue(HighlightOnMouseOverProperty);
+        }
+
         public static void SetPositionMonitor(DependencyObject element, PositionMonitor value)
         {
             element.SetValue(PositionMonitorProperty, value);

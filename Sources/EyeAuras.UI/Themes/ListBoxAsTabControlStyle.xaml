@@ -35,6 +35,7 @@
         <Setter Property="IsTabStop" Value="False" />
         <Setter Property="Canvas.Left" Value="{Binding X, RelativeSource={RelativeSource Self}}" />
         <Setter Property="Canvas.Top" Value="{Binding Y, RelativeSource={RelativeSource Self}}" />
+        <Setter Property="Width" Value="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType={x:Type ItemsPresenter}}}" />
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="{x:Type dragablz:DragablzItem}">
@@ -75,7 +76,6 @@
 
                     </Grid>
 
-
                     <ControlTemplate.Triggers>
                         <Trigger Property="dragablz:TabablzControl.IsWrappingTabItem" Value="True">
                             <Setter TargetName="contentPresenter" Property="Content"
@@ -86,47 +86,26 @@
                             <Setter Property="BorderBrush" Value="{StaticResource SecondaryAccentBrush}" />
                             <Setter Property="Background" Value="{StaticResource PrimaryHueDarkBrush}" />
                         </Trigger>
-
-                        <Trigger Property="IsMouseOver" Value="True">
+                        
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsMouseOver" Value="True"/>
+                                <Condition Property="utils:TabablzHelper.HighlightOnMouseOver" Value="True"/>
+                            </MultiTrigger.Conditions>
                             <Setter Property="Foreground" Value="{StaticResource SecondaryAccentBrush}" />
-                        </Trigger>
+                        </MultiTrigger>
 
                         <Trigger Property="IsEnabled" Value="False">
                             <Setter Property="Foreground" Value="Pink" />
                             <Setter Property="Opacity" TargetName="contentPresenter" Value="0.56" />
                         </Trigger>
-
                     </ControlTemplate.Triggers>
                 </ControlTemplate>
             </Setter.Value>
         </Setter>
-
-        <Style.Triggers>
-            <Trigger Property="IsSiblingDragging" Value="True">
-                <Trigger.EnterActions>
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="Opacity">
-                                <EasingDoubleKeyFrame KeyTime="0:0:0.25" Value="1" />
-                                <EasingDoubleKeyFrame KeyTime="0:0:0.50" Value=".3" />
-                            </DoubleAnimationUsingKeyFrames>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </Trigger.EnterActions>
-                <Trigger.ExitActions>
-                    <BeginStoryboard>
-                        <Storyboard>
-                            <DoubleAnimationUsingKeyFrames Storyboard.TargetProperty="Opacity">
-                                <EasingDoubleKeyFrame KeyTime="0:0:0.50" Value="1" />
-                            </DoubleAnimationUsingKeyFrames>
-                        </Storyboard>
-                    </BeginStoryboard>
-                </Trigger.ExitActions>
-            </Trigger>
-        </Style.Triggers>
     </Style>
 
-    <Style TargetType="{x:Type dragablz:DragablzItemsControl}" x:Key="DragablzItemsControlStyle">
+    <Style x:Key="DragablzItemsControlStyle" TargetType="{x:Type dragablz:DragablzItemsControl}" >
         <Setter Property="HorizontalAlignment" Value="Left" />
         <Setter Property="VerticalAlignment" Value="Top" />
         <Setter Property="Focusable" Value="False" />
@@ -157,6 +136,21 @@
         </Setter>
     </Style>
 
+    <Style x:Key="DragablzVerticalItemsControl" TargetType="{x:Type dragablz:DragablzItemsControl}" BasedOn="{StaticResource DragablzItemsControlStyle}">
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled"/>
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="False"/>
+        <Setter Property="VirtualizingPanel.IsContainerVirtualizable" Value="False"/>
+        <Setter Property="ItemContainerStyle" Value="{StaticResource DragablzTabItemVerticalStyle}"/>
+        <Setter Property="Height" Value="{Binding RelativeSource={RelativeSource Self}, Path=ItemsPresenterHeight}"/>
+        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+        <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+        <Setter Property="utils:TabablzHelper.HighlightOnMouseOver" Value="False"/>
+        <Setter Property="ItemsOrganiser">
+            <Setter.Value>
+                <dragablz:VerticalOrganiser/>
+            </Setter.Value>
+        </Setter>
+    </Style>
 
     <Style TargetType="{x:Type dragablz:TabablzControl}" x:Key="DragablzVerticalTabablzControl">
         <Setter Property="Padding" Value="2" />

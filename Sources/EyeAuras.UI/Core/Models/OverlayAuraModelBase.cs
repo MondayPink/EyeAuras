@@ -12,11 +12,13 @@ using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Threading;
+using Dragablz;
 using DynamicData;
 using DynamicData.Binding;
 using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
 using EyeAuras.UI.Core.Services;
+using EyeAuras.UI.Core.Utilities;
 using EyeAuras.UI.MainWindow.Models;
 using EyeAuras.UI.Overlay.ViewModels;
 using EyeAuras.UI.Prism.Modularity;
@@ -254,7 +256,7 @@ namespace EyeAuras.UI.Core.Models
         public ObservableCollection<IAuraAction> OnEnterActions { get; }
         
         public ObservableCollection<IAuraAction> WhileActiveActions { get; }
-        
+
         public ObservableCollection<IAuraAction> OnExitActions { get; }
 
         public TimeSpan WhileActiveActionsTimeout
@@ -350,8 +352,8 @@ namespace EyeAuras.UI.Core.Models
             properties.Name = Name;
             properties.TriggerProperties = Triggers.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
             properties.OnEnterActionProperties = OnEnterActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
-            properties.OnExitActionProperties = OnExitActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
             properties.WhileActiveActionProperties = WhileActiveActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
+            properties.OnExitActionProperties = OnExitActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
             properties.WhileActiveActionsTimeout = WhileActiveActionsTimeout;
             properties.SourceRegionBounds = Overlay.Region.Bounds;
             properties.OverlayBounds = Overlay.NativeBounds;

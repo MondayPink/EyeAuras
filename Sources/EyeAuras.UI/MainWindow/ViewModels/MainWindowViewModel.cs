@@ -62,7 +62,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         private readonly IHotkeyConverter hotkeyConverter;
         private readonly IFactory<HotkeyIsActiveTrigger> hotkeyTriggerFactory;
-        private readonly TabablzPositionMonitor<IEyeAuraViewModel> positionMonitor = new TabablzPositionMonitor<IEyeAuraViewModel>();
         private readonly CircularBuffer<OverlayAuraProperties> recentlyClosedQueries = new CircularBuffer<OverlayAuraProperties>(UndoStackDepth);
         private readonly IRegionSelectorService regionSelectorService;
         private readonly IAppArguments appArguments;
@@ -93,6 +92,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             [NotNull] IPrismModuleStatusViewModel moduleStatus,
             [NotNull] IMainWindowBlocksProvider mainWindowBlocksProvider,
             [NotNull] IFactory<IRegionSelectorService> regionSelectorServiceFactory,
+            [NotNull] IFactory<LinkedPositionMonitor<IEyeAuraViewModel>> positionMonitorFactory,
             [NotNull] ISharedContext sharedContext,
             [NotNull] IComparisonService comparisonService,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
@@ -127,6 +127,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .AddTo(Anchors);
             
             TabsList = new ReadOnlyObservableCollection<IEyeAuraViewModel>(sharedContext.AuraList);
+            PositionMonitor = positionMonitorFactory.Create().SyncWith(sharedContext.AuraList, ReferenceEquals).AddTo(Anchors);
             ModuleStatus = moduleStatus.AddTo(Anchors);
             var executingAssemblyName = Assembly.GetExecutingAssembly().GetName();
             Title = $"{(appArguments.IsDebugMode ? "[D]" : "")} {executingAssemblyName.Name} v{executingAssemblyName.Version}";
@@ -182,12 +183,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             UndoCloseTabCommand = CommandWrapper.Create(UndoCloseTabCommandExecuted, UndoCloseTabCommandCanExecute);
             OpenAppDataDirectoryCommand = CommandWrapper.Create(OpenAppDataDirectory);
             SelectRegionCommand = CommandWrapper.Create(SelectRegionCommandExecuted);
-
-            Observable
-                .FromEventPattern<OrderChangedEventArgs>(h => positionMonitor.OrderChanged += h, h => positionMonitor.OrderChanged -= h)
-                .Select(x => x.EventArgs)
-                .Subscribe(OnTabOrderChanged, Log.HandleUiException)
-                .AddTo(Anchors);
 
             sharedContext
                 .AuraList
@@ -339,7 +334,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         public ReadOnlyObservableCollection<IEyeAuraViewModel> TabsList { get; }
 
-        public PositionMonitor PositionMonitor => positionMonitor;
+        public PositionMonitor PositionMonitor { get; }
 
         public CommandWrapper OpenAppDataDirectoryCommand { get; }
         
@@ -589,11 +584,10 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
             Log.Debug($"Removing tab {tab}...");
 
-            var items = positionMonitor.Items.ToArray();
-            var tabIdx = items.IndexOf(tab);
+            var tabIdx = TabsList.IndexOf(tab);
             if (tabIdx > 0)
             {
-                var tabToSelect = items[tabIdx - 1];
+                var tabToSelect = TabsList[tabIdx - 1];
                 Log.Debug($"Selecting neighbour tab {tabToSelect}...");
                 SelectedTab = tabToSelect;
             }
@@ -622,17 +616,11 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         {
             using var unused = new BenchmarkTimer("Prepare config", Log);
 
-            var positionedItems = positionMonitor.Items.ToArray();
-            Log.Debug($"Preparing config, tabs count: {positionedItems.Length}");
+            var positionedItems = TabsList;
+            Log.Debug($"Preparing config, tabs count: {positionedItems.Count}");
             var config = configProvider.ActualConfig.CloneJson();
 
-            config.Auras = sharedContext.AuraList
-                .Select(x => new {Idx = positionedItems.IndexOf(x), Tab = x})
-                .OrderBy(x => x.Idx)
-                .Select(x => x.Tab)
-                .Select(tab => tab.Properties)
-                .ToArray();
-
+            config.Auras = positionedItems.Select(x => x.Properties).ToArray();
             config.MainWindowBounds = new Rect(Left, Top, Width, Height);
             config.ListWidth = ListWidth.Value;
             return config;
@@ -684,16 +672,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 : new GridLength(config.ListWidth, GridUnitType.Pixel);
 
             Log.Debug($"Successfully loaded config, tabs count: {TabsList.Count}");
-        }
-
-        private void OnTabOrderChanged(OrderChangedEventArgs args)
-        {
-            var existingItems = sharedContext.AuraList.ToList();
-            var newItems = args.NewOrder.OfType<IOverlayAuraViewModel>().ToList();
-
-            Log.Debug(
-                $"Source ordering:\n\tSource: {string.Join(" => ", existingItems.Select(x => x.TabName))}\n\tView: {string.Join(" => ", newItems.Select(x => x.TabName))}");
-            configUpdateSubject.OnNext(Unit.Default);
         }
 
         private IEyeAuraViewModel CreateAndAddTab(OverlayAuraProperties tabProperties)
