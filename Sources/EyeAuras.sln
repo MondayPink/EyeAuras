@@ -33,6 +33,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "PoeShared.Native", "PoeShar
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EyeAuras.Controls", "EyeAuras.Controls\EyeAuras.Controls.csproj", "{64AF5C76-494E-474F-9DC6-1743B0F984E5}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EyeAuras.Interception", "EyeAuras.Interception\EyeAuras.Interception.csproj", "{C745E394-F454-4BF2-A39B-B263E650D106}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug.Plus|Any CPU = Debug.Plus|Any CPU
@@ -158,6 +160,14 @@ Global
 		{64AF5C76-494E-474F-9DC6-1743B0F984E5}.Release.Plus|Any CPU.Build.0 = Debug|Any CPU
 		{64AF5C76-494E-474F-9DC6-1743B0F984E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{64AF5C76-494E-474F-9DC6-1743B0F984E5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C745E394-F454-4BF2-A39B-B263E650D106}.Debug.Plus|Any CPU.ActiveCfg = Debug|Any CPU
+		{C745E394-F454-4BF2-A39B-B263E650D106}.Debug.Plus|Any CPU.Build.0 = Debug|Any CPU
+		{C745E394-F454-4BF2-A39B-B263E650D106}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C745E394-F454-4BF2-A39B-B263E650D106}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C745E394-F454-4BF2-A39B-B263E650D106}.Release.Plus|Any CPU.ActiveCfg = Debug|Any CPU
+		{C745E394-F454-4BF2-A39B-B263E650D106}.Release.Plus|Any CPU.Build.0 = Debug|Any CPU
+		{C745E394-F454-4BF2-A39B-B263E650D106}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C745E394-F454-4BF2-A39B-B263E650D106}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

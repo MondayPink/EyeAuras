@@ -1,30 +1,78 @@
 using System;
 using System.Threading;
+using System.Windows;
 using System.Windows.Input;
 using WindowsInput;
 using WindowsInput.Native;
+using EyeAuras.Interception;
 using EyeAuras.Shared;
 using JetBrains.Annotations;
 using log4net;
+using PoeShared.Scaffolding.WPF;
 using PoeShared.UI.Hotkeys;
 
 namespace EyeAuras.DefaultAuras.Actions.SendInput
 {
     internal sealed class SendInputAction : AuraActionBase<SendInputProperties>
     {
-        private readonly IHotkeyConverter hotkeyConverter;
         private static readonly ILog Log = LogManager.GetLogger(typeof(SendInputAction));
+        private static readonly TimeSpan DefaultModifierKeyStrokeDelay = TimeSpan.FromMilliseconds(100);
+
+        private readonly IHotkeyConverter hotkeyConverter;
         private TimeSpan keyStrokeDelay;
         private HotkeyGesture hotkey;
-        private static readonly TimeSpan DefaultModifierKeyStrokeDelay = TimeSpan.FromMilliseconds(100);
-        
-        private readonly IKeyboardSimulator keyboardSimulator = new InputSimulator().Keyboard;
+
+        private IKeyboardSimulator keyboardSimulator;
+        private bool isDriverBasedSimulator;
 
         public SendInputAction(
             [NotNull] IHotkeyConverter hotkeyConverter)
         {
             this.hotkeyConverter = hotkeyConverter;
+            InstallDriverCommand = CommandWrapper.Create(InstallDriverCommandExecuted);
+            UninstallDriverCommand = CommandWrapper.Create(UninstallDriverCommandExecuted);
+            InitializeSimulator();
         }
+
+        private void InitializeSimulator()
+        {
+            Log.Debug($"Initializing simulator, current state: {(IsDriverBasedSimulator ? "Interception-Based" : "InputSimulator")}");
+            try
+            {
+                keyboardSimulator = new DriverBasedKeyboardSimulator();
+                IsDriverBasedSimulator = true;
+            }
+            catch (Exception e)
+            {
+                Log.Error($"Failed to load Interception driver-based keyboard simulator, falling back to {typeof(InputSimulator)}");
+                keyboardSimulator = new InputSimulator().Keyboard;
+                IsDriverBasedSimulator = false;
+            }
+            Log.Debug($"Initialized simulator, current state: {(IsDriverBasedSimulator ? "Interception-Based" : "InputSimulator")}");
+        }
+
+        private void InstallDriverCommandExecuted()
+        {
+            new DriverInstallHelper().Install();
+            InitializeSimulator();
+            MessageBox.Show($"Driver installation completed successfully. You must reboot for it to take effect.");
+        }
+        
+        private void UninstallDriverCommandExecuted()
+        {
+            new DriverInstallHelper().Uninstall();
+            InitializeSimulator();
+        }
+
+        public bool IsDriverBasedSimulator
+        {
+            get => isDriverBasedSimulator;
+            set => this.RaiseAndSetIfChanged(ref isDriverBasedSimulator, value);
+        }
+        
+        public ICommand InstallDriverCommand { get; }
+        
+        public ICommand UninstallDriverCommand { get; }
 
         public TimeSpan KeyStrokeDelay
         {
@@ -64,38 +112,37 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Control))
             {
                 keyboardSimulator.KeyDown(VirtualKeyCode.CONTROL);
-                Thread.Sleep(DefaultModifierKeyStrokeDelay);
+                keyboardSimulator.Sleep(DefaultModifierKeyStrokeDelay);
             }
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Alt))
             {
                 keyboardSimulator.KeyDown(VirtualKeyCode.MENU);
-                Thread.Sleep(DefaultModifierKeyStrokeDelay);
+                keyboardSimulator.Sleep(DefaultModifierKeyStrokeDelay);
             }
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Shift))
             {
                 keyboardSimulator.KeyDown(VirtualKeyCode.SHIFT);
-                Thread.Sleep(DefaultModifierKeyStrokeDelay);
+                keyboardSimulator.Sleep(DefaultModifierKeyStrokeDelay);
             }
+
             keyboardSimulator.KeyDown(vk);
-            if (keyStrokeDelay > TimeSpan.Zero)
-            {
-                Thread.Sleep(keyStrokeDelay);
-            }
+            keyboardSimulator.Sleep(KeyStrokeDelay);
             keyboardSimulator.KeyUp(vk);
+            
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Control))
             {
                 keyboardSimulator.KeyUp(VirtualKeyCode.CONTROL);
-                Thread.Sleep(DefaultModifierKeyStrokeDelay);
+                keyboardSimulator.Sleep(DefaultModifierKeyStrokeDelay);
             }
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Alt))
             {
                 keyboardSimulator.KeyUp(VirtualKeyCode.MENU);
-                Thread.Sleep(DefaultModifierKeyStrokeDelay);
+                keyboardSimulator.Sleep(DefaultModifierKeyStrokeDelay);
             }
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Shift))
             {
                 keyboardSimulator.KeyUp(VirtualKeyCode.SHIFT);
-                Thread.Sleep(DefaultModifierKeyStrokeDelay);
+                keyboardSimulator.Sleep(DefaultModifierKeyStrokeDelay);
             }
         }
     }

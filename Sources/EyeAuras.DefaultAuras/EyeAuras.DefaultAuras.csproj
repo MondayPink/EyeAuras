@@ -28,6 +28,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\EyeAuras.Controls\EyeAuras.Controls.csproj" />
+      <ProjectReference Include="..\EyeAuras.Interception\EyeAuras.Interception.csproj" />
       <ProjectReference Include="..\EyeAuras.OnTopReplica\EyeAuras.OnTopReplica.csproj" />
       <ProjectReference Include="..\EyeAuras.Shared\EyeAuras.Shared.csproj" />
       <ProjectReference Include="..\PoeShared.Native\PoeShared.Native.csproj" />

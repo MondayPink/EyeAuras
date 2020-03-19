@@ -3,7 +3,8 @@
                     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
                     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
                     xmlns:sendInput="clr-namespace:EyeAuras.DefaultAuras.Actions.SendInput"
-                    xmlns:hotkeys="clr-namespace:PoeShared.UI.Hotkeys;assembly=PoeShared.Wpf">
+                    xmlns:hotkeys="clr-namespace:PoeShared.UI.Hotkeys;assembly=PoeShared.Wpf"
+                    xmlns:eye="http://coderush.net/poeeye/">
     
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Converters.xaml" />
@@ -15,8 +16,7 @@
     
     <DataTemplate DataType="{x:Type sendInput:SendInputActionEditor}">
         <DockPanel DockPanel.Dock="Left" Margin="10,0,0,0" >
-            <StackPanel Margin="5,0" Orientation="Horizontal">
-                <TextBlock Margin="5,0" Text="Delay, ms" />
+            <TextBlock Margin="5,0" Text="Up/Down Delay, ms" />
                 <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="60"
                                     Margin="5,0,0,0"
                                     DefaultValue="0"
@@ -27,10 +27,24 @@
                                     Style="{StaticResource MaterialNumericUpDownStyleKey}"
                                     Value="{Binding KeyStrokeDelay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 
-                <TextBlock Margin="30,0,0,0" Text="Hotkey to press" />
-                <hotkeys:HotKeyBox DockPanel.Dock="Right" Margin="5,0,0,0" HotKey="{Binding Source.Hotkey}" MinWidth="120"
+                <TextBlock DockPanel.Dock="Left" Margin="10,0,0,0" Text="Key" />
+                <hotkeys:HotKeyBox BorderBrush="{DynamicResource SecondaryAccentBrush}" BorderThickness="1" DockPanel.Dock="Left" Margin="5,0,0,0" HotKey="{Binding Source.Hotkey}" MinWidth="60"
                                    VerticalAlignment="Center" />
-            </StackPanel>
+            <ContentControl DockPanel.Dock="Right" Content="{Binding Source.UninstallDriverCommand}" Margin="5,0,0,0" FontSize="12"
+                            Visibility="{Binding Source.IsDriverBasedSimulator, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                            eye:CommandWrapperHelper.Text="Uninstall driver" />    
+            <TextBlock Margin="15,0,0,0" DockPanel.Dock="Right" HorizontalAlignment="Right" 
+                       FontWeight="Bold" Text="Using driver-based Input simulation"
+                       Foreground="{StaticResource PositiveBrush}"
+                       Visibility="{Binding Source.IsDriverBasedSimulator, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"/>
+                
+                <ContentControl DockPanel.Dock="Right" Content="{Binding Source.InstallDriverCommand}" Margin="5,0,0,0" FontSize="12"
+                            Visibility="{Binding Source.IsDriverBasedSimulator, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"
+                            eye:CommandWrapperHelper.Text="Install driver" />
+                <TextBlock Margin="15,0,0,0" DockPanel.Dock="Right" HorizontalAlignment="Right" 
+                           FontWeight="Bold" Text="Using Windows Input simulation"
+                           Foreground="{StaticResource NegativeBrush}"
+                           Visibility="{Binding Source.IsDriverBasedSimulator, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"/>
         </DockPanel>
         
     </DataTemplate>
