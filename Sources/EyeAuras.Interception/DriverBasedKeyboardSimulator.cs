@@ -44,7 +44,10 @@ namespace EyeAuras.Interception
                 {
                     FileName = installerPath, Arguments = arguments, UseShellExecute = false, 
                     RedirectStandardOutput = true,
-                    RedirectStandardError = true
+                    RedirectStandardError = true,
+                    CreateNoWindow = true,
+                    WindowStyle = ProcessWindowStyle.Hidden,
+                    ErrorDialog = true,
                 }
             };
             if (!AppArguments.Instance.IsElevated)
