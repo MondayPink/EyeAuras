@@ -1,5 +1,7 @@
 using EyeAuras.Shared;
 using EyeAuras.UI.Core.Models;
+using ReactiveUI;
+using PoeShared.Scaffolding;
 
 namespace EyeAuras.UI.Core.ViewModels
 {
@@ -7,6 +9,14 @@ namespace EyeAuras.UI.Core.ViewModels
     {
         private string triggerDescription = "Technical Proxy Trigger";
         public string TriggerName { get; } = "ProxyTrigger";
+        private bool isInverted;
+
+        public ProxyAuraTriggerViewModel()
+        {
+            this.WhenAnyValue(x => x.IsInverted)
+                .Subscribe(() => RaisePropertyChanged(nameof(IsActive)))
+                .AddTo(Anchors);
+        }
 
         public string TriggerDescription
         {
@@ -14,9 +24,13 @@ namespace EyeAuras.UI.Core.ViewModels
             private set => RaiseAndSetIfChanged(ref triggerDescription, value);
         }
 
-        public bool IsInverted { get; } = false;
+        public bool IsInverted
+        {
+            get => isInverted;
+            set => this.RaiseAndSetIfChanged(ref isInverted, value);
+        }
 
-        public bool IsActive { get; } = false;
+        public bool IsActive => !IsInverted;
 
         protected override void LoadProperties(IAuraProperties source)
         {

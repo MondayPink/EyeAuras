@@ -10,7 +10,7 @@ namespace EyeAuras.Shared
         ///    Indicates whether IsActive should be Inverted or not for the final result
         ///    Respected by ComplexAuraTrigger
         /// </summary>
-        bool IsInverted { get; }
+        bool IsInverted { get; set; }
 
         bool IsActive { get; }
     }
