@@ -45,6 +45,11 @@ namespace EyeAuras.UI.Core.Models
         private readonly IClock clock;
         private readonly string defaultAuraName;
 
+        private readonly ComplexAuraAction onEnterActionsHolder = new ComplexAuraAction();
+        private readonly ComplexAuraAction whileActiveActionsHolder = new ComplexAuraAction();
+        private readonly ComplexAuraAction onExitActionsHolder = new ComplexAuraAction();
+        private readonly ComplexAuraTrigger triggersHolder = new ComplexAuraTrigger();
+
         private ICloseController closeController;
         private bool isActive;
         private bool isEnabled = true;
@@ -63,25 +68,18 @@ namespace EyeAuras.UI.Core.Models
             [NotNull] IFactory<IEyeOverlayViewModel, IOverlayWindowController, IAuraModelController> overlayViewModelFactory,
             [NotNull] IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory,
             [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory,
-            [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler,
-            [NotNull] [Dependency(WellKnownSchedulers.Background)] IScheduler bgScheduler)
+            [NotNull] ISchedulerProvider schedulerProvider,
+            [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
             defaultAuraName = $"Aura #{Interlocked.Increment(ref GlobalAuraIdx)}";
             Name = defaultAuraName;
             Id = idGenerator.Next();
             using var sw = new BenchmarkTimer($"[{Name}({Id})] OverlayAuraModel initialization", Log, nameof(OverlayAuraModelBase));
-            
-            var auraTriggers = new ComplexAuraTrigger().AddTo(Anchors);
-            Triggers = auraTriggers.Triggers;
-            
-            var onEnterActionsHolder = new ComplexAuraAction();
-            OnEnterActions = onEnterActionsHolder.Actions;
-            
-            var onExitActionsHolder = new ComplexAuraAction();
-            OnExitActions = onExitActionsHolder.Actions;
-            
-            var whileActiveActionsHolder = new ComplexAuraAction();
-            WhileActiveActions = whileActiveActionsHolder.Actions;
+            var bgScheduler = schedulerProvider.GetOrCreate($"{defaultAuraName}");
+            Triggers = triggersHolder;
+            OnEnterActions = onEnterActionsHolder;
+            OnExitActions = onExitActionsHolder;
+            WhileActiveActions = whileActiveActionsHolder;
             
             this.repository = repository;
             this.configSerializer = configSerializer;
@@ -113,27 +111,31 @@ namespace EyeAuras.UI.Core.Models
                         OverlayShouldBeShown = IsActive || !overlayViewModel.IsLocked,
                         WindowIsAttached = overlayViewModel.AttachedWindow != null
                     })
-                .Subscribe(x => overlayController.IsEnabled = x.OverlayShouldBeShown && x.WindowIsAttached)
+                .Subscribe(x => overlayController.IsEnabled = x.OverlayShouldBeShown && x.WindowIsAttached, Log.HandleUiException)
                 .AddTo(Anchors);
             sw.Step($"Overlay view model initialized: {overlayViewModel}");
 
             Observable.CombineLatest(
-                    auraTriggers.WhenAnyValue(x => x.IsActive),  
+                    triggersHolder.WhenAnyValue(x => x.IsActive),  
                     sharedContext.SystemTrigger.WhenValueChanged(x => x.IsActive))
                 .DistinctUntilChanged()
-                .Subscribe(x => IsActive = x.All(isActive => isActive), Log.HandleUiException)
+                .ObserveOn(uiScheduler)
+                .Subscribe(x => IsActive = x.Count > 0 && x.All(isActive => isActive), Log.HandleUiException)
                 .AddTo(Anchors);
 
             var triggerActivates =
-            auraTriggers.WhenAnyValue(x => x.IsActive)
-                .WithPrevious((prev, curr) => new {prev, curr})
-                .Where(x => x.prev == false && x.curr)
-                .Where(x => Triggers.Count > 0);
+                triggersHolder.WhenAnyValue(x => x.IsActive)
+                    .Where(x => Triggers.Count > 0)
+                    .WithPrevious((prev, curr) => new {prev, curr})
+                    .Where(x => x.prev == false && x.curr)
+                 .Publish();
             
-            var triggerDeactivates = auraTriggers.WhenAnyValue(x => x.IsActive)
-                .WithPrevious((prev, curr) => new {prev, curr})
-                .Where(x => x.prev == true && x.curr == false)
-                .Where(x => Triggers.Count > 0);
+            var triggerDeactivates = 
+                triggersHolder.WhenAnyValue(x => x.IsActive)
+                    .Where(x => Triggers.Count > 0)
+                    .WithPrevious((prev, curr) => new {prev, curr})
+                    .Where(x => x.prev == true && !x.curr)
+                    .Publish();
             
             triggerActivates
                 .ObserveOn(bgScheduler)
@@ -143,20 +145,22 @@ namespace EyeAuras.UI.Core.Models
                 .ObserveOn(bgScheduler)
                 .Subscribe(ExecuteOnExitActions, Log.HandleUiException)
                 .AddTo(Anchors);
-
-            Observable.Merge(
-                    triggerActivates.ToUnit(), 
-                    triggerDeactivates.ToUnit(), 
-                    this.WhenAnyValue(x => x.WhileActiveActionsTimeout).ToUnit())
+            
+            triggersHolder.WhenAnyValue(x => x.IsActive)
                 .Select(
-                    x => IsActive && Triggers.Count > 0
-                        ? Observable.Timer(DateTimeOffset.Now, TimeSpan.FromMilliseconds(50), bgScheduler).ToUnit()
-                        : Observable.Empty(Unit.Default))
+                    () =>
+                    {
+                        Log.Debug($"Reinitializing WhileActive for Aura {this}, IsActive: {triggersHolder.IsActive}");
+                        return triggersHolder.IsActive && Triggers.Count > 0
+                            ? Observable.Timer(DateTimeOffset.Now, TimeSpan.FromMilliseconds(50), bgScheduler).ToUnit()
+                            : Observable.Empty<Unit>();
+                    })
                 .Switch()
-                .Where(x => clock.Now - lastWhileActiveTimestamp > WhileActiveActionsTimeout)
                 .ObserveOn(bgScheduler)
                 .Subscribe(ExecuteWhileActiveActions, Log.HandleUiException)
                 .AddTo(Anchors);
+            triggerActivates.Connect().AddTo(Anchors);
+            triggerDeactivates.Connect().AddTo(Anchors);
             
             this.repository.KnownEntities
                 .ToObservableChangeSet()
@@ -182,14 +186,14 @@ namespace EyeAuras.UI.Core.Models
             Observable.Merge(
                     this.WhenAnyProperty(x => x.Name, x => x.TargetWindow, x => x.IsEnabled).Select(x => $"[{Name}].{x.EventArgs.PropertyName} property changed"),
                     Overlay.WhenAnyProperty().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{nameof(Overlay)}.{x.EventArgs.PropertyName} property changed"),
-                    Triggers.ToObservableChangeSet().Select(x => $"[{Name}({Id})] Trigger list changed, item count: {Triggers.Count}"),
-                    Triggers.ToObservableChangeSet().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName} Trigger property changed"),
-                    OnEnterActions.ToObservableChangeSet().Select(x => $"[{Name}({Id})] [OnEnter]  Action list changed, item count: {OnEnterActions.Count}"),
-                    OnEnterActions.ToObservableChangeSet().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName} [OnEnter] Action property changed"),
-                    OnExitActions.ToObservableChangeSet().Select(x => $"[{Name}({Id})] [OnExit]  Action list changed, item count: {OnEnterActions.Count}"),
-                    OnExitActions.ToObservableChangeSet().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName} [OnExit] Action property changed"),
-                    WhileActiveActions.ToObservableChangeSet().Select(x => $"[{Name}({Id})] [WhileActive] Action list changed, item count: {OnEnterActions.Count}"),
-                    WhileActiveActions.ToObservableChangeSet().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName}  [WhileActive] Action property changed"))
+                    Triggers.Connect().Select(x => $"[{Name}({Id})] Trigger list changed, item count: {Triggers.Count}"),
+                    Triggers.Connect().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName} Trigger property changed"),
+                    OnEnterActions.Connect().Select(x => $"[{Name}({Id})] [OnEnter]  Action list changed, item count: {OnEnterActions.Count}"),
+                    OnEnterActions.Connect().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName} [OnEnter] Action property changed"),
+                    OnExitActions.Connect().Select(x => $"[{Name}({Id})] [OnExit]  Action list changed, item count: {OnEnterActions.Count}"),
+                    OnExitActions.Connect().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName} [OnExit] Action property changed"),
+                    WhileActiveActions.Connect().Select(x => $"[{Name}({Id})] [WhileActive] Action list changed, item count: {OnEnterActions.Count}"),
+                    WhileActiveActions.Connect().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName}  [WhileActive] Action property changed"))
                 .Subscribe(reason => RaisePropertyChanged(nameof(Properties)))
                 .AddTo(Anchors);
             sw.Step($"Overlay model properties initialized");
@@ -197,7 +201,7 @@ namespace EyeAuras.UI.Core.Models
             overlayController.RegisterChild(overlayViewModel).AddTo(Anchors);
             sw.Step($"Overlay registration completed: {this}");
             
-            auraTriggers.AddTo(Anchors);
+            triggersHolder.AddTo(Anchors);
             whileActiveActionsHolder.AddTo(Anchors);
             onEnterActionsHolder.AddTo(Anchors);
             onExitActionsHolder.AddTo(Anchors);
@@ -211,18 +215,18 @@ namespace EyeAuras.UI.Core.Models
         private void ExecuteOnEnterActions()
         {
             Log.Debug($"[{Name}({Id})] Trigger state changed, executing OnEnter Actions");
-            OnEnterActions.ForEach(action => action.Execute());
+            onEnterActionsHolder.Items.ForEach(x => x.Execute());
         }
         
         private void ExecuteOnExitActions()
         {
             Log.Debug($"[{Name}({Id})] Trigger state changed, executing OnExit Actions");
-            OnExitActions.ForEach(action => action.Execute());
+            onExitActionsHolder.Items.ForEach(x => x.Execute());
         }
         
         private void ExecuteWhileActiveActions()
         {
-            foreach (var action in WhileActiveActions)
+            foreach (var action in whileActiveActionsHolder.Items)
             {
                 if (!IsActive)
                 {
@@ -230,8 +234,10 @@ namespace EyeAuras.UI.Core.Models
                 }
                 action.Execute();
             }
-
-            LastWhileActiveTimestamp = clock.Now;
+            if (IsActive)
+            {
+                Thread.Sleep(WhileActiveActionsTimeout);
+            }
         }
         
         public bool IsActive
@@ -239,13 +245,7 @@ namespace EyeAuras.UI.Core.Models
             get => isActive;
             private set => RaiseAndSetIfChanged(ref isActive, value);
         }
-
-        public DateTime LastWhileActiveTimestamp
-        {
-            get => lastWhileActiveTimestamp;
-            private set => this.RaiseAndSetIfChanged(ref lastWhileActiveTimestamp, value);
-        }
-
+        
         public WindowMatchParams TargetWindow
         {
             get => targetWindow;
@@ -264,13 +264,13 @@ namespace EyeAuras.UI.Core.Models
             private set => this.RaiseAndSetIfChanged(ref uniqueId, value);
         }
 
-        public ObservableCollection<IAuraTrigger> Triggers { get; }
+        public IComplexAuraTrigger Triggers { get; }
 
-        public ObservableCollection<IAuraAction> OnEnterActions { get; }
+        public IComplexAuraAction OnEnterActions { get; }
         
-        public ObservableCollection<IAuraAction> WhileActiveActions { get; }
+        public IComplexAuraAction WhileActiveActions { get; }
 
-        public ObservableCollection<IAuraAction> OnExitActions { get; }
+        public IComplexAuraAction OnExitActions { get; }
 
         public TimeSpan WhileActiveActionsTimeout
         {
@@ -301,10 +301,10 @@ namespace EyeAuras.UI.Core.Models
 
         private void ReloadCollections(OverlayAuraProperties source)
         {
-            OnEnterActions.Clear();
-            OnExitActions.Clear();
-            WhileActiveActions.Clear();
-            Triggers.Clear();
+            OnExitActions.Edit(x => x.Clear());;
+            WhileActiveActions.Edit(x => x.Clear());;
+            OnEnterActions.Edit(x => x.Clear());;
+            Triggers.Edit(x => x.Clear());;
             
             source.TriggerProperties
                 .Select(ToAuraProperties)
@@ -363,10 +363,10 @@ namespace EyeAuras.UI.Core.Models
         protected override void VisitSave(OverlayAuraProperties properties)
         {
             properties.Name = Name;
-            properties.TriggerProperties = Triggers.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
-            properties.OnEnterActionProperties = OnEnterActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
-            properties.WhileActiveActionProperties = WhileActiveActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
-            properties.OnExitActionProperties = OnExitActions.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
+            properties.TriggerProperties = Triggers.Items.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
+            properties.OnEnterActionProperties = OnEnterActions.Items.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
+            properties.WhileActiveActionProperties = WhileActiveActions.Items.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
+            properties.OnExitActionProperties = OnExitActions.Items.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
             properties.WhileActiveActionsTimeout = WhileActiveActionsTimeout;
             properties.SourceRegionBounds = Overlay.Region.Bounds;
             properties.OverlayBounds = Overlay.NativeBounds;

@@ -236,7 +236,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     Log.HandleUiException)
                 .AddTo(Anchors);
 
-            GlobalHotkeyTrigger = hotkeyTriggerFactory.Create().AddTo(sharedContext.SystemTrigger.Triggers);
+            GlobalHotkeyTrigger = hotkeyTriggerFactory.Create();
+            sharedContext.SystemTrigger.Add(GlobalHotkeyTrigger);
             GlobalHotkeyTrigger.IsActive = true;
             GlobalHotkeyTrigger.SuppressKey = true;
             Observable.Merge(

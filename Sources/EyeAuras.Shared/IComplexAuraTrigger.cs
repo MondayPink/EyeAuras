@@ -1,10 +1,13 @@
 using System.Collections.ObjectModel;
+using DynamicData;
 using JetBrains.Annotations;
 
 namespace EyeAuras.Shared
 {
-    public interface IComplexAuraTrigger : IAuraTrigger
+    public interface IComplexAuraTrigger : ISourceList<IAuraTrigger>, IAuraTrigger
     {
-        ObservableCollection<IAuraTrigger> Triggers { [NotNull] get; }
+        void Add([NotNull] IAuraTrigger trigger);
+
+        bool Remove([NotNull] IAuraTrigger trigger);
     }
 }

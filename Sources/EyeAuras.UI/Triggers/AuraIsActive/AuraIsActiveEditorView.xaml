@@ -28,7 +28,6 @@
                                              Kind="CheckboxBlankCircleOutline" />
                 </StackPanel>
             </Grid>
-            <CheckBox IsChecked="{Binding Source.IsInverted}">Invert</CheckBox>
             <ComboBox DockPanel.Dock="Left" 
                       Margin="5, 0"
                       ItemsSource="{Binding AuraList}" SelectedItem="{Binding Aura}">

@@ -154,7 +154,7 @@ namespace EyeAuras.UI.Core.ViewModels
             private set => this.RaiseAndSetIfChanged(ref onExitActionsPositionMonitor, value);
         }
 
-        private void AddAction(object actionSample, ObservableCollection<IAuraAction> actions)
+        private void AddAction(object actionSample, IComplexAuraAction actions)
         {
             Guard.ArgumentNotNull(actionSample, nameof(actionSample));
 
@@ -193,7 +193,7 @@ namespace EyeAuras.UI.Core.ViewModels
             WindowSelector.WhenAnyValue(x => x.ActiveWindow).Subscribe(x => Source.Overlay.AttachedWindow = x).AddTo(sourceAnchors);
 
             Source.Triggers
-                .ToObservableChangeSet()
+                .Connect()
                 .Transform(
                     x =>
                     {
@@ -227,11 +227,11 @@ namespace EyeAuras.UI.Core.ViewModels
         }
 
         private IDisposable SubscribeAndCreate<TAuraModel>(
-            ObservableCollection<TAuraModel> collection, 
+            ISourceList<TAuraModel> collection, 
             out ReadOnlyObservableCollection<IPropertyEditorViewModel> editorCollection) where TAuraModel : IAuraModel
         {
             return collection
-                .ToObservableChangeSet()
+                .Connect()
                 .Transform(
                     x =>
                     {

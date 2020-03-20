@@ -15,9 +15,13 @@ namespace EyeAuras.UI.Core.Models
 
         WindowMatchParams TargetWindow { [CanBeNull] get; [CanBeNull] set; }
         
-        ObservableCollection<IAuraTrigger> Triggers { [NotNull] get; }
+        IComplexAuraTrigger Triggers { [NotNull] get; }
         
-        ObservableCollection<IAuraAction> OnEnterActions { get; }
+        IComplexAuraAction OnEnterActions { get; }
+        
+        IComplexAuraAction OnExitActions { get; }
+        
+        IComplexAuraAction WhileActiveActions { get; }
         
         IEyeOverlayViewModel Overlay { [NotNull] get; }
         

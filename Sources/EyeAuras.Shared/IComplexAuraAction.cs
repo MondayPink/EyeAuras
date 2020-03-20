@@ -1,10 +1,12 @@
-﻿using System.Collections.ObjectModel;
+﻿using DynamicData;
 using JetBrains.Annotations;
 
 namespace EyeAuras.Shared
 {
-    public interface IComplexAuraAction : IAuraAction
+    public interface IComplexAuraAction : ISourceList<IAuraAction>, IAuraAction
     {
-        ObservableCollection<IAuraAction> Actions { [NotNull] get; }
+        void Add([NotNull] IAuraAction action);
+
+        bool Remove([NotNull] IAuraAction action);
     }
 }

@@ -7,6 +7,7 @@ using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Dragablz;
+using DynamicData;
 using JetBrains.Annotations;
 using log4net;
 using PoeShared.Prism;
@@ -41,10 +42,23 @@ namespace EyeAuras.UI.Core.Utilities
             ObservableCollection<TTarget> targetCollection,
             Func<T, TTarget, bool> comparer)
         {
+            return SyncWith(() => AlignCollections(Items, targetCollection, ObservableCollectionMoveAdaptor, comparer));
+        }
+
+        public LinkedPositionMonitor<T> SyncWith<TTarget>(
+            ISourceList<TTarget> targetCollection,
+            Func<T, TTarget, bool> comparer)
+        {
+            return SyncWith(() => targetCollection.Edit(list => AlignCollections(Items, list, SourceListMoveAdaptor, comparer)));
+        }
+        
+        public LinkedPositionMonitor<T> SyncWith(
+            Action alignCollections)
+        {
             this.WhenAnyValue(x => x.Items)
                 .Throttle(TimeSpan.FromMilliseconds(500), bgScheduler)
                 .ObserveOn(uiScheduler)
-                .Subscribe(() => AlignCollections(Items, targetCollection, comparer))
+                .Subscribe(alignCollections)
                 .AddTo(Anchors);
             return this;
         }
@@ -58,9 +72,21 @@ namespace EyeAuras.UI.Core.Utilities
         
         public T[] Items { get; private set; }
         
-        private static void AlignCollections<TTarget>(
+        private static void SourceListMoveAdaptor<TTarget>(IExtendedList<TTarget> list, int oldIdx, int newIdx)
+        {
+            list.Move(oldIdx, newIdx);
+        }
+        
+        private static void ObservableCollectionMoveAdaptor<TTarget>(ObservableCollection<TTarget> list, int oldIdx, int newIdx)
+        {
+            list.Move(oldIdx, newIdx);
+        }
+        
+        private static void AlignCollections<TTargetCollection, TTarget>(
             IList<T> orderedCollection,
-            ObservableCollection<TTarget> targetCollection, Func<T, TTarget, bool> comparer)
+            TTargetCollection targetCollection, 
+            Action<TTargetCollection, int, int> moveAdaptor,
+            Func<T, TTarget, bool> comparer) where TTargetCollection : IList<TTarget>
         {
             var changesLog = new List<string>();
             for (var newIndex = 0; newIndex < orderedCollection.Count; newIndex++)
@@ -74,7 +100,7 @@ namespace EyeAuras.UI.Core.Utilities
                 }
                 var oldItem = targetCollection[oldIndex];
                 changesLog.Add($"Moving item {oldItem} from #{oldIndex} to {newIndex}");
-                targetCollection.Move(oldIndex, newIndex);
+                moveAdaptor(targetCollection, oldIndex, newIndex);
                 newIndex = 0;
             }
 

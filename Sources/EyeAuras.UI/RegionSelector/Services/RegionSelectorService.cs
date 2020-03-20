@@ -46,8 +46,8 @@ namespace EyeAuras.UI.RegionSelector.Services
                     var windowAnchors = new CompositeDisposable();
 
                     var temporarilyDisableAuras = new DefaultTrigger() {IsActive = false};
-                    Disposable.Create(() => sharedContext.SystemTrigger.Triggers.Remove(temporarilyDisableAuras)).AddTo(windowAnchors);
-                    temporarilyDisableAuras.AddTo(sharedContext.SystemTrigger.Triggers);
+                    Disposable.Create(() => sharedContext.SystemTrigger.Remove(temporarilyDisableAuras)).AddTo(windowAnchors);
+                    sharedContext.SystemTrigger.Add(temporarilyDisableAuras);
 
                     var window = regionSelectorWindowFactory.Create().AddTo(windowAnchors);
                     Disposable.Create(() => Log.Debug("Disposed selector window: {window}")).AddTo(windowAnchors);
