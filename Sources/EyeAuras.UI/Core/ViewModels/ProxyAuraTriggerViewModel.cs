@@ -30,7 +30,7 @@ namespace EyeAuras.UI.Core.ViewModels
             set => this.RaiseAndSetIfChanged(ref isInverted, value);
         }
 
-        public bool IsActive => !IsInverted;
+        public bool IsActive => false ^ IsInverted;
 
         protected override void LoadProperties(IAuraProperties source)
         {
