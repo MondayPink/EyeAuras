@@ -116,11 +116,12 @@ namespace EyeAuras.UI.RegionSelector.ViewModels
 
         public IObservable<Rect> StartSelection()
         {
+            //FIXME Remove side-effects, code became too complicated
             return Observable.Create<Rect>(
                 subscriber =>
                 {
+                    Log.Debug($"Initializing Selection");
                     IsVisible = true;
-
                     var selectionAnchors = new CompositeDisposable();
                     Disposable.Create(() => Log.Debug($"Disposing SelectionAnchors")).AddTo(selectionAnchors);
                     Disposable.Create(() => IsVisible = false).AddTo(selectionAnchors);
