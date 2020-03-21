@@ -67,7 +67,7 @@
                     Kind="CheckboxMarkedCircleOutline" />
                 <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="{Binding TriggerName}" />
                 <TextBlock Margin="5,0" FontSize="10" VerticalAlignment="Center" Text="{Binding TriggerDescription}" />
-                <CheckBox Margin="5,0" IsChecked="{Binding IsInverted}">Invert</CheckBox>
+                <CheckBox Margin="5,0" IsChecked="{Binding IsInverted}">Use inverted value</CheckBox>
             </DockPanel>
     </DataTemplate>
 

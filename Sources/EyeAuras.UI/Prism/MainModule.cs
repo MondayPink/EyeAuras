@@ -1,15 +1,13 @@
-﻿using System.Reactive.Disposables;
+﻿using EyeAuras.Interception.Prism;
 using EyeAuras.Shared;
 using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.ViewModels;
 using EyeAuras.UI.MainWindow.ViewModels;
 using EyeAuras.UI.Prism.Modularity;
 using EyeAuras.UI.Triggers.AuraIsActive;
-using log4net;
 using PoeShared;
 using PoeShared.Modularity;
 using PoeShared.Prism;
-using PoeShared.Scaffolding;
 using PoeShared.Squirrel.Prism;
 using PoeShared.Wpf.Scaffolding;
 using Prism.Ioc;
@@ -20,8 +18,6 @@ namespace EyeAuras.UI.Prism
 {
     internal sealed class MainModule : IModule
     {
-        private static readonly ILog Log = LogManager.GetLogger(typeof(MainModule));
-
         private readonly IUnityContainer container;
 
         public MainModule(IUnityContainer container)
@@ -39,6 +35,7 @@ namespace EyeAuras.UI.Prism
             container.AddNewExtension<UpdaterRegistrations>();
             container.AddNewExtension<NativeRegistrations>();
             container.AddNewExtension<CommonRegistrations>();
+            container.AddNewExtension<InterceptionRegistrations>();
         }
 
         public void OnInitialized(IContainerProvider containerProvider)

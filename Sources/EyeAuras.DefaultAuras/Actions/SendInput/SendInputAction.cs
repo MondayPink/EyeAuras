@@ -10,6 +10,7 @@ using JetBrains.Annotations;
 using log4net;
 using PoeShared.Scaffolding.WPF;
 using PoeShared.UI.Hotkeys;
+using Unity;
 
 namespace EyeAuras.DefaultAuras.Actions.SendInput
 {
@@ -19,34 +20,32 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         private static readonly TimeSpan DefaultModifierKeyStrokeDelay = TimeSpan.FromMilliseconds(100);
 
         private readonly IHotkeyConverter hotkeyConverter;
+        private readonly IInputSimulatorEx inputSimulator;
+
         private TimeSpan keyStrokeDelay;
         private HotkeyGesture hotkey;
-
-        private IKeyboardSimulator keyboardSimulator;
         private bool isDriverBasedSimulator;
 
         public SendInputAction(
+            [Dependency(WellKnownKeyboardSimulators.InputSimulator)] IInputSimulatorEx windowsInputSimulator,
+            [Dependency(WellKnownKeyboardSimulators.InterceptionDriver)] IInputSimulatorEx driverBasedSimulator,
             [NotNull] IHotkeyConverter hotkeyConverter)
         {
             this.hotkeyConverter = hotkeyConverter;
             InstallDriverCommand = CommandWrapper.Create(InstallDriverCommandExecuted);
             UninstallDriverCommand = CommandWrapper.Create(UninstallDriverCommandExecuted);
-            InitializeSimulator();
-        }
-
-        private void InitializeSimulator()
-        {
-            Log.Debug($"Initializing simulator, current state: {(IsDriverBasedSimulator ? "Interception-Based" : "InputSimulator")}");
-            try
+            Log.Debug($"Initializing simulator, driver.IsAvailable: {driverBasedSimulator.IsAvailable}, windows.IsAvailable: {windowsInputSimulator.IsAvailable}");
+            if (driverBasedSimulator.IsAvailable)
             {
-                keyboardSimulator = new DriverBasedKeyboardSimulator();
+                Log.Debug($"Using Driver-based simulator {driverBasedSimulator}");
                 IsDriverBasedSimulator = true;
+                inputSimulator = driverBasedSimulator;
             }
-            catch (Exception e)
+            else
             {
-                Log.Error($"Failed to load Interception driver-based keyboard simulator, falling back to {typeof(InputSimulator)}");
-                keyboardSimulator = new InputSimulator().Keyboard;
+                Log.Debug($"Driver-based simulator is not available, falling back to {windowsInputSimulator}");
                 IsDriverBasedSimulator = false;
+                inputSimulator = windowsInputSimulator;
             }
             Log.Debug($"Initialized simulator, current state: {(IsDriverBasedSimulator ? "Interception-Based" : "InputSimulator")}");
         }
@@ -54,14 +53,12 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         private void InstallDriverCommandExecuted()
         {
             new DriverInstallHelper().Install();
-            InitializeSimulator();
             MessageBox.Show($"Driver installation completed successfully. You must reboot for it to take effect.");
         }
         
         private void UninstallDriverCommandExecuted()
         {
             new DriverInstallHelper().Uninstall();
-            InitializeSimulator();
         }
 
         public bool IsDriverBasedSimulator
@@ -111,38 +108,38 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
             var vk = (VirtualKeyCode)KeyInterop.VirtualKeyFromKey(Hotkey.Key);
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Control))
             {
-                keyboardSimulator.KeyDown(VirtualKeyCode.CONTROL);
-                keyboardSimulator.Sleep(DefaultModifierKeyStrokeDelay);
+                inputSimulator.Keyboard.KeyDown(VirtualKeyCode.CONTROL);
+                inputSimulator.Keyboard.Sleep(DefaultModifierKeyStrokeDelay);
             }
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Alt))
             {
-                keyboardSimulator.KeyDown(VirtualKeyCode.MENU);
-                keyboardSimulator.Sleep(DefaultModifierKeyStrokeDelay);
+                inputSimulator.Keyboard.KeyDown(VirtualKeyCode.MENU);
+                inputSimulator.Keyboard.Sleep(DefaultModifierKeyStrokeDelay);
             }
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Shift))
             {
-                keyboardSimulator.KeyDown(VirtualKeyCode.SHIFT);
-                keyboardSimulator.Sleep(DefaultModifierKeyStrokeDelay);
+                inputSimulator.Keyboard.KeyDown(VirtualKeyCode.SHIFT);
+                inputSimulator.Keyboard.Sleep(DefaultModifierKeyStrokeDelay);
             }
 
-            keyboardSimulator.KeyDown(vk);
-            keyboardSimulator.Sleep(KeyStrokeDelay);
-            keyboardSimulator.KeyUp(vk);
+            inputSimulator.Keyboard.KeyDown(vk);
+            inputSimulator.Keyboard.Sleep(KeyStrokeDelay);
+            inputSimulator.Keyboard.KeyUp(vk);
             
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Control))
             {
-                keyboardSimulator.KeyUp(VirtualKeyCode.CONTROL);
-                keyboardSimulator.Sleep(DefaultModifierKeyStrokeDelay);
+                inputSimulator.Keyboard.KeyUp(VirtualKeyCode.CONTROL);
+                inputSimulator.Keyboard.Sleep(DefaultModifierKeyStrokeDelay);
             }
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Alt))
             {
-                keyboardSimulator.KeyUp(VirtualKeyCode.MENU);
-                keyboardSimulator.Sleep(DefaultModifierKeyStrokeDelay);
+                inputSimulator.Keyboard.KeyUp(VirtualKeyCode.MENU);
+                inputSimulator.Keyboard.Sleep(DefaultModifierKeyStrokeDelay);
             }
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Shift))
             {
-                keyboardSimulator.KeyUp(VirtualKeyCode.SHIFT);
-                keyboardSimulator.Sleep(DefaultModifierKeyStrokeDelay);
+                inputSimulator.Keyboard.KeyUp(VirtualKeyCode.SHIFT);
+                inputSimulator.Keyboard.Sleep(DefaultModifierKeyStrokeDelay);
             }
         }
     }
