@@ -52,12 +52,10 @@ namespace EyeAuras.UI.Core.Utilities
             return SyncWith(() => targetCollection.Edit(list => AlignCollections(Items, list, SourceListMoveAdaptor, comparer)));
         }
         
-        public LinkedPositionMonitor<T> SyncWith(
+        private LinkedPositionMonitor<T> SyncWith(
             Action alignCollections)
         {
             this.WhenAnyValue(x => x.Items)
-                .Throttle(TimeSpan.FromMilliseconds(500), bgScheduler)
-                .ObserveOn(uiScheduler)
                 .Subscribe(alignCollections)
                 .AddTo(Anchors);
             return this;
@@ -106,7 +104,10 @@ namespace EyeAuras.UI.Core.Utilities
 
             if (changesLog.Any())
             {
-                Log.Debug($"Order changed:\n\t{changesLog.DumpToTable()}");
+                if (Log.IsDebugEnabled)
+                {
+                    Log.Debug($"Order changed:\n\t{changesLog.DumpToTable()}");
+                }
             }
         }
         
@@ -117,8 +118,10 @@ namespace EyeAuras.UI.Core.Utilities
                 return;
             }
 
-            Log.Debug(
-                $"Items order has changed, \nOld:\n\t{orderChangedEventArgs.PreviousOrder.EmptyIfNull().Select(x => x?.ToString() ?? "(null)").DumpToTable()}, \nNew:\n\t{orderChangedEventArgs.NewOrder.EmptyIfNull().Select(x => x?.ToString() ?? "(null)").DumpToTable()}");
+            if (Log.IsDebugEnabled)
+            {
+                Log.Debug($"Items order has changed, \nOld:\n\t{orderChangedEventArgs.PreviousOrder.EmptyIfNull().Select(x => x?.ToString() ?? "(null)").DumpToTable()}, \nNew:\n\t{orderChangedEventArgs.NewOrder.EmptyIfNull().Select(x => x?.ToString() ?? "(null)").DumpToTable()}");
+            }
             
             var orderedItems = orderChangedEventArgs.NewOrder
                 .EmptyIfNull()

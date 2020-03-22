@@ -197,6 +197,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .AddTo(Anchors);
 
             LoadConfig();
+            Log.Info($"Updating configuration format");
             rootConfigProvider.Save();
 
             if (sharedContext.AuraList.Count == 0)
