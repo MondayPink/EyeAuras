@@ -32,12 +32,12 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
                 .Subscribe(x => Aura = x)
                 .AddTo(Anchors);
             
-            this.WhenAnyValue(x => x.Aura, x => x.IsInverted)
+            this.WhenAnyValue(x => x.Aura)
                 .Select(_ => Aura == null 
                     ? Observable.Return(false) 
                     : Aura.WhenAnyValue(y => y.IsActive).Do(y => Log.Debug($"Child Aura {Aura.TabName}({Aura.Id}) IsActive changed to {Aura.IsActive}")))
                 .Switch()
-                .Subscribe(isActive => IsActive = isActive ^ IsInverted, Log.HandleUiException)
+                .Subscribe(isActive => IsActive = isActive, Log.HandleUiException)
                 .AddTo(Anchors);
         }
 
