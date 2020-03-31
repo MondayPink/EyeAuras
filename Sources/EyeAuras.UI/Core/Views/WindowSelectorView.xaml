@@ -5,7 +5,8 @@
                     xmlns:viewModels="clr-namespace:EyeAuras.UI.Core.ViewModels"
                     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
                     xmlns:lib="clr-namespace:EyeAuras.OnTopReplica;assembly=EyeAuras.OnTopReplica"
-                    xmlns:fa="http://schemas.fontawesome.io/icons/">
+                    xmlns:fa="http://schemas.fontawesome.io/icons/"
+                    xmlns:system="clr-namespace:System;assembly=System.Runtime">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
     </ResourceDictionary.MergedDictionaries>
@@ -65,6 +66,8 @@
             
             <ComboBox DockPanel.Dock="Left" Margin="10,0,0,0" ItemsSource="{Binding MatchingWindowList}"
                       IsEnabled="{Binding EnableOverlaySelector}"
+                      ToolTipService.ShowOnDisabled="True"
+                      ToolTipService.ShowDuration="{x:Static system:Int32.MaxValue}"
                       x:Name="OverlayWindowSelector"
                       HorizontalAlignment="Stretch"
                       HorizontalContentAlignment="Stretch"
@@ -74,6 +77,32 @@
                       IsEditable="False"
                       SelectedItem="{Binding ActiveWindow, Mode=TwoWay}"
                       Style="{StaticResource MaterialDesignFloatingHintComboBox}">
+                <ComboBox.ToolTip>
+                    <StackPanel Orientation="Vertical">
+                        <DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Process Name" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.ProcessName}"/>
+                        </DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Process Id" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.ProcessId}"/>
+                        </DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Title" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.Title}"/>
+                        </DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Process Path" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.ProcessPath}"/>
+                        </DockPanel><DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Window Bounds" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.WindowBounds}"/>
+                        </DockPanel><DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Client Bounds" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.ClientBounds}"/>
+                        </DockPanel>
+                    </StackPanel>                    
+                </ComboBox.ToolTip>
                 <ComboBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type lib:WindowHandle}">
                         <ContentControl

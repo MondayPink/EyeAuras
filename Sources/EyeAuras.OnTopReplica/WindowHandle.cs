@@ -1,11 +1,15 @@
 ﻿using System;
+using System.ComponentModel;
+using System.Diagnostics;
 using System.Drawing;
+using System.IO;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using EyeAuras.OnTopReplica.Native;
+using JetBrains.Annotations;
 using log4net;
 using Newtonsoft.Json;
 using PoeShared.Native;
@@ -38,6 +42,22 @@ namespace EyeAuras.OnTopReplica
             }
             IconBitmap?.Freeze();
             ProcessId = UnsafeNative.GetProcessIdByWindowHandle(handle);
+            if (ProcessId > 0)
+            {
+                try
+                {
+                    var process = Process.GetProcessById(ProcessId);
+                    ProcessName = process.ProcessName;
+                    ProcessPath = process.MainModule?.FileName;
+                }
+                catch (Win32Exception)
+                {
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"Failed to wrap Process with Id {ProcessId}, window: {Title}, class: {Class}", ex);
+                }
+            }
         }
         
         public string Title { get; }
@@ -57,6 +77,10 @@ namespace EyeAuras.OnTopReplica
         public IntPtr Handle { get; }
 
         public int ProcessId { get; }
+        
+        public string ProcessPath  { [CanBeNull] get; }
+        
+        public string ProcessName { [CanBeNull] get; }
         
         public int ZOrder { get; set; }
 

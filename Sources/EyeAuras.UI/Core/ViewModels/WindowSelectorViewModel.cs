@@ -183,12 +183,27 @@ namespace EyeAuras.UI.Core.ViewModels
                 return false;
             }
 
-            if (string.IsNullOrEmpty(window.Title))
+            var matchExpression = matchParams.Title.Trim('\"', '\'');
+            
+            var processPathMatches = window.ProcessPath?.Equals(matchExpression, StringComparison.OrdinalIgnoreCase) ?? false;
+            if (processPathMatches)
             {
-                return false;
+                return true;
+            }
+            
+            var processNameMatches = window.ProcessName?.Equals(matchExpression, StringComparison.OrdinalIgnoreCase) ?? false;
+            if (processNameMatches)
+            {
+                return true;
+            }
+            
+            var titleMatches = window.Title?.Contains(matchExpression, StringComparison.OrdinalIgnoreCase) ?? false;
+            if (titleMatches)
+            {
+                return true;
             }
 
-            return window.Title.Contains(matchParams.Title, StringComparison.OrdinalIgnoreCase);
+            return false;
         }
     }
 }

@@ -57,7 +57,6 @@ namespace EyeAuras.UI.Core.Models
         private WindowMatchParams targetWindow;
         private string uniqueId;
         private TimeSpan whileActiveActionsTimeout;
-        private DateTime lastWhileActiveTimestamp;
 
         public OverlayAuraModelBase(
             [NotNull] ISharedContext sharedContext,
@@ -237,7 +236,7 @@ namespace EyeAuras.UI.Core.Models
             if (IsActive)
             {
                 Thread.Sleep(WhileActiveActionsTimeout);
-            }
+            }  
         }
         
         public bool IsActive
