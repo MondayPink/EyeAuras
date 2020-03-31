@@ -47,6 +47,8 @@
 
             <TextBox
                 Width="350"
+                Padding="0,2,0,0"
+                Height="43"
                 materialDesign:HintAssist.FloatingOffset="-25,-16"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Center"

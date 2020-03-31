@@ -185,7 +185,7 @@
                     <TextBlock Grid.Column="1" Grid.Row="3" Text="{Binding WindowBounds}" Margin="10,0" />
                 </Grid>
             </DockPanel.ToolTip>
-            <Image Source="{Binding IconBitmap}" Margin="5,0" Width="16" Height="16" />
+            <Image Source="{Binding IconBitmap}" Margin="5,0" Width="14" Height="14" />
             <TextBlock Text="{Binding Title}"
                        HorizontalAlignment="Left"
                        VerticalAlignment="Center"
