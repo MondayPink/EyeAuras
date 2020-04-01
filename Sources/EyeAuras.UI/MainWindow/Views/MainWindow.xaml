@@ -193,8 +193,20 @@
                                            HorizontalAlignment="Right" />
                             </DockPanel>
                         </Border>
-
-                        <dragablz:TabablzControl Margin="2.5"
+                        
+                        <DockPanel>
+                            <DockPanel DockPanel.Dock="Top">
+                                <ContentControl DockPanel.Dock="Right" Content="{Binding SelectRegionCommand}"
+                                                eye:CommandWrapperHelper.Icon="&#xf140;"
+                                                ContentTemplate="{StaticResource CommandWrapperIcon}"
+                                                ToolTip="Select Window" />
+                                <ContentControl Content="{Binding CreateNewTabCommand}"
+                                                eye:CommandWrapperHelper.Icon="&#xF055;"
+                                                eye:CommandWrapperHelper.Text="New aura"
+                                                ToolTip="CTRL+T Create new tab" />
+                            </DockPanel>
+                            
+                            <dragablz:TabablzControl Margin="2.5" DockPanel.Dock="Top"
                                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                                  x:Name="AuraList"
                                                  Style="{StaticResource DragablzVerticalTabablzControl}"
@@ -271,6 +283,9 @@
                                 <KeyBinding Key="F2" Command="{Binding SelectedTab.RenameCommand}" />
                             </dragablz:TabablzControl.InputBindings>
                         </dragablz:TabablzControl>
+                        </DockPanel>
+
+                        
                     </DockPanel>
 
                     <Image x:Name="AppBackgroundImage" Grid.Row="0" Grid.Column="2" Source="pack://application:,,,/Resources/mainIcon.png"
@@ -282,7 +297,7 @@
 
                     <Border x:Name="SelectedTabContent" Grid.Row="0" Grid.Column="2" Margin="2.5"
                             Visibility="{Binding SelectedTab, Converter={StaticResource NullToCollapsedConverter}}">
-                        <ScrollViewer VerticalScrollBarVisibility="Auto" IsTabStop="False" Focusable="False">
+                        <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto" IsTabStop="False" Focusable="False">
                             <ItemsControl ItemsSource="{Binding TabsList}" Focusable="False">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -353,15 +368,7 @@
 
     <mah:MetroWindow.LeftWindowCommands>
         <mah:WindowCommands ShowSeparators="True">
-            <ContentControl Content="{Binding CreateNewTabCommand}"
-                            eye:CommandWrapperHelper.Icon="&#xF055;"
-                            eye:CommandWrapperHelper.Text="New aura"
-                            ToolTip="CTRL+T Create new tab" />
-
-            <ContentControl Content="{Binding SelectRegionCommand}"
-                            eye:CommandWrapperHelper.Icon="&#xf140;"
-                            ContentTemplate="{StaticResource CommandWrapperIcon}"
-                            ToolTip="Select Window" />
+           
         </mah:WindowCommands>
     </mah:MetroWindow.LeftWindowCommands>
 
