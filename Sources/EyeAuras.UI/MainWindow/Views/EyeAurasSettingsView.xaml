@@ -16,6 +16,7 @@
                 <RowDefinition Height="Auto" MinHeight="40" />
                 <RowDefinition Height="Auto" MinHeight="40" />
                 <RowDefinition Height="Auto" MinHeight="40" />
+                <RowDefinition Height="Auto" MinHeight="40" />
             </Grid.RowDefinitions>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" SharedSizeGroup="LabelColumn" />
@@ -51,8 +52,15 @@
                                    VerticalAlignment="Center" />
             </DockPanel>
             
-            <TextBlock Grid.Row="3" Grid.Column="0" HorizontalAlignment="Right" Text="Run at start:" />
+            <TextBlock Grid.Row="3" Grid.Column="0" HorizontalAlignment="Right" Text="Minimize to Tray:" />
             <DockPanel Grid.Row="3" Grid.Column="1">
+                <ToggleButton
+                    DockPanel.Dock="Left" Margin="5,0,0,0" HorizontalAlignment="Left"
+                    IsChecked="{Binding MinimizeToTray}" />
+            </DockPanel>
+            
+            <TextBlock Grid.Row="4" Grid.Column="0" HorizontalAlignment="Right" Text="Run at start:" />
+            <DockPanel Grid.Row="4" Grid.Column="1">
                 <ToggleButton
                     DockPanel.Dock="Left" Margin="5,0,0,0" HorizontalAlignment="Left"
                     IsChecked="{Binding RunAtLogin, Mode=OneWay}"
@@ -60,8 +68,8 @@
                     CommandParameter="{Binding IsChecked, RelativeSource={RelativeSource Self}}" />
             </DockPanel>
             
-            <TextBlock Grid.Row="4" Grid.Column="0" HorizontalAlignment="Right" Text="Start Minimized:" />
-            <DockPanel Grid.Row="4" Grid.Column="1">
+            <TextBlock Grid.Row="5" Grid.Column="0" HorizontalAlignment="Right" Text="Start Minimized:" />
+            <DockPanel Grid.Row="5" Grid.Column="1">
                 <ToggleButton
                     DockPanel.Dock="Left" Margin="5,0,0,0" HorizontalAlignment="Left"
                     IsChecked="{Binding StartMinimized}" />

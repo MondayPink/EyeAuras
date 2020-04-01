@@ -27,6 +27,8 @@ namespace EyeAuras.UI.Prism.Modularity
         public double ListWidth { get; set; }
         
         public bool StartMinimized { get; set; }
+        
+        public bool MinimizeToTray { get; set; }
 
         public int Version { get; set; } = 2;
     }

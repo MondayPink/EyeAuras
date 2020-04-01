@@ -3,6 +3,7 @@ using System.Diagnostics;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Text.RegularExpressions;
+using EyeAuras.OnTopReplica;
 using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
 using log4net;
@@ -19,12 +20,15 @@ namespace EyeAuras.DefaultAuras.Triggers.WinActive
         private static readonly int CurrentProcessId = Process.GetCurrentProcess().Id;
 
         private readonly SerialDisposable activeTracker = new SerialDisposable();
+        private readonly IWindowMatcher windowMatcher;
         private readonly IFactory<WindowTracker, IStringMatcher> windowTrackerFactory;
         private WindowMatchParams targetWindow;
 
         public WinActiveTrigger(
+            IWindowMatcher windowMatcher,
             IFactory<WindowTracker, IStringMatcher> windowTrackerFactory)
         {
+            this.windowMatcher = windowMatcher;
             this.windowTrackerFactory = windowTrackerFactory;
             activeTracker.AddTo(Anchors);
 
@@ -67,7 +71,9 @@ namespace EyeAuras.DefaultAuras.Triggers.WinActive
                         CurrentProcessId
                     })
                 .Do(x => Log.Debug($"WinActiveTrigger data updated(target: {TargetWindow}): {x}"))
-                .Subscribe(x => IsActive = x.IsActive);
+                .Select(x => new WindowHandle(x.ActiveWindowHandle))
+                .Select(x => new { Window = x, IsMatch = windowMatcher.IsMatch(x, targetWindow) })
+                .Subscribe(x => IsActive = x.IsMatch);
         }
 
         protected override void VisitLoad(WinActiveTriggerProperties source)

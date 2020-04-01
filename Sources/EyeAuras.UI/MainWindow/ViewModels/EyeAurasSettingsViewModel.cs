@@ -34,6 +34,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private HotkeyMode unlockAurasHotkeyMode;
         private HotkeyGesture selectRegionHotkey;
         private bool startMinimized;
+        private bool minimizeToTray;
 
         public EyeAurasSettingsViewModel(
             [NotNull] IApplicationUpdaterViewModel appUpdater,
@@ -93,6 +94,12 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             get => startMinimized;
             set => this.RaiseAndSetIfChanged(ref startMinimized, value);
         }
+
+        public bool MinimizeToTray
+        {
+            get => minimizeToTray;
+            set => this.RaiseAndSetIfChanged(ref minimizeToTray, value);
+        }
         
         public bool RunAtLogin => startupManager.IsRegistered;
 
@@ -106,6 +113,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             UnlockAurasHotkeyMode = config.UnlockAurasHotkeyMode;
             SelectRegionHotkey = hotkeyConverter.ConvertFromString(config.RegionSelectHotkey);
             StartMinimized = config.StartMinimized;
+            MinimizeToTray = config.MinimizeToTray;
             return Task.CompletedTask;
         }
 
@@ -118,6 +126,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             updatedConfig.UnlockAurasHotkeyMode = UnlockAurasHotkeyMode;
             updatedConfig.RegionSelectHotkey = SelectRegionHotkey?.ToString();
             updatedConfig.StartMinimized = StartMinimized;
+            updatedConfig.MinimizeToTray = MinimizeToTray;
             return updatedConfig;
         }
         

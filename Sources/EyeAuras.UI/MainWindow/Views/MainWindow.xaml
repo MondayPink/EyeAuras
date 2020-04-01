@@ -29,6 +29,7 @@
     MinHeight="{Binding MinSize.Height, Mode=OneWay}"
     Visibility="{Binding Visibility, Mode=TwoWay}"
     ShowInTaskbar="{Binding ShowInTaskbar, Mode=TwoWay}"
+    Topmost="{Binding Topmost, Mode=TwoWay}"
     x:Name="MainWindowRoot"
     Background="{StaticResource MaterialDesignPaper}"
     Title="{Binding Title}"

@@ -21,6 +21,7 @@ namespace EyeAuras.UI.Core.ViewModels
 {
     internal sealed class WindowSelectorViewModel : DisposableReactiveObject, IWindowSelectorViewModel
     {
+        private readonly IWindowMatcher windowMatcher;
         private static readonly ILog Log = LogManager.GetLogger(typeof(WindowSelectorViewModel));
         private static readonly TimeSpan ThrottlingPeriod = TimeSpan.FromMilliseconds(100);
 
@@ -34,9 +35,11 @@ namespace EyeAuras.UI.Core.ViewModels
         private IntPtr windowHandle;
 
         public WindowSelectorViewModel(
+            [NotNull] IWindowMatcher windowMatcher,
             [NotNull] IWindowListProvider windowListProvider,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
+            this.windowMatcher = windowMatcher;
             WindowList = windowListProvider.WindowList;
 
             this.WhenAnyValue(x => x.WindowTitle)
@@ -56,7 +59,7 @@ namespace EyeAuras.UI.Core.ViewModels
                 
             this.WhenAnyValue(x => x.ActiveWindow)
                 .Where(x => x != null)
-                .Where(x => !IsMatch(x, TargetWindow))
+                .Where(x => !windowMatcher.IsMatch(x, TargetWindow))
                 .Subscribe(
                     x =>
                     {
@@ -168,42 +171,10 @@ namespace EyeAuras.UI.Core.ViewModels
                 .ThenByAscending(x => x.Title.Length)
                 .ThenByAscending(x => x.Title);
             var windowList = source
-                .Where(x => IsMatch(x, targetWindow))
+                .Where(x => windowMatcher.IsMatch(x, targetWindow))
                 .OrderBy(x => x, comparer)
                 .ToArray();
             return windowList;
-        }
-
-        private bool IsMatch(WindowHandle window, WindowMatchParams matchParams)
-        {
-            Guard.ArgumentNotNull(window, nameof(window));
-
-            if (string.IsNullOrEmpty(matchParams.Title))
-            {
-                return false;
-            }
-
-            var matchExpression = matchParams.Title.Trim('\"', '\'');
-            
-            var processPathMatches = window.ProcessPath?.Equals(matchExpression, StringComparison.OrdinalIgnoreCase) ?? false;
-            if (processPathMatches)
-            {
-                return true;
-            }
-            
-            var processNameMatches = window.ProcessName?.Equals(matchExpression, StringComparison.OrdinalIgnoreCase) ?? false;
-            if (processNameMatches)
-            {
-                return true;
-            }
-            
-            var titleMatches = window.Title?.Contains(matchExpression, StringComparison.OrdinalIgnoreCase) ?? false;
-            if (titleMatches)
-            {
-                return true;
-            }
-
-            return false;
         }
     }
 }

@@ -64,6 +64,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private readonly IFactory<HotkeyIsActiveTrigger> hotkeyTriggerFactory;
         private readonly CircularBuffer<OverlayAuraProperties> recentlyClosedQueries = new CircularBuffer<OverlayAuraProperties>(UndoStackDepth);
         private readonly IRegionSelectorService regionSelectorService;
+        private readonly IWindowViewController viewController;
         private readonly IAppArguments appArguments;
 
         private double height;
@@ -75,6 +76,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private WindowState windowState;
         private Visibility visibility;
         private bool showInTaskbar;
+        private bool topmost;
 
         public MainWindowViewModel(
             [NotNull] IWindowViewController viewController,
@@ -122,8 +124,11 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     }, Log.HandleUiException)
                 .AddTo(Anchors);
             
-            this.WhenAnyValue(x => x.WindowState)
-                .Subscribe(x => ShowInTaskbar = x != WindowState.Minimized, Log.HandleUiException)
+            Observable.Merge(
+                    this.WhenAnyValue(x => x.WindowState).ToUnit(),
+                    configProvider.ListenTo(x => x.MinimizeToTray).ToUnit())
+                .ObserveOn(uiScheduler)
+                .Subscribe(x => ShowInTaskbar = WindowState != WindowState.Minimized || !configProvider.ActualConfig.MinimizeToTray, Log.HandleUiException)
                 .AddTo(Anchors);
             
             TabsList = new ReadOnlyObservableCollection<IEyeAuraViewModel>(sharedContext.AuraList);
@@ -138,6 +143,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             Settings = settingsViewModel.AddTo(Anchors);
             StatusBarItems = mainWindowBlocksProvider.StatusBarItems;
 
+            this.viewController = viewController;
             this.appArguments = appArguments;
             this.auraViewModelFactory = auraViewModelFactory;
             this.configProvider = configProvider;
@@ -155,18 +161,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     configProvider.Save(configProvider.ActualConfig);
                     System.Windows.Application.Current.Shutdown();
                 });
-            ShowAppCommand = CommandWrapper.Create(
-                () =>
-                {
-                    if (Visibility != Visibility.Visible)
-                    {
-                        viewController.Show();
-                    }
-                    else
-                    {
-                        viewController.Hide();
-                    }
-                });
+            ShowAppCommand = CommandWrapper.Create(ToggleAppVisibilityCommandExecuted);
             CreateNewTabCommand = CommandWrapper.Create(() => AddNewCommandExecuted(OverlayAuraProperties.Default));
             CloseTabCommand = CommandWrapper
                 .Create<IOverlayAuraViewModel>(CloseTabCommandExecuted, CloseTabCommandCanExecute)
@@ -395,11 +390,17 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             get => showInTaskbar;
             set => this.RaiseAndSetIfChanged(ref showInTaskbar, value);
         }
-        
+
         public Visibility Visibility
         {
             get => visibility;
             set => this.RaiseAndSetIfChanged(ref visibility, value);
+        }
+
+        public bool Topmost
+        {
+            get => topmost;
+            set => this.RaiseAndSetIfChanged(ref topmost, value);
         }
 
         public CommandWrapper CreateNewTabCommand { get; }
@@ -431,6 +432,35 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             Log.Debug("Viewmodel disposed");
         }
 
+
+        private void ToggleAppVisibilityCommandExecuted()
+        {
+            if (Visibility != Visibility.Visible || WindowState == WindowState.Minimized)
+            {
+                SetAppVisibility(true);
+            }
+            else
+            {
+                SetAppVisibility(false);
+            }
+        }
+
+        private void SetAppVisibility(bool isVisible)
+        {
+            if (isVisible)
+            {
+                viewController.Show();
+            }
+            else if (configProvider.ActualConfig.MinimizeToTray)
+            {
+                viewController.Hide();
+            }
+            else
+            {
+                viewController.Minimize();
+            }
+        }
+        
         private IObservable<bool> RegisterSelectRegionHotkey()
         {
             var selectRegionHotkeyTrigger = hotkeyTriggerFactory.Create().AddTo(Anchors);
@@ -457,11 +487,11 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
             return selectRegionHotkeyTrigger.WhenAnyValue(x => x.IsActive).DistinctUntilChanged();
         }
-
+        
         private async void SelectRegionCommandExecuted()
         {
             Log.Debug($"Requesting screen Region from {regionSelectorService}...");
-            WindowState = WindowState.Minimized;
+            SetAppVisibility(false);
             var result = await regionSelectorService.SelectRegion();
 
             if (result?.IsValid ?? false)
@@ -668,6 +698,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             Top = config.MainWindowBounds.Top;
             Width = config.MainWindowBounds.Width;
             Height = config.MainWindowBounds.Height;
+            viewController.Topmost = false;
 
             ListWidth = config.ListWidth <= 0 || double.IsNaN(config.ListWidth)
                 ? GridLength.Auto
