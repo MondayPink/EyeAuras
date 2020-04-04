@@ -13,7 +13,6 @@ namespace EyeAuras.Interception
     {
         private readonly InputWrapper wrapper;
         private readonly IConverter<VirtualKeyCode, uint> keysConverter = new KeysConverter();
-        private readonly ConcurrentDictionary<VirtualKeyCode, uint> keyCodeToScanCodeMap = new ConcurrentDictionary<VirtualKeyCode, uint>();
         
         public DriverBasedKeyboardSimulator()
         {
@@ -26,22 +25,17 @@ namespace EyeAuras.Interception
                 throw new ApplicationException($"Failed to load Interception driver");
             }
         }
-
-        private uint GetScanCode(VirtualKeyCode keyCode)
-        {
-            return  keyCodeToScanCodeMap.GetOrAdd(keyCode, x => keysConverter.Convert(x));
-        }
         
         public IKeyboardSimulator KeyDown(VirtualKeyCode keyCode)
         {
-            var keyToSend = GetScanCode(keyCode);
+            var keyToSend = keysConverter.Convert(keyCode);
             wrapper.SendKey(keyToSend, KeyState.Down);
             return this;
         }
 
         public IKeyboardSimulator KeyPress(VirtualKeyCode keyCode)
         {
-            var keyToSend = GetScanCode(keyCode);
+            var keyToSend = keysConverter.Convert(keyCode);
             wrapper.SendKey(keyToSend, KeyState.Down);
             Thread.Sleep(new Random().Next(50, 150));
             wrapper.SendKey(keyToSend, KeyState.Up);
@@ -60,7 +54,7 @@ namespace EyeAuras.Interception
 
         public IKeyboardSimulator KeyUp(VirtualKeyCode keyCode)
         {
-            var keyToSend = GetScanCode(keyCode);
+            var keyToSend = keysConverter.Convert(keyCode);
             wrapper.SendKey(keyToSend, KeyState.Up);
             return this;
         }

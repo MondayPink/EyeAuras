@@ -30,21 +30,30 @@
                 <TextBlock DockPanel.Dock="Left" Margin="10,0,0,0" Text="Key" />
                 <hotkeys:HotKeyBox BorderBrush="{DynamicResource SecondaryAccentBrush}" BorderThickness="1" DockPanel.Dock="Left" Margin="5,0,0,0" HotKey="{Binding Source.Hotkey}" MinWidth="60"
                                    VerticalAlignment="Center" />
-            <ContentControl DockPanel.Dock="Right" Content="{Binding Source.UninstallDriverCommand}" Margin="5,0,0,0" FontSize="12"
-                            Visibility="{Binding Source.IsDriverBasedSimulator, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
-                            eye:CommandWrapperHelper.Text="Uninstall driver" />    
-            <TextBlock Margin="15,0,0,0" DockPanel.Dock="Right" HorizontalAlignment="Right" 
-                       FontWeight="Bold" Text="Using driver-based Input simulation"
-                       Foreground="{StaticResource PositiveBrush}"
-                       Visibility="{Binding Source.IsDriverBasedSimulator, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"/>
-                
+                <materialDesign:PackIcon Margin="5,0,0,0" DockPanel.Dock="Left" VerticalAlignment="Center" Kind="ShieldWarning"
+                                         Foreground="{StaticResource NegativeBrush}"
+                                         Visibility="{Binding Source.Error, Converter={StaticResource NullToCollapsedConverter}}"
+                                         ToolTip="{Binding Source.Error}"/>
+            
                 <ContentControl DockPanel.Dock="Right" Content="{Binding Source.InstallDriverCommand}" Margin="5,0,0,0" FontSize="12"
-                            Visibility="{Binding Source.IsDriverBasedSimulator, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"
-                            eye:CommandWrapperHelper.Text="Install driver" />
-                <TextBlock Margin="15,0,0,0" DockPanel.Dock="Right" HorizontalAlignment="Right" 
-                           FontWeight="Bold" Text="Using Windows Input simulation"
-                           Foreground="{StaticResource NegativeBrush}"
-                           Visibility="{Binding Source.IsDriverBasedSimulator, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"/>
+                                Visibility="{Binding Source.IsDriverInstalled, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"
+                                eye:CommandWrapperHelper.Text="Install virtual keyboard driver" />
+            
+                <ContentControl DockPanel.Dock="Right" Content="{Binding Source.UninstallDriverCommand}" Margin="5,0,0,0" FontSize="12"
+                                Visibility="{Binding Source.IsDriverInstalled, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                                eye:CommandWrapperHelper.Text="Uninstall virtual keyboard driver" />    
+            
+                <Grid Margin="15,0,0,0" DockPanel.Dock="Right" HorizontalAlignment="Right" >
+                    <TextBlock FontWeight="Bold" Text="Using driver-based Input simulation"
+                               Foreground="{StaticResource PositiveBrush}"
+                               Visibility="{Binding Source.IsDriverBasedSimulator, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"/>
+                    <TextBlock FontWeight="Bold" Text="Using Windows Input simulation"
+                               Foreground="{StaticResource NegativeBrush}"
+                               Visibility="{Binding Source.IsWindowsSimulator, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"/>
+                    <TextBlock FontWeight="Bold" Text="Using Usb2Kbd"
+                               Foreground="{StaticResource WarningBrush}"
+                               Visibility="{Binding Source.IsUsb2KbdSimulator, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"/>
+                </Grid>
         </DockPanel>
         
     </DataTemplate>

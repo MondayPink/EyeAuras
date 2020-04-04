@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using WindowsInput.Native;
 using log4net;
@@ -7,8 +8,22 @@ using PoeShared.Prism;
 
 namespace EyeAuras.Interception
 {
-    internal sealed class KeysConverter : IConverter<VirtualKeyCode, uint>
+    public sealed class KeysConverter : IConverter<VirtualKeyCode, uint>
     {
+        private readonly ConcurrentDictionary<VirtualKeyCode, uint> keyCodeToScanCodeMap = new ConcurrentDictionary<VirtualKeyCode, uint>();
+
+        public uint Convert(VirtualKeyCode value)
+        {
+            var result = keyCodeToScanCodeMap.GetOrAdd(value, x => MapVirtualKey((uint)value, MapVirtualKeyMapTypes.MAPVK_VK_TO_VSC));
+            return result;
+        }
+
+        [DllImport("user32.dll")]
+        private static extern uint MapVirtualKeyEx(uint uCode, MapVirtualKeyMapTypes uMapType, IntPtr dwhkl);
+
+        [DllImport("user32.dll")]
+        private static extern uint MapVirtualKey(uint uCode, MapVirtualKeyMapTypes uMapType);
+        
         /// <summary>
         ///     uCode is a virtual-key code and is translated into a scan code.
         ///     If it is a virtual-key code that does not distinguish between left- and
@@ -18,7 +33,7 @@ namespace EyeAuras.Interception
         /// <summary>
         ///     The set of valid MapTypes used in MapVirtualKey
         /// </summary>
-        public enum MapVirtualKeyMapTypes : uint
+        private enum MapVirtualKeyMapTypes : uint
         {
             /// <summary>
             ///     uCode is a virtual-key code and is translated into a scan code.
@@ -55,17 +70,5 @@ namespace EyeAuras.Interception
             /// </summary>
             MAPVK_VK_TO_VSC_EX = 0x04
         }
-
-        public uint Convert(VirtualKeyCode value)
-        {
-            var result = MapVirtualKey((uint)value, MapVirtualKeyMapTypes.MAPVK_VK_TO_VSC);
-            return result;
-        }
-
-        [DllImport("user32.dll")]
-        private static extern uint MapVirtualKeyEx(uint uCode, MapVirtualKeyMapTypes uMapType, IntPtr dwhkl);
-
-        [DllImport("user32.dll")]
-        private static extern uint MapVirtualKey(uint uCode, MapVirtualKeyMapTypes uMapType);
     }
 }

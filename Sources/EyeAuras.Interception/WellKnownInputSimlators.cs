@@ -4,5 +4,6 @@ namespace EyeAuras.Interception
     {
         public const string InputSimulator = "InputSimulator";
         public const string InterceptionDriver = "Interception";
+        public const string Usb2Kbd = "Usb2Kbd";
     }
 }
