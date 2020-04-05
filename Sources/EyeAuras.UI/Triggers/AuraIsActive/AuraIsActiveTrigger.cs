@@ -23,13 +23,25 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
 
         public AuraIsActiveTrigger([NotNull] ISharedContext sharedContext)
         {
-            Observable.Merge(
-                    this.WhenAnyValue(x => x.AuraId).ToUnit(),
-                    sharedContext.AuraList.ToObservableChangeSet().SkipInitial().ToUnit(),
-                    sharedContext.AuraList.ToObservableChangeSet().SkipInitial().WhenPropertyChanged(x => x.Id).ToUnit())
-                .StartWithDefault()
+            this.WhenAnyValue(x => x.AuraId)
                 .Select(x => sharedContext.AuraList.FirstOrDefault(y => y.Id == AuraId))
-                .Subscribe(x => Aura = x)
+                .Select(
+                    x =>
+                    {
+                        if (x != null || string.IsNullOrEmpty(AuraId))
+                        {
+                            return Observable.Return(x);
+                        }
+
+                        return Observable.Merge(
+                                sharedContext.AuraList.ToObservableChangeSet().SkipInitial().ToUnit(),
+                                sharedContext.AuraList.ToObservableChangeSet().SkipInitial().WhenPropertyChanged(x => x.Id).ToUnit())
+                            .Select(() => sharedContext.AuraList.FirstOrDefault(y => y.Id == AuraId))
+                            .Where(x => x != null)
+                            .Take(1);
+                    })
+                .Switch()
+                .Subscribe(x => Aura = x, Log.HandleUiException)
                 .AddTo(Anchors);
             
             this.WhenAnyValue(x => x.Aura)
