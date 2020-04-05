@@ -4,6 +4,7 @@ using EyeAuras.DefaultAuras.Actions.SendInput;
 using EyeAuras.DefaultAuras.Actions.WinActivate;
 using EyeAuras.DefaultAuras.Triggers.Default;
 using EyeAuras.DefaultAuras.Triggers.HotkeyIsActive;
+using EyeAuras.DefaultAuras.Triggers.Timer;
 using EyeAuras.DefaultAuras.Triggers.WinActive;
 using EyeAuras.Shared;
 using JetBrains.Annotations;
@@ -46,6 +47,9 @@ namespace EyeAuras.DefaultAuras.Prism
 
             auraManager.Register<WinActiveTrigger>();
             auraManager.Register<WinActiveTriggerEditor, WinActiveTrigger>();
+            
+            auraManager.Register<TimerTrigger>();
+            auraManager.Register<TimerTriggerEditor, TimerTrigger>();
 
             auraManager.Register<DefaultTrigger>();
             auraManager.Register<DefaultTriggerEditor, DefaultTrigger>();

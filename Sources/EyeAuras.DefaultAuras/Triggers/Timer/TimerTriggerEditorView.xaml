@@ -1,0 +1,58 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:default="clr-namespace:EyeAuras.DefaultAuras.Triggers.Default"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
+                    xmlns:timer="clr-namespace:EyeAuras.DefaultAuras.Triggers.Timer">
+    
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Converters.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Colors.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Styles.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/CommandWrapperView.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras.Controls;component/Themes/Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+    
+    <DataTemplate DataType="{x:Type timer:TimerTriggerEditor}">
+        <DockPanel>
+            <TextBlock Margin="5,0" Text="Activation period, ms" />
+            <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="100"
+                                Margin="5,0,0,0"
+                                DefaultValue="1000"
+                                Increment="100"
+                                Minimum="0"
+                                Maximum="86400000"
+                                Style="{StaticResource MaterialNumericUpDownStyleKey}"
+                                Value="{Binding ActivationPeriod, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <TextBlock Margin="5,0" Text="Deactivation timeout, ms" />
+            <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="100"
+                                Margin="5,0,0,0"
+                                DefaultValue="0"
+                                Increment="100"
+                                Minimum="0"
+                                Maximum="86400000"
+                                Style="{StaticResource MaterialNumericUpDownStyleKey}"
+                                Value="{Binding DeactivationTimeout, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+            <Grid Margin="5,0,0,0" Width="140">
+                <DockPanel Visibility="{Binding TimeLeftTillNextActivation, Converter={StaticResource NullToCollapsedConverter}}">
+                    <materialDesign:PackIcon Margin="2.5,0"  VerticalAlignment="Center"
+                                             Foreground="{StaticResource PositiveBrush}"
+                                             Kind="CheckboxMarkedCircleOutline" />
+                    <TextBlock Text="Activation in" Foreground="{StaticResource PositiveBrush}" />
+                    <TextBlock Margin="5,0,0,0" MinWidth="30"
+                               Text="{Binding TimeLeftTillNextActivation, Converter={StaticResource TimeSpanToHumanReadableStringConverter}}"/>
+                </DockPanel>
+            
+                <DockPanel Visibility="{Binding TimeLeftTillNextDeactivation, Converter={StaticResource NullToCollapsedConverter}}">
+                    <materialDesign:PackIcon Margin="2.5,0"  VerticalAlignment="Center"
+                                             Foreground="{StaticResource NegativeBrush}"
+                                             Kind="CheckboxBlankCircleOutline" />
+                    <TextBlock Text="Deactivation in" Foreground="{StaticResource NegativeBrush}" />
+                    <TextBlock Margin="5,0,0,0" MinWidth="30"
+                               Text="{Binding TimeLeftTillNextDeactivation, Converter={StaticResource TimeSpanToHumanReadableStringConverter}}"/>
+                </DockPanel>
+            </Grid>
+            <ProgressBar Margin="5,0" Value="{Binding ActivationProgress, Mode=OneWay}" Minimum="0" Maximum="100"/>
+        </DockPanel>
+    </DataTemplate>
+</ResourceDictionary>
