@@ -81,8 +81,8 @@ namespace EyeAuras.Usb2kbd
             get => config;
             set => this.RaiseAndSetIfChanged(ref config, value);
         }
-        
-        private IKeyboardSimulator PerformCall(Usb2KbdEventType eventType, int keyCode, int eventValue, int mouseCoords)
+
+        private int PerformCall(Usb2KbdEventType eventType, int keyCode, int eventValue, int mouseCoords)
         {
             if (dllMethod == null)
             {
@@ -114,6 +114,24 @@ namespace EyeAuras.Usb2kbd
             var resultCode = dllMethod(eventType, keyCode, eventValue, mouseCoords, config.DeviceId, config.SerialNumber);
             if (resultCode != 1)
             {
+                if (eventType == Usb2KbdEventType.KeyDown || eventType == Usb2KbdEventType.KeyUp)
+                {
+                    Log.Warn($"Failed to perform keyboard operation, trying to restore keyboard state, eventType={eventType}({(int)eventType}), keyCode: {keyCode}, eventValue: {eventValue}, mouseCoords: {mouseCoords}");
+                    if (PerformCall(Usb2KbdEventType.AllKeysUp, 0, 0, 0) != 1)
+                    {
+                        Log.Warn($"Failed to restore keyboard state");
+                    }
+                }
+            }
+
+            return resultCode;
+        }
+
+        private IKeyboardSimulator PerformCallOrThrow(Usb2KbdEventType eventType, int keyCode, int eventValue, int mouseCoords)
+        {
+            var resultCode = PerformCall(eventType, keyCode, eventValue, mouseCoords);
+            if (resultCode != 1)
+            {
                 throw new ApplicationException($"Failed to perform call, eventType={eventType}({(int)eventType}), keyCode: {keyCode}, eventValue: {eventValue}, mouseCoords: {mouseCoords}");
             }
 
@@ -127,7 +145,7 @@ namespace EyeAuras.Usb2kbd
            {
                throw new ApplicationException($"Failed to convert {nameof(VirtualKeyCode)} {keyCode} to {nameof(UsbHidScanCodes)}");
            }
-           return PerformCall(Usb2KbdEventType.KeyDown, (int)scanCode, 0 ,0);
+           return PerformCallOrThrow(Usb2KbdEventType.KeyDown, (int)scanCode, 0 ,0);
         }
         
         public IKeyboardSimulator KeyPress(VirtualKeyCode keyCode)
@@ -147,7 +165,7 @@ namespace EyeAuras.Usb2kbd
             {
                 throw new ApplicationException($"Failed to convert {nameof(VirtualKeyCode)} {keyCode} to {nameof(UsbHidScanCodes)}");
             }
-            return PerformCall(Usb2KbdEventType.KeyUp, (int)scanCode, 0 ,0);
+            return PerformCallOrThrow(Usb2KbdEventType.KeyUp, (int)scanCode, 0 ,0);
         }
 
         public IKeyboardSimulator ModifiedKeyStroke(IEnumerable<VirtualKeyCode> modifierKeyCodes, IEnumerable<VirtualKeyCode> keyCodes)
