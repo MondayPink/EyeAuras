@@ -65,6 +65,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private readonly CircularBuffer<OverlayAuraProperties> recentlyClosedQueries = new CircularBuffer<OverlayAuraProperties>(UndoStackDepth);
         private readonly IRegionSelectorService regionSelectorService;
         private readonly IWindowViewController viewController;
+        private readonly IUniqueIdGenerator idGenerator;
         private readonly IAppArguments appArguments;
 
         private double height;
@@ -80,6 +81,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         public MainWindowViewModel(
             [NotNull] IWindowViewController viewController,
+            [NotNull] IUniqueIdGenerator idGenerator,
             [NotNull] IAppArguments appArguments,
             [NotNull] IFactory<IOverlayAuraViewModel, OverlayAuraProperties> auraViewModelFactory,
             [NotNull] IApplicationUpdaterViewModel appUpdater,
@@ -144,6 +146,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             StatusBarItems = mainWindowBlocksProvider.StatusBarItems;
 
             this.viewController = viewController;
+            this.idGenerator = idGenerator;
             this.appArguments = appArguments;
             this.auraViewModelFactory = auraViewModelFactory;
             this.configProvider = configProvider;
@@ -712,6 +715,14 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             using var sw = new BenchmarkTimer("Create new tab", Log);
 
             Log.Debug($"Adding new tab using config {tabProperties.DumpToTextRaw()}...");
+
+            var existingTab = TabsList.FirstOrDefault(x => x.Id == tabProperties.Id);
+            if (existingTab != null)
+            {
+                var newId = idGenerator.Next();
+                Log.Warn($"Tab with the same Id({tabProperties.Id}) already exists: {existingTab}, changing Id of a new tab to {newId}");
+                tabProperties.Id = newId;
+            }
 
             var auraViewModel = (IEyeAuraViewModel)auraViewModelFactory.Create(tabProperties);
             sw.Step($"Created view model of type {auraViewModel.GetType()}: {auraViewModel}");

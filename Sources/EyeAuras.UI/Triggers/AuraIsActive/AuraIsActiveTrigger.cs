@@ -30,17 +30,19 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
                     {
                         if (x != null || string.IsNullOrEmpty(AuraId))
                         {
+                            Log.Warn($"Failed to find child aura by Id {AuraId}");
                             return Observable.Return(x);
                         }
 
                         return Observable.Merge(
-                                sharedContext.AuraList.ToObservableChangeSet().SkipInitial().ToUnit(),
-                                sharedContext.AuraList.ToObservableChangeSet().SkipInitial().WhenPropertyChanged(x => x.Id).ToUnit())
+                                sharedContext.AuraList.ToObservableChangeSet().SkipInitial().ToUnit())
+                            .StartWithDefault()
                             .Select(() => sharedContext.AuraList.FirstOrDefault(y => y.Id == AuraId))
                             .Where(x => x != null)
                             .Take(1);
                     })
                 .Switch()
+                .Do(y => Log.Debug(y != null ? $"Child Aura {y.TabName}({y.Id}) is selected as source, isActive{y.IsActive}" : $"Child aura selection is reset to null, auraId {AuraId}"))
                 .Subscribe(x => Aura = x, Log.HandleUiException)
                 .AddTo(Anchors);
             
