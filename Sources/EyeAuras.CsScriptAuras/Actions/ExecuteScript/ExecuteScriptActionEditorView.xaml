@@ -1,6 +1,12 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:executeScript="clr-namespace:EyeAuras.CsScriptAuras.Actions.ExecuteScript">
+                    xmlns:executeScript="clr-namespace:EyeAuras.CsScriptAuras.Actions.ExecuteScript"
+                    xmlns:controls="clr-namespace:EyeAuras.CsScriptAuras.Controls"
+                    xmlns:converters="http://schemas.kent.boogaart.com/converters"
+                    xmlns:system="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+                    xmlns:eye="http://coderush.net/poeeye/"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
     
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Converters.xaml" />
@@ -11,7 +17,51 @@
     </ResourceDictionary.MergedDictionaries>
     
     <DataTemplate DataType="{x:Type executeScript:ExecuteScriptActionEditor}">
-        <DockPanel DockPanel.Dock="Left"  >
+        
+        
+        <DockPanel >
+            <DockPanel DockPanel.Dock="Top">
+                <Button Command="{Binding ExecuteCommand}" Content="Execute script"/>
+                <materialDesign:PackIcon Margin="5,0,0,0" DockPanel.Dock="Left" VerticalAlignment="Center" Kind="ShieldWarning"
+                                         Foreground="{StaticResource NegativeBrush}"
+                                         Visibility="{Binding Source.Error, Converter={StaticResource NullToCollapsedConverter}}"
+                                         ToolTip="{Binding Source.Error}"/>
+                <TextBlock HorizontalAlignment="Right" Margin="5,0,0,0" Text="{Binding Source.State, StringFormat='State: {0}'}"/>
+            </DockPanel>
+            <ToggleButton DockPanel.Dock="Bottom"
+                          Style="{StaticResource MaterialDesignActionToggleButton}"
+                          Focusable="False" IsTabStop="False"
+                          Margin="0,2"
+                          IsChecked="{Binding ExpandEditor}">
+                <ToggleButton.Content>
+                    <TextBlock x:Name="EyeOn" Text="&#xf06e;" ToolTip="Enable Aura" Style="{StaticResource IconTextBlock}" Foreground="{StaticResource PositiveBrush}"/>
+                </ToggleButton.Content>
+                <materialDesign:ToggleButtonAssist.OnContent>
+                    <TextBlock x:Name="EyeOff" Text="&#xf070;" ToolTip="Disable Aura" Style="{StaticResource IconTextBlock}" Foreground="{StaticResource NegativeBrush}"/>
+                </materialDesign:ToggleButtonAssist.OnContent>
+            </ToggleButton>
+            <controls:ExtendedTextEditor DockPanel.Dock="Top" Margin="2" Padding="2" FontSize="14"
+                                         Foreground="{StaticResource OverlayWindowTextBrushKey}"
+                                         BorderThickness="1" BorderBrush="{DynamicResource SecondaryAccentBrush}"
+                                         TextContent="{Binding LiveSourceCode, UpdateSourceTrigger=PropertyChanged}">
+                <controls:ExtendedTextEditor.Style>
+                    <Style TargetType="{x:Type controls:ExtendedTextEditor}">
+                        <Setter Property="HorizontalScrollBarVisibility" Value="Auto"></Setter>
+                        <Setter Property="VerticalScrollBarVisibility" Value="Auto"></Setter>
+                        <Setter Property="VerticalContentAlignment" Value="Stretch"></Setter>
+                        <Setter Property="VerticalAlignment" Value="Stretch"></Setter>
+                        <Style.Triggers>
+                            <DataTrigger Binding="{Binding ExpandEditor}" Value="False">
+                                <Setter Property="MaxHeight" Value="400"></Setter>
+                            </DataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </controls:ExtendedTextEditor.Style>
+                
+                <i:Interaction.Behaviors>
+                    <eye:IgnoreMouseWheelBehavior IsEnabled="{Binding ExpandEditor}"/>
+                </i:Interaction.Behaviors>
+            </controls:ExtendedTextEditor>
         </DockPanel>
     </DataTemplate>
 </ResourceDictionary>
