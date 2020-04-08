@@ -40,31 +40,6 @@
                                     materialDesign:HintAssist.IsFloating="false"
                                     Style="{StaticResource MaterialNumericUpDownStyleKey}"
                                     Value="{Binding KeyStrokeDelay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-
-                <DockPanel Margin="10,0,0,0"  IsEnabled="{Binding Source.IsMouseGesture}" >
-                    <TextBlock DockPanel.Dock="Left"  Text="X"/>
-                    <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="60"
-                                        Margin="5,0,0,0"
-                                        DefaultValue="0"
-                                        Increment="1"
-                                        Minimum="0"
-                                        Maximum="65535"
-                                        materialDesign:HintAssist.IsFloating="false"
-                                        Style="{StaticResource MaterialNumericUpDownStyleKey}"
-                                        Value="{Binding MouseX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                
-                    <TextBlock DockPanel.Dock="Left" Margin="10,0,0,0" Text="Y"  />
-                    <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="60"
-                                        Margin="5,0,0,0"
-                                        DefaultValue="0"
-                                        Increment="1"
-                                        Minimum="0"
-                                        Maximum="65535"
-                                        materialDesign:HintAssist.IsFloating="false"
-                                        Style="{StaticResource MaterialNumericUpDownStyleKey}"
-                                        Value="{Binding MouseY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                    <CheckBox Margin="5,0,0,0" IsChecked="{Binding Source.RestoreMousePosition}">Restore Mouse position after click</CheckBox>
-                </DockPanel>
                 
                 <DockPanel Margin="5,0,0,0"  DockPanel.Dock="Right">
                     <ContentControl Content="{Binding Source.InstallDriverCommand}" Margin="5,0,0,0" FontSize="12"
@@ -87,6 +62,33 @@
                                Foreground="{StaticResource WarningBrush}"
                                Visibility="{Binding Source.IsUsb2KbdSimulator, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"/>
                 </Grid>
+            </DockPanel>
+            
+            <DockPanel DockPanel.Dock="Top"  Margin="5,10,0,0" 
+                       Visibility="{Binding Source.IsMouseGesture, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                       IsEnabled="{Binding Source.IsMouseGesture}" >
+                <TextBlock DockPanel.Dock="Left"  Text="X"/>
+                <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="60"
+                                    Margin="5,0,0,0"
+                                    DefaultValue="0"
+                                    Increment="1"
+                                    Minimum="0"
+                                    Maximum="65535"
+                                    materialDesign:HintAssist.IsFloating="false"
+                                    Style="{StaticResource MaterialNumericUpDownStyleKey}"
+                                    Value="{Binding MouseX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                
+                <TextBlock DockPanel.Dock="Left" Margin="10,0,0,0" Text="Y"  />
+                <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="60"
+                                    Margin="5,0,0,0"
+                                    DefaultValue="0"
+                                    Increment="1"
+                                    Minimum="0"
+                                    Maximum="65535"
+                                    materialDesign:HintAssist.IsFloating="false"
+                                    Style="{StaticResource MaterialNumericUpDownStyleKey}"
+                                    Value="{Binding MouseY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <CheckBox Margin="5,0,0,0" IsChecked="{Binding Source.RestoreMousePosition}">Restore Mouse position after click</CheckBox>
             </DockPanel>
             
         </DockPanel>
