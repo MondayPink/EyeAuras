@@ -46,6 +46,11 @@ namespace EyeAuras.DefaultAuras.Actions.WinActivate
                 return;
             }
 
+            if (activeWindow.Handle == UnsafeNative.GetForegroundWindow())
+            {
+                return;
+            }
+
             Log.Debug($"Bringing window {activeWindow} to foreground");
             UnsafeNative.SetForegroundWindow(activeWindow.Handle);
         }

@@ -11,7 +11,6 @@ namespace EyeAuras.Usb2kbd
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(Usb2KbdSimulator));
 
-        private readonly IConfigProvider<Usb2KbdConfig> configProvider;
         private readonly Usb2KbdWrapper wrapper;
         private bool isAvailable = false;
 
@@ -20,13 +19,16 @@ namespace EyeAuras.Usb2kbd
             try
             {
                 wrapper = new Usb2KbdWrapper();
+                
+                var defaultSimulator = new InputSimulator();
+                Mouse = defaultSimulator.Mouse;
+                InputDeviceState = defaultSimulator.InputDeviceState;
             }
             catch (Exception ex)
             {
                 Log.Warn($"Failed to initialize Usb2Kbd", ex);
             }
-            
-            this.configProvider = configProvider;
+
             configProvider.WhenChanged
                 .Subscribe(ApplyConfig)
                 .AddTo(Anchors);
@@ -49,7 +51,7 @@ namespace EyeAuras.Usb2kbd
 
         public IKeyboardSimulator Keyboard => wrapper;
 
-        public IMouseSimulator Mouse => wrapper?.Mouse;
+        public IMouseSimulator Mouse { get; }
         
         public IInputDeviceStateAdaptor InputDeviceState { get; }
 

@@ -73,7 +73,7 @@ namespace EyeAuras.Usb2kbd
                 typeof(InvokeMethod));
             
             Log.Debug($"Resetting Usb2Kbd using config {cfg.DumpToTextRaw()}");
-            PerformCall(Usb2KbdEventType.AllKeysUp, 0, 0, 0);
+            PerformCallOrThrow(Usb2KbdEventType.AllKeysUp, 0, 0, 0);
         }
 
         public Usb2KbdConfig Config

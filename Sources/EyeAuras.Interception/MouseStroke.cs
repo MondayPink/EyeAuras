@@ -12,5 +12,10 @@ namespace EyeAuras.Interception
         public Int32 X;
         public Int32 Y;
         public UInt16 Information;
+
+        public override string ToString()
+        {
+            return $"{nameof(State)}: {State}, {nameof(Flags)}: {Flags}, {nameof(Rolling)}: {Rolling}, {nameof(X)}: {X}, {nameof(Y)}: {Y}, {nameof(Information)}: {Information}";
+        }
     }
 }

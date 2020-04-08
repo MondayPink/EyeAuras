@@ -8,5 +8,10 @@ namespace EyeAuras.Interception
         [FieldOffset(0)] public MouseStroke Mouse;
 
         [FieldOffset(0)] public KeyStroke Key;
+
+        public override string ToString()
+        {
+            return $"{nameof(Mouse)}: {Mouse}, {nameof(Key)}: {Key}";
+        }
     }
 }

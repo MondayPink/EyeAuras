@@ -344,7 +344,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         
         public IGenericSettingsViewModel Settings { get; }
 
-        public Size MinSize { get; } = new Size(950, 650);
+        public Size MinSize { get; } = new Size(1150, 750);
 
         public IEyeAuraViewModel SelectedTab
         {

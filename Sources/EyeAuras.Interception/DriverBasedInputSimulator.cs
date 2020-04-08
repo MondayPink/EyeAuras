@@ -16,7 +16,9 @@ namespace EyeAuras.Interception
             
             try
             {
-                Keyboard = new DriverBasedKeyboardSimulator();
+                var simulator = new DriverBasedKeyboardSimulator();
+                Keyboard = simulator;
+                Mouse = simulator;
                 Log.Info($"Successfully loaded Interception driver-based input simulator");
 
                 IsAvailable = true;
@@ -25,13 +27,17 @@ namespace EyeAuras.Interception
             {
                 Log.Error($"Failed to load Interception driver-based keyboard simulator, falling back to {typeof(InputSimulator)}");
                 Keyboard = defaultSimulator.Keyboard;
+                Mouse = defaultSimulator.Mouse;
                 IsAvailable = false;
             }
         }
 
         public IKeyboardSimulator Keyboard { get; }
+        
         public IMouseSimulator Mouse { get; }
+        
         public IInputDeviceStateAdaptor InputDeviceState { get; }
+        
         public bool IsAvailable { get; }
     }
 }

@@ -16,7 +16,21 @@
     
     <DataTemplate DataType="{x:Type sendInput:SendInputActionEditor}">
         <DockPanel DockPanel.Dock="Left" Margin="10,0,0,0" >
-            <TextBlock Margin="5,0" Text="Up/Down Delay, ms" />
+            <ContentControl DockPanel.Dock="Top" Content="{Binding Source.WindowSelector}" />
+            
+            <DockPanel DockPanel.Dock="Top" Margin="0,10,0,0">
+                <materialDesign:PackIcon Margin="5,0,0,0" DockPanel.Dock="Left" VerticalAlignment="Center" Kind="ShieldWarning"
+                                         Foreground="{StaticResource NegativeBrush}"
+                                         Visibility="{Binding Source.Error, Converter={StaticResource NullToCollapsedConverter}}"
+                                         ToolTip="{Binding Source.Error}"/>
+                <DockPanel Margin="5,0,0,0">
+                    <TextBlock DockPanel.Dock="Left" Text="MouseButton or Key" />
+                    <hotkeys:HotKeyBox BorderBrush="{DynamicResource SecondaryAccentBrush}" BorderThickness="1" DockPanel.Dock="Left" Margin="5,0,0,0" HotKey="{Binding Source.Hotkey}" 
+                                       MinWidth="180"
+                                       VerticalAlignment="Center" AcceptsMouseKeys="True"/>
+                </DockPanel>
+                
+                <TextBlock Margin="5,0,0,0" Text="Up/Down Delay, ms" />
                 <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="60"
                                     Margin="5,0,0,0"
                                     DefaultValue="0"
@@ -26,22 +40,41 @@
                                     materialDesign:HintAssist.IsFloating="false"
                                     Style="{StaticResource MaterialNumericUpDownStyleKey}"
                                     Value="{Binding KeyStrokeDelay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                <DockPanel Margin="10,0,0,0"  IsEnabled="{Binding Source.IsMouseGesture}" >
+                    <TextBlock DockPanel.Dock="Left"  Text="X"/>
+                    <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="60"
+                                        Margin="5,0,0,0"
+                                        DefaultValue="0"
+                                        Increment="1"
+                                        Minimum="0"
+                                        Maximum="65535"
+                                        materialDesign:HintAssist.IsFloating="false"
+                                        Style="{StaticResource MaterialNumericUpDownStyleKey}"
+                                        Value="{Binding MouseX, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                 
-                <TextBlock DockPanel.Dock="Left" Margin="10,0,0,0" Text="Key" />
-                <hotkeys:HotKeyBox BorderBrush="{DynamicResource SecondaryAccentBrush}" BorderThickness="1" DockPanel.Dock="Left" Margin="5,0,0,0" HotKey="{Binding Source.Hotkey}" MinWidth="60"
-                                   VerticalAlignment="Center" />
-                <materialDesign:PackIcon Margin="5,0,0,0" DockPanel.Dock="Left" VerticalAlignment="Center" Kind="ShieldWarning"
-                                         Foreground="{StaticResource NegativeBrush}"
-                                         Visibility="{Binding Source.Error, Converter={StaticResource NullToCollapsedConverter}}"
-                                         ToolTip="{Binding Source.Error}"/>
+                    <TextBlock DockPanel.Dock="Left" Margin="10,0,0,0" Text="Y"  />
+                    <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="60"
+                                        Margin="5,0,0,0"
+                                        DefaultValue="0"
+                                        Increment="1"
+                                        Minimum="0"
+                                        Maximum="65535"
+                                        materialDesign:HintAssist.IsFloating="false"
+                                        Style="{StaticResource MaterialNumericUpDownStyleKey}"
+                                        Value="{Binding MouseY, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                    <CheckBox Margin="5,0,0,0" IsChecked="{Binding Source.RestoreMousePosition}">Restore Mouse position after click</CheckBox>
+                </DockPanel>
+                
+                <DockPanel Margin="5,0,0,0"  DockPanel.Dock="Right">
+                    <ContentControl Content="{Binding Source.InstallDriverCommand}" Margin="5,0,0,0" FontSize="12"
+                                    Visibility="{Binding Source.IsDriverInstalled, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"
+                                    eye:CommandWrapperHelper.Text="Install virtual keyboard/mouse driver" />
             
-                <ContentControl DockPanel.Dock="Right" Content="{Binding Source.InstallDriverCommand}" Margin="5,0,0,0" FontSize="12"
-                                Visibility="{Binding Source.IsDriverInstalled, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"
-                                eye:CommandWrapperHelper.Text="Install virtual keyboard driver" />
-            
-                <ContentControl DockPanel.Dock="Right" Content="{Binding Source.UninstallDriverCommand}" Margin="5,0,0,0" FontSize="12"
-                                Visibility="{Binding Source.IsDriverInstalled, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
-                                eye:CommandWrapperHelper.Text="Uninstall virtual keyboard driver" />    
+                    <ContentControl Content="{Binding Source.UninstallDriverCommand}" Margin="5,0,0,0" FontSize="12"
+                                    Visibility="{Binding Source.IsDriverInstalled, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                                    eye:CommandWrapperHelper.Text="Uninstall virtual keyboard/mouse driver" />    
+                </DockPanel>
             
                 <Grid Margin="15,0,0,0" DockPanel.Dock="Right" HorizontalAlignment="Right" >
                     <TextBlock FontWeight="Bold" Text="Using driver-based Input simulation"
@@ -54,6 +87,8 @@
                                Foreground="{StaticResource WarningBrush}"
                                Visibility="{Binding Source.IsUsb2KbdSimulator, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"/>
                 </Grid>
+            </DockPanel>
+            
         </DockPanel>
         
     </DataTemplate>
