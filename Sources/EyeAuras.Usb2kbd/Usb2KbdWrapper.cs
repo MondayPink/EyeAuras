@@ -54,6 +54,9 @@ namespace EyeAuras.Usb2kbd
                 .Where(x => x != null)
                 .Subscribe(ApplyConfig, Log.HandleUiException)
                 .AddTo(Anchors);
+
+            Keyboard = this;
+            Mouse = this;
         }
 
         private void ApplyConfig(Usb2KbdConfig cfg)
@@ -211,16 +214,15 @@ namespace EyeAuras.Usb2kbd
             return PerformCallOrThrow(Usb2KbdEventType.MouseAbsolute, 0, (int)coordinates.X, (int)coordinates.Y);
         }
 
-        private Point GetCurrentCoordinates()
+        private System.Drawing.Point GetCurrentCoordinates()
         {
-            var point = System.Windows.Forms.Cursor.Position;
-            return GetCoordinates(point.X, point.Y);
+            return System.Windows.Forms.Cursor.Position;
         }
         
-        private Point GetCoordinates(double absoluteX, double absoluteY)
+        private System.Drawing.Point GetCoordinates(double absoluteX, double absoluteY)
         {
             var screenSize = SystemInformation.VirtualScreen;
-            var point = new Point((int)(absoluteX / 65535 * screenSize.Width), (int)(absoluteY / 65535 * screenSize.Height));
+            var point = new System.Drawing.Point((int)(absoluteX / 65535 * screenSize.Width), (int)(absoluteY / 65535 * screenSize.Height));
             return point;
         }
 
@@ -314,6 +316,7 @@ namespace EyeAuras.Usb2kbd
         private IMouseSimulator ReleaseAllMouseButtons()
         {
             var point = GetCurrentCoordinates();
+            Log.Info($"Coords: {point}");
             return PerformCallOrThrow(Usb2KbdEventType.MouseAbsolute, 0, (int) point.X, (int) point.Y);
         }
 
@@ -329,15 +332,18 @@ namespace EyeAuras.Usb2kbd
 
         IMouseSimulator IMouseSimulator.Sleep(int millsecondsTimeout)
         {
-            throw new NotImplementedException();
+            Sleep(millsecondsTimeout);
+            return this;
         }
 
         IMouseSimulator IMouseSimulator.Sleep(TimeSpan timeout)
         {
-            throw new NotImplementedException();
+            Sleep(timeout);
+            return this;
         }
 
         public int MouseWheelClickSize { get; set; }
+        
         public IKeyboardSimulator Keyboard { get; }
 
         public IKeyboardSimulator Sleep(int millisecondsTimeout)

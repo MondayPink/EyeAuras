@@ -13,7 +13,7 @@ using PoeShared.Prism;
 
 namespace EyeAuras.Interception
 {
-    internal sealed class DriverBasedKeyboardSimulator : IKeyboardSimulator, IMouseSimulator
+    public sealed class DriverBasedKeyboardSimulator : IKeyboardSimulator, IMouseSimulator
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(DriverBasedKeyboardSimulator));
 

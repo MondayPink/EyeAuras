@@ -1,4 +1,5 @@
 using System;
+using System.Windows.Input;
 using WindowsInput;
 using EyeAuras.Interception;
 using log4net;
@@ -14,15 +15,17 @@ namespace EyeAuras.Usb2kbd
         private readonly Usb2KbdWrapper wrapper;
         private bool isAvailable = false;
 
-        public Usb2KbdSimulator(IConfigProvider<Usb2KbdConfig> configProvider)
+        public Usb2KbdSimulator(
+            DriverBasedKeyboardSimulator driverBasedKeyboardSimulator,
+            IConfigProvider<Usb2KbdConfig> configProvider)
         {
             try
             {
-                wrapper = new Usb2KbdWrapper();
-                
                 var defaultSimulator = new InputSimulator();
-                Mouse = defaultSimulator.Mouse;
                 InputDeviceState = defaultSimulator.InputDeviceState;
+                wrapper = new Usb2KbdWrapper();
+                Keyboard = wrapper;
+                Mouse = driverBasedKeyboardSimulator.Mouse;
             }
             catch (Exception ex)
             {
@@ -49,7 +52,7 @@ namespace EyeAuras.Usb2kbd
             }
         }
 
-        public IKeyboardSimulator Keyboard => wrapper;
+        public IKeyboardSimulator Keyboard {get; }
 
         public IMouseSimulator Mouse { get; }
         
