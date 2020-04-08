@@ -4,6 +4,8 @@ using System.IO;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows;
+using System.Windows.Forms;
 using WindowsInput;
 using WindowsInput.Native;
 using EyeAuras.Interception;
@@ -16,7 +18,7 @@ using ReactiveUI;
 
 namespace EyeAuras.Usb2kbd
 {
-    internal sealed class Usb2KbdWrapper : DisposableReactiveObject, IKeyboardSimulator
+    internal sealed class Usb2KbdWrapper : DisposableReactiveObject, IKeyboardSimulator, IMouseSimulator
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(Usb2KbdWrapper));
         private static readonly string Usb2KbdDllName = $"usb2kbd.dll";
@@ -30,7 +32,7 @@ namespace EyeAuras.Usb2kbd
 
         private Usb2KbdConfig config;
         private InvokeMethod dllMethod;
-        
+
         public Usb2KbdWrapper()
         {
             Log.Info($"Initializing Usb2Kbd native DLL {Usb2KbdDllName}");
@@ -127,7 +129,7 @@ namespace EyeAuras.Usb2kbd
             return resultCode;
         }
 
-        private IKeyboardSimulator PerformCallOrThrow(Usb2KbdEventType eventType, int keyCode, int eventValue, int mouseCoords)
+        private Usb2KbdWrapper PerformCallOrThrow(Usb2KbdEventType eventType, int keyCode, int eventValue, int mouseCoords)
         {
             var resultCode = PerformCall(eventType, keyCode, eventValue, mouseCoords);
             if (resultCode != 1)
@@ -197,6 +199,146 @@ namespace EyeAuras.Usb2kbd
         {
             throw new NotImplementedException();
         }
+
+        public IMouseSimulator MoveMouseBy(int pixelDeltaX, int pixelDeltaY)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator MoveMouseTo(double absoluteX, double absoluteY)
+        {
+            var coordinates = GetCoordinates(absoluteX, absoluteY);
+            return PerformCallOrThrow(Usb2KbdEventType.MouseAbsolute, 0, (int)coordinates.X, (int)coordinates.Y);
+        }
+
+        private Point GetCurrentCoordinates()
+        {
+            var point = System.Windows.Forms.Cursor.Position;
+            return GetCoordinates(point.X, point.Y);
+        }
+        
+        private Point GetCoordinates(double absoluteX, double absoluteY)
+        {
+            var screenSize = SystemInformation.VirtualScreen;
+            var point = new Point((int)(absoluteX / 65535 * screenSize.Width), (int)(absoluteY / 65535 * screenSize.Height));
+            return point;
+        }
+
+        public IMouseSimulator MoveMouseToPositionOnVirtualDesktop(double absoluteX, double absoluteY)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator LeftButtonDown()
+        {
+            var point = GetCurrentCoordinates();
+            return PerformCallOrThrow(Usb2KbdEventType.MouseAbsolute, 1, (int) point.X, (int) point.Y);
+        }
+
+        public IMouseSimulator LeftButtonUp()
+        {
+            return ReleaseAllMouseButtons();
+        }
+
+        public IMouseSimulator LeftButtonClick()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator LeftButtonDoubleClick()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator MiddleButtonDown()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator MiddleButtonUp()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator MiddleButtonClick()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator MiddleButtonDoubleClick()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator RightButtonDown()
+        {
+            var point = GetCurrentCoordinates();
+            return PerformCallOrThrow(Usb2KbdEventType.MouseAbsolute, 2, (int) point.X, (int) point.Y);
+        }
+
+        public IMouseSimulator RightButtonUp()
+        {
+            return ReleaseAllMouseButtons();
+        }
+
+        public IMouseSimulator RightButtonClick()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator RightButtonDoubleClick()
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator XButtonDown(int buttonId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator XButtonUp(int buttonId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator XButtonClick(int buttonId)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator XButtonDoubleClick(int buttonId)
+        {
+            throw new NotImplementedException();
+        }
+
+        private IMouseSimulator ReleaseAllMouseButtons()
+        {
+            var point = GetCurrentCoordinates();
+            return PerformCallOrThrow(Usb2KbdEventType.MouseAbsolute, 0, (int) point.X, (int) point.Y);
+        }
+
+        public IMouseSimulator VerticalScroll(int scrollAmountInClicks)
+        {
+            throw new NotImplementedException();
+        }
+
+        public IMouseSimulator HorizontalScroll(int scrollAmountInClicks)
+        {
+            throw new NotImplementedException();
+        }
+
+        IMouseSimulator IMouseSimulator.Sleep(int millsecondsTimeout)
+        {
+            throw new NotImplementedException();
+        }
+
+        IMouseSimulator IMouseSimulator.Sleep(TimeSpan timeout)
+        {
+            throw new NotImplementedException();
+        }
+
+        public int MouseWheelClickSize { get; set; }
+        public IKeyboardSimulator Keyboard { get; }
 
         public IKeyboardSimulator Sleep(int millisecondsTimeout)
         {
