@@ -1,6 +1,7 @@
 using System;
 using WindowsInput;
 using log4net;
+using PoeShared.Modularity;
 
 namespace EyeAuras.Interception
 {
@@ -8,15 +9,15 @@ namespace EyeAuras.Interception
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(DriverBasedInputSimulator));
 
-        public DriverBasedInputSimulator()
+        public DriverBasedInputSimulator(IAppArguments appArguments)
         {
             var defaultSimulator = new InputSimulator();
-            Mouse = defaultSimulator.Mouse;
             InputDeviceState = defaultSimulator.InputDeviceState;
-            
+
             try
-            {
-                var simulator = new DriverBasedKeyboardSimulator();
+            {                
+                Log.Info($"Initializing Interception driver-based input simulator");
+                var simulator = new DriverBasedKeyboardSimulator(appArguments);
                 Keyboard = simulator;
                 Mouse = simulator;
                 Log.Info($"Successfully loaded Interception driver-based input simulator");

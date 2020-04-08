@@ -13,6 +13,7 @@ using EyeAuras.Shared.Services;
 using JetBrains.Annotations;
 using log4net;
 using PoeShared.Modularity;
+using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using PoeShared.Scaffolding.WPF;
 using PoeShared.UI.Hotkeys;
@@ -46,13 +47,14 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
 
         public SendInputAction(
             IWindowSelectorViewModel windowSelector,
+            IFactory<WinActivateAction, IWindowSelectorViewModel> winActivateActionFactory,
             [Dependency(WellKnownKeyboardSimulators.InputSimulator)] IInputSimulatorEx windowsInputSimulator,
             [Dependency(WellKnownKeyboardSimulators.InterceptionDriver)] IInputSimulatorEx driverBasedSimulator,
             [Dependency(WellKnownKeyboardSimulators.Usb2Kbd)] IInputSimulatorEx usb2KbdSimulator,
             IHotkeyConverter hotkeyConverter)
         {
             WindowSelector = windowSelector;
-            winActivateAction = new WinActivateAction(windowSelector).AddTo(Anchors);
+            winActivateAction = winActivateActionFactory.Create(windowSelector).AddTo(Anchors);
             this.hotkeyConverter = hotkeyConverter;
             IsDriverInstalled = driverBasedSimulator.IsAvailable;
             InstallDriverCommand = CommandWrapper.Create(InstallDriverCommandExecuted, Observable.Return(!IsDriverInstalled));

@@ -64,18 +64,23 @@ namespace EyeAuras.Interception
          */
         public bool Load()
         {
+            Log.Debug($"Loading virtual keyboard and mouse device driver");
             if (IsLoaded)
             {
+                Log.Warn($"Driver is already loaded");
                 return false;
             }
             
+            Log.Debug($"Creating InterceptionDriver context");
             context = InterceptionDriver.CreateContext();
             if (context == IntPtr.Zero)
             {
+                Log.Warn($"Failed to create InterceptionDriver context");
                 IsLoaded = false;
                 return false;
             }
 
+            Log.Debug($"Starting callback thread");
             callbackThread = new Thread(KeyboardCallback)
             {
                 Priority = ThreadPriority.Highest, 
@@ -84,6 +89,7 @@ namespace EyeAuras.Interception
             };
             callbackThread.Start();
 
+            Log.Debug($"Successfully loaded InterceptionDriver");
             IsLoaded = true;
             return true;
         }
@@ -113,8 +119,9 @@ namespace EyeAuras.Interception
         {
             try
             {
+                Log.Debug($"Setting InterceptionDriver filters, Mouse: {MouseFilterMode}, Keyboard: {KeyboardFilterMode}");
                 InterceptionDriver.SetFilter(context, InterceptionDriver.IsKeyboard, (int) KeyboardFilterMode);
-                InterceptionDriver.SetFilter(context, InterceptionDriver.IsMouse, (int)MouseFilterMode.All);
+                InterceptionDriver.SetFilter(context, InterceptionDriver.IsMouse, (int) MouseFilterMode);
 
                 var stroke = new Stroke();
                 int deviceId;
@@ -123,16 +130,24 @@ namespace EyeAuras.Interception
                     if (keyboardDeviceId <= 0 && InterceptionDriver.IsKeyboard(deviceId) != 0)
                     {
                         keyboardDeviceId = deviceId;
-                        Log.Info($"Keyboard detected, deviceId: {deviceId}");
+                        Log.Info($"Keyboard detected, deviceId: {deviceId}, resetting KeyboardFilterMode");
+                        InterceptionDriver.SetFilter(context, InterceptionDriver.IsKeyboard, (int)KeyboardFilterMode.None);
                     }
                     
                     if (mouseDeviceId <= 0 && InterceptionDriver.IsMouse(deviceId) != 0)
                     {
                         mouseDeviceId = deviceId;
-                        Log.Info($"Mouse detected, deviceId: {deviceId}");
+                        Log.Info($"Mouse detected, deviceId: {deviceId}, resetting MouseFilterMode");
+                        InterceptionDriver.SetFilter(context, InterceptionDriver.IsMouse, (int)MouseFilterMode.None);
                     }
                     
                     InterceptionDriver.Send(context, deviceId, ref stroke, 1);
+                    
+                    if (mouseDeviceId > 0 && keyboardDeviceId > 0)
+                    {
+                        Log.Debug($"Keyboard and mouse detected, keyboardId: {keyboardDeviceId}, mouseId: {mouseDeviceId}, terminating loop");
+                        return;
+                    }
                 }
             }
             catch (Exception e)
@@ -141,7 +156,7 @@ namespace EyeAuras.Interception
             }
             finally
             {
-                Log.Debug($"Driver thread terminated, unloading context");
+                Log.Debug($"Keyboard&mouse handling thread terminated");
             }
         }
 

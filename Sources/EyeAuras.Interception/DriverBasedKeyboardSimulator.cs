@@ -7,21 +7,33 @@ using System.Threading;
 using System.Windows.Forms;
 using WindowsInput;
 using WindowsInput.Native;
+using log4net;
+using PoeShared.Modularity;
 using PoeShared.Prism;
 
 namespace EyeAuras.Interception
 {
     internal sealed class DriverBasedKeyboardSimulator : IKeyboardSimulator, IMouseSimulator
     {
+        private static readonly ILog Log = LogManager.GetLogger(typeof(DriverBasedKeyboardSimulator));
+
         private readonly InputWrapper wrapper;
         private readonly IConverter<VirtualKeyCode, uint> keysConverter = new KeysConverter();
         
-        public DriverBasedKeyboardSimulator()
+        public DriverBasedKeyboardSimulator(IAppArguments appArguments)
         {
-            wrapper = new InputWrapper
+            Log.Debug($"Initializing Driver-based keyboard simulator, debugMode: {appArguments.IsDebugMode}");
+            wrapper = new InputWrapper();
+            if (appArguments.IsDebugMode)
             {
-                KeyboardFilterMode = KeyboardFilterMode.KeyDown
-            };
+                wrapper.KeyboardFilterMode = KeyboardFilterMode.KeyDown | KeyboardFilterMode.KeyUp;
+                wrapper.MouseFilterMode = MouseFilterMode.RightDown | MouseFilterMode.RightUp;
+            }
+            else
+            {
+                wrapper.KeyboardFilterMode = KeyboardFilterMode.KeyDown | KeyboardFilterMode.KeyUp;
+                wrapper.MouseFilterMode = MouseFilterMode.RightDown | MouseFilterMode.RightUp;
+            }
             if (!wrapper.Load() || !wrapper.IsLoaded)
             {
                 throw new ApplicationException($"Failed to load Interception driver");
