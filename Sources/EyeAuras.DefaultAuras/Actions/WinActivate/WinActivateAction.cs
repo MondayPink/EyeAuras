@@ -1,4 +1,5 @@
 using System;
+using System.Threading;
 using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
 using log4net;
@@ -76,9 +77,9 @@ namespace EyeAuras.DefaultAuras.Actions.WinActivate
                 }
                 if (clock.Now - now > timeout)
                 {
-                    Log.Warn($"Failed to switch to window ${activeWindow.Handle.ToHexadecimal()}");
-                    break;
+                    throw new ApplicationException($"Failed to switch to window {UnsafeNative.GetWindowTitle(activeWindow.Handle)} (${activeWindow.Handle.ToHexadecimal()})");
                 }
+                Thread.Sleep(10);
             }
         }
     }

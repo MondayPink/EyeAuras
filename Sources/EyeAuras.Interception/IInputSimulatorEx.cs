@@ -1,3 +1,4 @@
+using System;
 using WindowsInput;
 
 namespace EyeAuras.Interception

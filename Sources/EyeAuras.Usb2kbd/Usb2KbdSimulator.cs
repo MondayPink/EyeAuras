@@ -1,10 +1,12 @@
 using System;
+using System.Reactive.Disposables;
 using System.Windows.Input;
 using WindowsInput;
 using EyeAuras.Interception;
 using log4net;
 using PoeShared.Modularity;
 using PoeShared.Scaffolding;
+using Unity;
 
 namespace EyeAuras.Usb2kbd
 {
@@ -16,7 +18,7 @@ namespace EyeAuras.Usb2kbd
         private bool isAvailable = false;
 
         public Usb2KbdSimulator(
-            DriverBasedKeyboardSimulator driverBasedKeyboardSimulator,
+            [Dependency(WellKnownKeyboardSimulators.InterceptionDriver)] IInputSimulatorEx driverBasedSimulator,
             IConfigProvider<Usb2KbdConfig> configProvider)
         {
             try
@@ -25,7 +27,7 @@ namespace EyeAuras.Usb2kbd
                 InputDeviceState = defaultSimulator.InputDeviceState;
                 wrapper = new Usb2KbdWrapper();
                 Keyboard = wrapper;
-                Mouse = driverBasedKeyboardSimulator.Mouse;
+                Mouse = driverBasedSimulator.Mouse;
             }
             catch (Exception ex)
             {
