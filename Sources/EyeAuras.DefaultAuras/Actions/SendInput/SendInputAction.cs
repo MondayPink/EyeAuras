@@ -1,4 +1,5 @@
 using System;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Windows;
@@ -16,6 +17,7 @@ using PoeShared.Modularity;
 using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using PoeShared.Scaffolding.WPF;
+using PoeShared.Services;
 using PoeShared.UI.Hotkeys;
 using ReactiveUI;
 using Unity;
@@ -31,6 +33,7 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         private static readonly ILog Log = LogManager.GetLogger(typeof(SendInputAction));
         private static readonly TimeSpan DefaultModifierKeyStrokeDelay = TimeSpan.FromMilliseconds(100);
 
+        private readonly IUserInputBlocker userInputBlocker;
         private readonly IHotkeyConverter hotkeyConverter;
         private readonly WinActivateAction winActivateAction;
 
@@ -44,8 +47,10 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         private Point mouseLocation;
         private IInputSimulatorEx inputSimulator;
         private bool restoreMousePosition;
+        private bool blockUserInput;
 
         public SendInputAction(
+            IUserInputBlocker userInputBlocker,
             IWindowSelectorViewModel windowSelector,
             IFactory<WinActivateAction, IWindowSelectorViewModel> winActivateActionFactory,
             [Dependency(WellKnownKeyboardSimulators.InputSimulator)] IInputSimulatorEx windowsInputSimulator,
@@ -55,6 +60,7 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         {
             WindowSelector = windowSelector;
             winActivateAction = winActivateActionFactory.Create(windowSelector).AddTo(Anchors);
+            this.userInputBlocker = userInputBlocker;
             this.hotkeyConverter = hotkeyConverter;
             IsDriverInstalled = driverBasedSimulator.IsAvailable;
             InstallDriverCommand = CommandWrapper.Create(InstallDriverCommandExecuted, Observable.Return(!IsDriverInstalled));
@@ -108,6 +114,12 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         {
             get => error;
             set => this.RaiseAndSetIfChanged(ref error, value);
+        }
+
+        public bool BlockUserInput
+        {
+            get => blockUserInput;
+            set => this.RaiseAndSetIfChanged(ref blockUserInput, value);
         }
 
         public bool IsDriverInstalled
@@ -201,6 +213,7 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
             WindowSelector.TargetWindow = source.TargetWindow;
             MouseLocation = source.MouseLocation;
             RestoreMousePosition = source.RestoreMousePosition;
+            BlockUserInput = source.BlockUserInput;
         }
 
         protected override void VisitSave(SendInputProperties source)
@@ -210,6 +223,7 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
             source.TargetWindow = WindowSelector.TargetWindow;
             source.RestoreMousePosition = RestoreMousePosition;
             source.MouseLocation = MouseLocation;
+            source.BlockUserInput = BlockUserInput;
         }
 
         public override string ActionName { get; } = "Send Input";
@@ -225,8 +239,13 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
 
             try
             {
+                Error = null;
+                
                 winActivateAction.Execute();
-                PerformInput();
+                using (blockUserInput ? userInputBlocker.Block() : Disposable.Empty)
+                {
+                    PerformInput();
+                }
             }
             catch (Exception e)
             {

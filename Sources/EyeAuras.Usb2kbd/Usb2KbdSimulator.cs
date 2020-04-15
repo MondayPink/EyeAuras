@@ -5,6 +5,7 @@ using WindowsInput;
 using EyeAuras.Interception;
 using log4net;
 using PoeShared.Modularity;
+using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using Unity;
 
@@ -18,20 +19,24 @@ namespace EyeAuras.Usb2kbd
         private bool isAvailable = false;
 
         public Usb2KbdSimulator(
-            [Dependency(WellKnownKeyboardSimulators.InterceptionDriver)] IInputSimulatorEx driverBasedSimulator,
+            [Dependency(WellKnownKeyboardSimulators.InputSimulator)] IInputSimulatorEx defaultSimulator,
+            IFactory<Usb2KbdWrapper> wrapperFactory,
             IConfigProvider<Usb2KbdConfig> configProvider)
         {
             try
             {
-                var defaultSimulator = new InputSimulator();
+                Log.Info($"Initializing Usb2Kbd device");
                 InputDeviceState = defaultSimulator.InputDeviceState;
-                wrapper = new Usb2KbdWrapper();
+                wrapper = wrapperFactory.Create();
                 Keyboard = wrapper;
-                Mouse = driverBasedSimulator.Mouse;
+                Mouse = wrapper;
+                Log.Info($"Successfully initialized Usb2Kbd device");
             }
             catch (Exception ex)
             {
-                Log.Warn($"Failed to initialize Usb2Kbd", ex);
+                Log.Warn($"Failed to initialize Usb2Kbd device", ex);
+                Keyboard = defaultSimulator.Keyboard;
+                Mouse = defaultSimulator.Mouse;
             }
 
             configProvider.WhenChanged

@@ -2,17 +2,16 @@ using PoeShared.Prism;
 
 namespace EyeAuras.Usb2kbd
 {
+    /// <summary>
+    /// USB HID UsageID
+    /// Table 12: Keyboard/Keypad page
+    /// https://docs.google.com/viewer?url=https%3A%2F%2Fwww.usb.org%2Fsites%2Fdefault%2Ffiles%2Fdocuments%2Fhut1_12v2.pdf
+    /// </summary>
     internal enum UsbHidScanCodes
     {
         KEY_NONE = 0x00,  // Nos key pressed
-        KEY_MOD_LCTRL = 0x01, 
-        KEY_MOD_LSHIFT = 0x02, 
-        KEY_MOD_LALT = 0x04, 
-        KEY_MOD_LMETA = 0x08, 
-        KEY_MOD_RCTRL = 0x10, 
-        KEY_MOD_RSHIFT = 0x20, 
-        KEY_MOD_RALT = 0x40, 
-        KEY_MOD_RMETA = 0x80, 
+        ErrorRollOver = 0x01, 
+        POSTFail = 0x02, 
         KEY_A = 0x04,  // Keyboard a and A
         KEY_B = 0x05,  // Keyboard b and B
         KEY_C = 0x06,  // Keyboard c and C

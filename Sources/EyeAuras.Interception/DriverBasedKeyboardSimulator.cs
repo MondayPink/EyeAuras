@@ -18,7 +18,7 @@ namespace EyeAuras.Interception
         private static readonly ILog Log = LogManager.GetLogger(typeof(DriverBasedKeyboardSimulator));
 
         private readonly InputWrapper wrapper;
-        private readonly IConverter<VirtualKeyCode, uint> keysConverter = new KeysConverter();
+        private readonly IConverter<VirtualKeyCode, uint> keysConverter = new VirtualKeyCodeToScanCodeConverter();
         
         public DriverBasedKeyboardSimulator(IAppArguments appArguments)
         {

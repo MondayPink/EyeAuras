@@ -18,6 +18,8 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         
         public bool RestoreMousePosition { get; set; }
         
+        public bool BlockUserInput { get; set; }
+        
         public int Version { get; set; } = 1;
     }
 }

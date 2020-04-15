@@ -4,6 +4,10 @@ using PoeShared.Prism;
 
 namespace EyeAuras.Usb2kbd
 {
+    /// <summary>
+    /// https://www.w3.org/TR/uievents-code/#key-media
+    /// http://www.kbdedit.com/manual/low_level_vk_list.html
+    /// </summary>
     internal sealed class KeyToUsbHidScanCodeConverter : IConverter<VirtualKeyCode, UsbHidScanCodes>
     {
         private readonly Dictionary<VirtualKeyCode, UsbHidScanCodes> keyToScanCode = new Dictionary<VirtualKeyCode, UsbHidScanCodes>
@@ -49,7 +53,6 @@ namespace EyeAuras.Usb2kbd
             {VirtualKeyCode.BACK, UsbHidScanCodes.KEY_BACKSPACE},
             {VirtualKeyCode.TAB, UsbHidScanCodes.KEY_TAB},
             {VirtualKeyCode.SPACE, UsbHidScanCodes.KEY_SPACE},
-            {VirtualKeyCode.OEM_MINUS, UsbHidScanCodes.KEY_MINUS},
             {VirtualKeyCode.F1, UsbHidScanCodes.KEY_F1},
             {VirtualKeyCode.F2, UsbHidScanCodes.KEY_F2},
             {VirtualKeyCode.F3, UsbHidScanCodes.KEY_F3},
@@ -62,8 +65,19 @@ namespace EyeAuras.Usb2kbd
             {VirtualKeyCode.F10, UsbHidScanCodes.KEY_F10},
             {VirtualKeyCode.F11, UsbHidScanCodes.KEY_F11},
             {VirtualKeyCode.F12, UsbHidScanCodes.KEY_F12},
+            {VirtualKeyCode.F13, UsbHidScanCodes.KEY_F13},
+            {VirtualKeyCode.F14, UsbHidScanCodes.KEY_F14},
+            {VirtualKeyCode.F15, UsbHidScanCodes.KEY_F15},
+            {VirtualKeyCode.F16, UsbHidScanCodes.KEY_F16},
+            {VirtualKeyCode.F17, UsbHidScanCodes.KEY_F17},
+            {VirtualKeyCode.F18, UsbHidScanCodes.KEY_F18},
+            {VirtualKeyCode.F19, UsbHidScanCodes.KEY_F19},
+            {VirtualKeyCode.F20, UsbHidScanCodes.KEY_F20},
+            {VirtualKeyCode.F21, UsbHidScanCodes.KEY_F21},
+            {VirtualKeyCode.F22, UsbHidScanCodes.KEY_F22},
+            {VirtualKeyCode.F23, UsbHidScanCodes.KEY_F23},
+            {VirtualKeyCode.F24, UsbHidScanCodes.KEY_F24},
             {VirtualKeyCode.SCROLL, UsbHidScanCodes.KEY_SCROLLLOCK},
-            {VirtualKeyCode.PAUSE, UsbHidScanCodes.KEY_PAUSE},
             {VirtualKeyCode.INSERT, UsbHidScanCodes.KEY_INSERT},
             {VirtualKeyCode.HOME, UsbHidScanCodes.KEY_HOME},
             {VirtualKeyCode.PRIOR, UsbHidScanCodes.KEY_PAGEUP},
@@ -75,6 +89,29 @@ namespace EyeAuras.Usb2kbd
             {VirtualKeyCode.DOWN, UsbHidScanCodes.KEY_DOWN},
             {VirtualKeyCode.UP, UsbHidScanCodes.KEY_UP},
             {VirtualKeyCode.NUMLOCK, UsbHidScanCodes.KEY_NUMLOCK},
+            {VirtualKeyCode.PAUSE, UsbHidScanCodes.KEY_PAUSE},
+            {VirtualKeyCode.CANCEL, UsbHidScanCodes.KEY_PAUSE},
+            {VirtualKeyCode.CAPITAL, UsbHidScanCodes.KEY_CAPSLOCK},
+            {VirtualKeyCode.OEM_MINUS, UsbHidScanCodes.KEY_MINUS},
+            {VirtualKeyCode.OEM_PLUS, UsbHidScanCodes.KEY_EQUAL},
+
+            {VirtualKeyCode.VOLUME_UP, UsbHidScanCodes.KEY_VOLUMEUP},
+            {VirtualKeyCode.VOLUME_DOWN, UsbHidScanCodes.KEY_VOLUMEDOWN},
+            {VirtualKeyCode.VOLUME_MUTE, UsbHidScanCodes.KEY_MUTE},
+            {VirtualKeyCode.CONTROL, UsbHidScanCodes.KEY_LEFTCTRL},
+            {VirtualKeyCode.LCONTROL, UsbHidScanCodes.KEY_LEFTCTRL},
+            {VirtualKeyCode.RCONTROL, UsbHidScanCodes.KEY_RIGHTCTRL},
+
+            {VirtualKeyCode.SHIFT, UsbHidScanCodes.KEY_LEFTSHIFT},
+            {VirtualKeyCode.RSHIFT, UsbHidScanCodes.KEY_RIGHTSHIFT},
+            {VirtualKeyCode.LSHIFT, UsbHidScanCodes.KEY_LEFTSHIFT},
+            
+            {VirtualKeyCode.MENU, UsbHidScanCodes.KEY_LEFTALT},
+            {VirtualKeyCode.LMENU, UsbHidScanCodes.KEY_LEFTALT},
+            {VirtualKeyCode.RMENU, UsbHidScanCodes.KEY_RIGHTALT},
+            {VirtualKeyCode.LWIN, UsbHidScanCodes.KEY_LEFTMETA},
+            {VirtualKeyCode.RWIN, UsbHidScanCodes.KEY_RIGHTMETA},
+            
             {VirtualKeyCode.NUMPAD1, UsbHidScanCodes.KEY_KP1},
             {VirtualKeyCode.NUMPAD2, UsbHidScanCodes.KEY_KP2},
             {VirtualKeyCode.NUMPAD3, UsbHidScanCodes.KEY_KP3},
@@ -85,14 +122,26 @@ namespace EyeAuras.Usb2kbd
             {VirtualKeyCode.NUMPAD8, UsbHidScanCodes.KEY_KP8},
             {VirtualKeyCode.NUMPAD9, UsbHidScanCodes.KEY_KP9},
             {VirtualKeyCode.NUMPAD0, UsbHidScanCodes.KEY_KP0},
-            {VirtualKeyCode.VOLUME_UP, UsbHidScanCodes.KEY_VOLUMEUP},
-            {VirtualKeyCode.VOLUME_DOWN, UsbHidScanCodes.KEY_VOLUMEDOWN},
-            {VirtualKeyCode.LCONTROL, UsbHidScanCodes.KEY_LEFTCTRL},
-            {VirtualKeyCode.LSHIFT, UsbHidScanCodes.KEY_LEFTSHIFT},
-            {VirtualKeyCode.LMENU, UsbHidScanCodes.KEY_LEFTALT},
-            {VirtualKeyCode.RCONTROL, UsbHidScanCodes.KEY_RIGHTCTRL},
-            {VirtualKeyCode.RSHIFT, UsbHidScanCodes.KEY_RIGHTSHIFT},
-            {VirtualKeyCode.RMENU, UsbHidScanCodes.KEY_RIGHTALT}
+            {VirtualKeyCode.ADD, UsbHidScanCodes.KEY_KPPLUS},
+            {VirtualKeyCode.SUBTRACT, UsbHidScanCodes.KEY_KPMINUS},
+            {VirtualKeyCode.MULTIPLY, UsbHidScanCodes.KEY_KPASTERISK},
+            {VirtualKeyCode.DECIMAL, UsbHidScanCodes.KEY_KPDOT},
+            {VirtualKeyCode.DIVIDE, UsbHidScanCodes.KEY_KPSLASH},
+            
+            {VirtualKeyCode.MEDIA_NEXT_TRACK, UsbHidScanCodes.KEY_MEDIA_NEXTSONG},
+            {VirtualKeyCode.MEDIA_PREV_TRACK, UsbHidScanCodes.KEY_MEDIA_PREVIOUSSONG},
+            {VirtualKeyCode.MEDIA_PLAY_PAUSE, UsbHidScanCodes.KEY_MEDIA_PLAYPAUSE},
+            {VirtualKeyCode.MEDIA_STOP, UsbHidScanCodes.KEY_MEDIA_STOP},
+            {VirtualKeyCode.BROWSER_HOME, UsbHidScanCodes.KEY_MEDIA_WWW},
+            {VirtualKeyCode.BROWSER_STOP, UsbHidScanCodes.KEY_MEDIA_STOP},
+            {VirtualKeyCode.BROWSER_FORWARD, UsbHidScanCodes.KEY_MEDIA_FORWARD},
+            {VirtualKeyCode.BROWSER_BACK, UsbHidScanCodes.KEY_MEDIA_BACK},
+            {VirtualKeyCode.BROWSER_SEARCH, UsbHidScanCodes.KEY_MEDIA_FIND},
+            {VirtualKeyCode.BROWSER_REFRESH, UsbHidScanCodes.KEY_MEDIA_REFRESH},
+            {VirtualKeyCode.SLEEP, UsbHidScanCodes.KEY_MEDIA_SLEEP},
+            {VirtualKeyCode.SNAPSHOT, UsbHidScanCodes.KEY_SYSRQ},
+            {VirtualKeyCode.HELP, UsbHidScanCodes.KEY_HELP},
+
         };
 
         public UsbHidScanCodes Convert(VirtualKeyCode value)

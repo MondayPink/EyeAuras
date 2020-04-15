@@ -40,7 +40,11 @@
                                     materialDesign:HintAssist.IsFloating="false"
                                     Style="{StaticResource MaterialNumericUpDownStyleKey}"
                                     Value="{Binding KeyStrokeDelay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                
+                <CheckBox Margin="5,0,0,0" IsChecked="{Binding Source.BlockUserInput}" 
+                          Visibility="Collapsed"
+                          IsEnabled="False" 
+                          ToolTip="Not fully supported yet" >Block User input while running</CheckBox>
+
                 <DockPanel Margin="5,0,0,0"  DockPanel.Dock="Right">
                     <ContentControl Content="{Binding Source.InstallDriverCommand}" Margin="5,0,0,0" FontSize="12"
                                     Visibility="{Binding Source.IsDriverInstalled, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"

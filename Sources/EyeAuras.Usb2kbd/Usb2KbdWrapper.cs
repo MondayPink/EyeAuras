@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Reactive.Linq;
 using System.Runtime.InteropServices;
@@ -15,6 +16,7 @@ using PoeShared;
 using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using ReactiveUI;
+using Point = System.Drawing.Point;
 
 namespace EyeAuras.Usb2kbd
 {
@@ -23,6 +25,7 @@ namespace EyeAuras.Usb2kbd
         private static readonly ILog Log = LogManager.GetLogger(typeof(Usb2KbdWrapper));
         private static readonly string Usb2KbdDllName = $"usb2kbd.dll";
         private static readonly int MinDelayInMilliseconds = 10;
+        private static readonly int MouseMovementIterations = 10;
 
         [UnmanagedFunctionPointer(CallingConvention.Winapi)]
         private delegate int InvokeMethod(Usb2KbdEventType eventType, int keyCode, int eventValue, int mouseCoords, string deviceId, int b6);
@@ -33,7 +36,7 @@ namespace EyeAuras.Usb2kbd
         private Usb2KbdConfig config;
         private InvokeMethod dllMethod;
 
-        public Usb2KbdWrapper()
+        public Usb2KbdWrapper(IClock clock)
         {
             Log.Info($"Initializing Usb2Kbd native DLL {Usb2KbdDllName}");
             
@@ -108,28 +111,34 @@ namespace EyeAuras.Usb2kbd
             {
                 Guard.ArgumentIsBetween(() => keyCode, 4, 231, true);
             }
-            if (eventType == Usb2KbdEventType.MouseAbsolute || 
-                eventType == Usb2KbdEventType.MouseRelative || 
-                eventType == Usb2KbdEventType.MouseAbsoluteNoAcceleration || 
-                eventType == Usb2KbdEventType.MouseRelativeNoAcceleration)
+            if (eventType == Usb2KbdEventType.MouseAbsoluteDisableAcceleration || 
+                eventType == Usb2KbdEventType.MouseRelativeDisableAcceleration || 
+                eventType == Usb2KbdEventType.MouseAbsolute || 
+                eventType == Usb2KbdEventType.MouseRelative)
             {
                 Guard.ArgumentIsBetween(() => keyCode, 0, 7, true);
             }
-            
-            var resultCode = dllMethod(eventType, keyCode, eventValue, mouseCoords, config.DeviceId, config.SerialNumber);
-            if (resultCode != 1)
+
+            try
             {
-                if (eventType == Usb2KbdEventType.KeyDown || eventType == Usb2KbdEventType.KeyUp)
+                var resultCode = dllMethod(eventType, keyCode, eventValue, mouseCoords, config.DeviceId, config.SerialNumber);
+                if (resultCode != 1)
                 {
-                    Log.Warn($"Failed to perform keyboard operation, trying to restore keyboard state, eventType={eventType}({(int)eventType}), keyCode: {keyCode}, eventValue: {eventValue}, mouseCoords: {mouseCoords}");
-                    if (PerformCall(Usb2KbdEventType.AllKeysUp, 0, 0, 0) != 1)
+                    if (eventType == Usb2KbdEventType.KeyDown || eventType == Usb2KbdEventType.KeyUp)
                     {
-                        Log.Warn($"Failed to restore keyboard state");
+                        Log.Warn($"Failed to perform keyboard operation, trying to restore keyboard state, eventType={eventType}({(int)eventType}), keyCode: {keyCode}, eventValue: {eventValue}, mouseCoords: {mouseCoords}");
+                        if (PerformCall(Usb2KbdEventType.AllKeysUp, 0, 0, 0) != 1)
+                        {
+                            Log.Warn($"Failed to restore keyboard state");
+                        }
                     }
                 }
+                return resultCode;
             }
-
-            return resultCode;
+            finally
+            {
+                Sleep(MinDelayInMilliseconds);
+            }
         }
 
         private Usb2KbdWrapper PerformCallOrThrow(Usb2KbdEventType eventType, int keyCode, int eventValue, int mouseCoords)
@@ -211,7 +220,20 @@ namespace EyeAuras.Usb2kbd
         public IMouseSimulator MoveMouseTo(double absoluteX, double absoluteY)
         {
             var coordinates = GetCoordinates(absoluteX, absoluteY);
-            return PerformCallOrThrow(Usb2KbdEventType.MouseAbsolute, 0, (int)coordinates.X, (int)coordinates.Y);
+            
+            var sw = Stopwatch.StartNew();
+            Point point;
+            var iterationIdx = 0;
+            while (!(point = GetCurrentCoordinates()).Equals(coordinates) && 
+                   sw.ElapsedMilliseconds < MinDelayInMilliseconds * MouseMovementIterations && 
+                   iterationIdx < MouseMovementIterations)
+            {
+                Log.Info($"[{iterationIdx + 1} / {MouseMovementIterations}] Moving mouse from {point} => {coordinates}, time elapsed: {sw.ElapsedMilliseconds:F0}ms");
+                PerformCallOrThrow(Usb2KbdEventType.MouseAbsolute, 0, coordinates.X, coordinates.Y);
+                iterationIdx++;
+            }
+
+            return this;
         }
 
         private System.Drawing.Point GetCurrentCoordinates()
@@ -234,7 +256,8 @@ namespace EyeAuras.Usb2kbd
         public IMouseSimulator LeftButtonDown()
         {
             var point = GetCurrentCoordinates();
-            return PerformCallOrThrow(Usb2KbdEventType.MouseAbsolute, 1, (int) point.X, (int) point.Y);
+            Log.Debug($"Clicking {MouseButton.LeftButton} @ {point}");
+            return PerformCallOrThrow(Usb2KbdEventType.MouseAbsoluteDisableAcceleration, 1, (int) point.X, (int) point.Y);
         }
 
         public IMouseSimulator LeftButtonUp()
@@ -275,7 +298,8 @@ namespace EyeAuras.Usb2kbd
         public IMouseSimulator RightButtonDown()
         {
             var point = GetCurrentCoordinates();
-            return PerformCallOrThrow(Usb2KbdEventType.MouseAbsolute, 2, (int) point.X, (int) point.Y);
+            Log.Debug($"Clicking {MouseButton.RightButton} @ {point}");
+            return PerformCallOrThrow(Usb2KbdEventType.MouseAbsoluteDisableAcceleration, 2, (int) point.X, (int) point.Y);
         }
 
         public IMouseSimulator RightButtonUp()
@@ -316,8 +340,8 @@ namespace EyeAuras.Usb2kbd
         private IMouseSimulator ReleaseAllMouseButtons()
         {
             var point = GetCurrentCoordinates();
-            Log.Info($"Coords: {point}");
-            return PerformCallOrThrow(Usb2KbdEventType.MouseAbsolute, 0, (int) point.X, (int) point.Y);
+            Log.Info($"Releasing all mouse buttons @ {point}");
+            return PerformCallOrThrow(Usb2KbdEventType.MouseAbsoluteDisableAcceleration, 0, (int) point.X, (int) point.Y);
         }
 
         public IMouseSimulator VerticalScroll(int scrollAmountInClicks)
