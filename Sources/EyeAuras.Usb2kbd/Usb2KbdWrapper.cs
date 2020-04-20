@@ -146,7 +146,7 @@ namespace EyeAuras.Usb2kbd
             var resultCode = PerformCall(eventType, keyCode, eventValue, mouseCoords);
             if (resultCode != 1)
             {
-                throw new ApplicationException($"Failed to perform call, eventType={eventType}({(int)eventType}), keyCode: {keyCode}, eventValue: {eventValue}, mouseCoords: {mouseCoords}");
+                throw new ApplicationException($"Failed to perform call, result: {resultCode}, eventType={eventType}({(int)eventType}), keyCode: {keyCode}, eventValue: {eventValue}, mouseCoords: {mouseCoords}");
             }
 
             return this;

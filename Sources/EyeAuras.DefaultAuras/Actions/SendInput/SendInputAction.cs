@@ -13,6 +13,7 @@ using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
 using JetBrains.Annotations;
 using log4net;
+using PoeShared;
 using PoeShared.Modularity;
 using PoeShared.Prism;
 using PoeShared.Scaffolding;
@@ -103,7 +104,7 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
                             InputSimulator = windowsInputSimulator;
                         }
                         Log.Debug($"Initialized simulator, current state: {(IsDriverBasedSimulator ? "Interception-Based" : "InputSimulator")}");
-                    })
+                    }, Log.HandleUiException)
                 .AddTo(Anchors);
         }
         

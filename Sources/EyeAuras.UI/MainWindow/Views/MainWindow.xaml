@@ -149,11 +149,6 @@
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
 
-                    <TextBlock x:Name="NoTabsTip" Grid.Row="0" Grid.Column="0" FontSize="16" Text="&#x2196; Click New aura'" VerticalAlignment="Top"
-                               HorizontalAlignment="Center"
-                               Visibility="{Binding SelectedTab, Converter={StaticResource NotNullToCollapsedConverter}}" />
-
-
                     <DockPanel Grid.Column="0" Grid.Row="0" x:Name="WindowContent">
                         <Border BorderBrush="{StaticResource SecondaryAccentBrush}" BorderThickness="0,0,1,0">
                             <DockPanel Margin="2.5">
@@ -205,7 +200,12 @@
                                                 eye:CommandWrapperHelper.Text="New aura"
                                                 ToolTip="CTRL+T Create new tab" />
                             </DockPanel>
-                            
+
+                            <TextBlock DockPanel.Dock="Top" x:Name="NoTabsTip" Grid.Row="0" Grid.Column="0" FontSize="16" Text="Add your first Aura &#x2196;" VerticalAlignment="Top"
+                                       IsEnabled="False" 
+                                       HorizontalAlignment="Center"
+                                       Visibility="{Binding SelectedTab, Converter={StaticResource NotNullToCollapsedConverter}}" />
+
                             <dragablz:TabablzControl Margin="2.5" DockPanel.Dock="Top"
                                                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                                  x:Name="AuraList"
