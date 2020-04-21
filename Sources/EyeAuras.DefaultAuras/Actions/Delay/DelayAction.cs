@@ -35,7 +35,7 @@ namespace EyeAuras.DefaultAuras.Actions.Delay
         
         public override string ActionDescription { get; } = "Postpones next action for specified time";
         
-        public override void Execute()
+        protected override void ExecuteInternal()
         {
             Log.Debug($"Delaying execution for {Delay}");
             Thread.Sleep(Delay);

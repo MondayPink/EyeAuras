@@ -43,7 +43,6 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         private bool isDriverBasedSimulator;
         private bool isUsb2KbdSimulator;
         private bool isWindowsSimulator;
-        private string error;
         private bool isDriverInstalled;
         private Point mouseLocation;
         private IInputSimulatorEx inputSimulator;
@@ -110,12 +109,6 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         
         [ComparisonIgnore]
         public IWindowSelectorViewModel WindowSelector { get; }
-
-        public string Error
-        {
-            get => error;
-            set => this.RaiseAndSetIfChanged(ref error, value);
-        }
 
         public bool BlockUserInput
         {
@@ -231,7 +224,7 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         
         public override string ActionDescription { get; } = "Send input via keyboard/mouse emulation";
         
-        public override void Execute()
+        protected override void ExecuteInternal()
         {
             if (Hotkey == null || Hotkey.IsEmpty)
             {
@@ -240,8 +233,6 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
 
             try
             {
-                Error = null;
-                
                 winActivateAction.Execute();
                 using (blockUserInput ? userInputBlocker.Block() : Disposable.Empty)
                 {
@@ -251,7 +242,7 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
             catch (Exception e)
             {
                 Log.Warn($"Failed to send input, hotkey: {hotkey}", e);
-                Error = e.ToString();
+                throw;
             }
         }
 

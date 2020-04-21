@@ -37,6 +37,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EyeAuras.Interception", "Ey
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EyeAuras.Usb2kbd", "EyeAuras.Usb2kbd\EyeAuras.Usb2kbd.csproj", "{49DC7A54-50E6-48BE-8A2B-19A24CEB4E38}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EyeAuras.AdvancedAuras", "EyeAuras.AdvancedAuras\EyeAuras.AdvancedAuras.csproj", "{DCC02D77-9D1F-47CB-9169-9036ECC59662}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug.Plus|Any CPU = Debug.Plus|Any CPU
@@ -178,6 +180,14 @@ Global
 		{49DC7A54-50E6-48BE-8A2B-19A24CEB4E38}.Release.Plus|Any CPU.Build.0 = Debug|Any CPU
 		{49DC7A54-50E6-48BE-8A2B-19A24CEB4E38}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{49DC7A54-50E6-48BE-8A2B-19A24CEB4E38}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DCC02D77-9D1F-47CB-9169-9036ECC59662}.Debug.Plus|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCC02D77-9D1F-47CB-9169-9036ECC59662}.Debug.Plus|Any CPU.Build.0 = Debug|Any CPU
+		{DCC02D77-9D1F-47CB-9169-9036ECC59662}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCC02D77-9D1F-47CB-9169-9036ECC59662}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DCC02D77-9D1F-47CB-9169-9036ECC59662}.Release.Plus|Any CPU.ActiveCfg = Debug|Any CPU
+		{DCC02D77-9D1F-47CB-9169-9036ECC59662}.Release.Plus|Any CPU.Build.0 = Debug|Any CPU
+		{DCC02D77-9D1F-47CB-9169-9036ECC59662}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DCC02D77-9D1F-47CB-9169-9036ECC59662}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

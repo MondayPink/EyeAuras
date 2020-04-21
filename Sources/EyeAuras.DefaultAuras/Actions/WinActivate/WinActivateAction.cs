@@ -52,7 +52,7 @@ namespace EyeAuras.DefaultAuras.Actions.WinActivate
             source.WindowMatchParams = TargetWindow;
         }
 
-        public override void Execute()
+        protected override void ExecuteInternal()
         {
             var activeWindow = WindowSelector.ActiveWindow;
             if (activeWindow == null)

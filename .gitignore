@@ -228,6 +228,7 @@ Sources/PoeShared.OpenCV
 Sources/PoeShared.Squirrel
 Sources/OnTopReplica
 Sources/EyeAuras.OpenCVAuras
+Sources/EyeAuras.AdvancedAuras
 Sources/EyeAuras.Loader
 Sources/EyeAuras.Web
 Sources/PoeShared.Native

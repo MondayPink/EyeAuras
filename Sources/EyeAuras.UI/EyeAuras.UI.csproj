@@ -37,6 +37,7 @@
             <ItemGroup>
                 <ProjectReference Include="..\EyeAuras.Loader\EyeAuras.Loader.csproj" />
                 <ProjectReference Include="..\EyeAuras.OpenCVAuras\EyeAuras.OpenCVAuras.csproj" />
+                <ProjectReference Include="..\EyeAuras.AdvancedAuras\EyeAuras.AdvancedAuras.csproj" />
             </ItemGroup>
         </When>
     </Choose>

@@ -13,6 +13,8 @@ namespace EyeAuras.UI.Core.ViewModels
             private set => RaiseAndSetIfChanged(ref actionDescription, value);
         }
 
+        public string Error { get; }
+
         public void Execute()
         {
         }

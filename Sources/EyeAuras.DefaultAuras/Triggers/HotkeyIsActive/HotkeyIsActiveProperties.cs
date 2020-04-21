@@ -13,5 +13,7 @@ namespace EyeAuras.DefaultAuras.Triggers.HotkeyIsActive
         public bool SuppressKey { get; set; } = true;
         
         public bool TriggerValue { get; set; } = true;
+        
+        public override int Version { get; set; } = 1;
     }
 }

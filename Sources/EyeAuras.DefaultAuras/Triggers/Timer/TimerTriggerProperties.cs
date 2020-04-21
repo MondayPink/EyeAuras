@@ -8,5 +8,6 @@ namespace EyeAuras.DefaultAuras.Triggers.Timer
         public TimeSpan ActivationPeriod { get; set; }
         
         public TimeSpan DeactivationTimeout { get; set; }
+        public override int Version { get; set; } = 1;
     }
 }

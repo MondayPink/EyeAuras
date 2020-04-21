@@ -38,7 +38,7 @@ namespace EyeAuras.DefaultAuras.Actions.PlaySound
         
         public override string ActionDescription { get; } = "plays specified sound";
         
-        public override void Execute()
+        protected override void ExecuteInternal()
         {
             if (string.IsNullOrEmpty(notification))
             {
