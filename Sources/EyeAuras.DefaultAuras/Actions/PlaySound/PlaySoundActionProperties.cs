@@ -2,7 +2,7 @@ using EyeAuras.Shared;
 
 namespace EyeAuras.DefaultAuras.Actions.PlaySound
 {
-    internal sealed class PlaySoundActionProperties : IAuraProperties
+    public sealed class PlaySoundActionProperties : IAuraProperties
     {
         public string Notification { get; set; }
 

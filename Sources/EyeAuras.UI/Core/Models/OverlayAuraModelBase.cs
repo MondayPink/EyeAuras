@@ -59,7 +59,7 @@ namespace EyeAuras.UI.Core.Models
         private TimeSpan whileActiveActionsTimeout;
 
         public OverlayAuraModelBase(
-            [NotNull] ISharedContext sharedContext,
+            [NotNull] IEyeAuraSharedContext sharedContext,
             [NotNull] IAuraRepository repository,
             [NotNull] IConfigSerializer configSerializer,
             [NotNull] IUniqueIdGenerator idGenerator,

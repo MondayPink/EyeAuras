@@ -30,9 +30,9 @@
             </Grid>
             <ComboBox DockPanel.Dock="Left" 
                       Margin="5, 0"
-                      ItemsSource="{Binding AuraList}" SelectedItem="{Binding Aura}">
+                      ItemsSource="{Binding AuraList}" SelectedItem="{Binding AuraTab}">
                 <ComboBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type viewModels:IEyeAuraViewModel}">
+                    <DataTemplate DataType="{x:Type viewModels:IAuraTabViewModel}">
                         <TextBlock Text="{Binding TabName}"/>
                     </DataTemplate>
                 </ComboBox.ItemTemplate>

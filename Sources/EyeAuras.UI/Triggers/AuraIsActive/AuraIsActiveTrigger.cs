@@ -1,5 +1,4 @@
 using EyeAuras.Shared;
-using EyeAuras.UI.Core.Services;
 using log4net;
 using ReactiveUI;
 using System;
@@ -7,7 +6,6 @@ using System.Linq;
 using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
-using EyeAuras.UI.Core.ViewModels;
 using JetBrains.Annotations;
 using PoeShared;
 using PoeShared.Scaffolding;
@@ -19,7 +17,7 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
         private static readonly ILog Log = LogManager.GetLogger(typeof(AuraIsActiveTrigger));
 
         private string auraId;
-        private IEyeAuraViewModel aura;
+        private IAuraViewModel aura;
 
         public AuraIsActiveTrigger([NotNull] ISharedContext sharedContext)
         {
@@ -28,10 +26,13 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
                 .Select(
                     x =>
                     {
-                        if (x != null || string.IsNullOrEmpty(AuraId))
+                        if (x != null)
                         {
-                            Log.Warn($"Failed to find child aura by Id {AuraId}");
                             return Observable.Return(x);
+                        }
+                        if (string.IsNullOrEmpty(AuraId))
+                        {
+                            return Observable.Empty<IAuraViewModel>();
                         }
 
                         return Observable.Merge(
@@ -43,19 +44,19 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
                     })
                 .Switch()
                 .Do(y => Log.Debug(y != null ? $"Child Aura {y.TabName}({y.Id}) is selected as source, isActive{y.IsActive}" : $"Child aura selection is reset to null, auraId {AuraId}"))
-                .Subscribe(x => Aura = x, Log.HandleUiException)
+                .Subscribe(x => AuraTab = x, Log.HandleUiException)
                 .AddTo(Anchors);
             
-            this.WhenAnyValue(x => x.Aura)
-                .Select(_ => Aura == null 
+            this.WhenAnyValue(x => x.AuraTab)
+                .Select(_ => AuraTab == null 
                     ? Observable.Return(false) 
-                    : Aura.WhenAnyValue(y => y.IsActive).Do(y => Log.Debug($"Child Aura {Aura.TabName}({Aura.Id}) IsActive changed to {Aura.IsActive}")))
+                    : AuraTab.WhenAnyValue(y => y.IsActive).Do(y => Log.Debug($"Child Aura {AuraTab.TabName}({AuraTab.Id}) IsActive changed to {AuraTab.IsActive}")))
                 .Switch()
                 .Subscribe(isActive => IsActive = isActive, Log.HandleUiException)
                 .AddTo(Anchors);
         }
 
-        public IEyeAuraViewModel Aura
+        public IAuraViewModel AuraTab
         {
             get => aura;
             private set => this.RaiseAndSetIfChanged(ref aura, value);

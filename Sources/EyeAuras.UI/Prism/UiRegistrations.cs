@@ -25,7 +25,7 @@ namespace EyeAuras.UI.Prism
                 .RegisterSingleton<AuraRepository>(typeof(IAuraRepository), typeof(IAuraRegistrator))
                 .RegisterSingleton<MainWindowBlocksService>(typeof(IMainWindowBlocksProvider), typeof(IMainWindowBlocksRepository))
                 .RegisterSingleton<IWindowListProvider, WindowListProvider>()
-                .RegisterSingleton<ISharedContext, SharedContext>()
+                .RegisterSingleton<SharedContext>(typeof(IEyeAuraSharedContext), typeof(ISharedContext))
                 .RegisterSingleton<IRegionSelectorService, RegionSelectorService>()
                 .RegisterSingleton<IUniqueIdGenerator, UniqueIdGenerator>()
                 .RegisterSingleton<IWindowMatcher, WindowMatcher>()
@@ -39,7 +39,7 @@ namespace EyeAuras.UI.Prism
                 .RegisterType<IOverlayAuraModel, OverlayAuraModelBase>()
                 .RegisterType<IRegionSelectorViewModel, RegionSelectorViewModel>()
                 .RegisterType<IPropertyEditorViewModel, PropertyEditorViewModel>()
-                .RegisterType<IOverlayAuraViewModel, OverlayAuraViewModel>()
+                .RegisterType<IOverlayAuraTabViewModel, OverlayAuraTabViewModel>()
                 .RegisterType<IEyeOverlayViewModel, EyeOverlayViewModel>();
 
             Container.RegisterSingleton<IConfigProvider, ConfigProviderFromFile>();

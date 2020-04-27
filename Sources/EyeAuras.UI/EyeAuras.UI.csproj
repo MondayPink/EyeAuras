@@ -22,6 +22,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\EyeAuras.Controls\EyeAuras.Controls.csproj" />
+      <ProjectReference Include="..\EyeAuras.CsScriptAuras\EyeAuras.CsScriptAuras.csproj" />
       <ProjectReference Include="..\EyeAuras.DefaultAuras\EyeAuras.DefaultAuras.csproj" />
       <ProjectReference Include="..\EyeAuras.OnTopReplica\EyeAuras.OnTopReplica.csproj" />
       <ProjectReference Include="..\EyeAuras.Shared\EyeAuras.Shared.csproj" />

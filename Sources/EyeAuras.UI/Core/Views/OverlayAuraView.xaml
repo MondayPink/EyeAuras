@@ -10,7 +10,7 @@
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <DataTemplate DataType="{x:Type viewModels:OverlayAuraViewModel}">
+    <DataTemplate DataType="{x:Type viewModels:OverlayAuraTabViewModel}">
         
         
         <Grid>

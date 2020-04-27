@@ -13,22 +13,22 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
     internal sealed class AuraIsActiveTriggerEditor : AuraPropertiesEditorBase<AuraIsActiveTrigger>
     {
         private readonly SerialDisposable activeSourceAnchors = new SerialDisposable();
-        private IEyeAuraViewModel aura;
+        private IAuraViewModel aura;
 
         public AuraIsActiveTriggerEditor(ISharedContext sharedContext)
         {
             activeSourceAnchors.AddTo(Anchors);
 
-            AuraList = new ReadOnlyObservableCollection<IEyeAuraViewModel>(sharedContext.AuraList);
+            AuraList = sharedContext.AuraList;
              
             this.WhenAnyValue(x => x.Source)
                 .Subscribe(HandleSourceChange)
                 .AddTo(Anchors);
         }
 
-        public ReadOnlyObservableCollection<IEyeAuraViewModel> AuraList { get; }
+        public ReadOnlyObservableCollection<IAuraViewModel> AuraList { get; }
 
-        public IEyeAuraViewModel Aura
+        public IAuraViewModel AuraTab
         {
             get => aura;
             set => this.RaiseAndSetIfChanged(ref aura, value);
@@ -43,8 +43,8 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
                 return;
             }
             
-            Source.WhenAnyValue(x => x.Aura).Subscribe(aura => Aura = aura).AddTo(sourceAnchors);
-            this.WhenAnyValue(x => x.Aura).Where(x => x != null).Subscribe(x => Source.AuraId = x?.Id).AddTo(sourceAnchors);
+            Source.WhenAnyValue(x => x.AuraTab).Subscribe(aura => AuraTab = aura).AddTo(sourceAnchors);
+            this.WhenAnyValue(x => x.AuraTab).Where(x => x != null).Subscribe(x => Source.AuraId = x?.Id).AddTo(sourceAnchors);
         }
     }
 }

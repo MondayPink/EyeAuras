@@ -1,6 +1,6 @@
 ﻿using JetBrains.Annotations;
 
-namespace EyeAuras.Shared
+namespace EyeAuras.Shared.Services
 {
     public interface IUniqueIdGenerator
     {

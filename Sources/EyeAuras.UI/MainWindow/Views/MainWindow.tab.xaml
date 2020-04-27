@@ -10,7 +10,7 @@
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/CommandWrapperView.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <DataTemplate x:Key="AuraViewModelHeaderTemplateKey" DataType="{x:Type viewModels1:IEyeAuraViewModel}">
+    <DataTemplate x:Key="AuraViewModelHeaderTemplateKey" DataType="{x:Type viewModels1:IAuraTabViewModel}">
         <DockPanel TextBlock.Foreground="WhiteSmoke" HorizontalAlignment="Stretch"
                    Height="30"
                    x:Name="AuraContainer">

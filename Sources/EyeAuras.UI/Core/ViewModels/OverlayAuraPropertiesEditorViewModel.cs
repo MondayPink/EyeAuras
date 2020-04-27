@@ -14,6 +14,7 @@ using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.Utilities;
 using JetBrains.Annotations;
 using PoeShared;
+using PoeShared.Native;
 using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using PoeShared.Scaffolding.WPF;
@@ -48,6 +49,7 @@ namespace EyeAuras.UI.Core.ViewModels
             [NotNull] IAuraRepository repository,
             [NotNull] IFactory<IPropertyEditorViewModel> propertiesEditorFactory,
             [NotNull] IWindowSelectorViewModel windowSelector,
+            [NotNull] IClipboardManager clipboardManager,
             [NotNull] IFactory<LinkedPositionMonitor<IPropertyEditorViewModel>> positionMonitorFactory,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
@@ -62,6 +64,7 @@ namespace EyeAuras.UI.Core.ViewModels
             AddOnEnterActionCommand = CommandWrapper.Create<object>(x => AddAction(x, Source.OnEnterActions));
             AddOnExitActionCommand = CommandWrapper.Create<object>(x => AddAction(x, Source.OnExitActions));
             AddWhileActiveActionCommand = CommandWrapper.Create<object>(x => AddAction(x, Source.WhileActiveActions));
+            CopyIdToClipboard = CommandWrapper.Create(() => clipboardManager.SetText(Source.Id), this.WhenAnyValue(x => x.Source).Select(x => x != null));
 
             repository.KnownEntities
                 .ToObservableChangeSet()
@@ -129,6 +132,8 @@ namespace EyeAuras.UI.Core.ViewModels
         public CommandWrapper AddOnExitActionCommand { get; }
         
         public CommandWrapper AddWhileActiveActionCommand { get; }
+        
+        public CommandWrapper CopyIdToClipboard { get; }
 
         public PositionMonitor TriggersPositionMonitor
         {
@@ -159,7 +164,7 @@ namespace EyeAuras.UI.Core.ViewModels
             Guard.ArgumentNotNull(actionSample, nameof(actionSample));
 
             var model = repository.CreateModel<IAuraAction>(actionSample.GetType());
-            actions.Add(model);
+            actions.Insert(0, model);
         }
 
         private void AddTriggerCommandExecuted(object obj)
@@ -167,7 +172,7 @@ namespace EyeAuras.UI.Core.ViewModels
             Guard.ArgumentNotNull(obj, nameof(obj));
 
             var trigger = repository.CreateModel<IAuraTrigger>(obj.GetType());
-            Source.Triggers.Add(trigger);
+            Source.Triggers.Insert(0, trigger);
         }
          
         private void HandleSourceChange()
@@ -192,23 +197,7 @@ namespace EyeAuras.UI.Core.ViewModels
             Source.Overlay.WhenAnyValue(x => x.AttachedWindow).Subscribe(x => WindowSelector.ActiveWindow = x).AddTo(sourceAnchors);
             WindowSelector.WhenAnyValue(x => x.ActiveWindow).Subscribe(x => Source.Overlay.AttachedWindow = x).AddTo(sourceAnchors);
 
-            Source.Triggers
-                .Connect()
-                .Transform(
-                    x =>
-                    {
-                        var editor = propertiesEditorFactory.Create();
-                        var closeController = new RemoveItemController<IAuraTrigger>(x, Source.Triggers);
-                        editor.SetCloseController(closeController);
-                        editor.Value = x;
-                        return editor;
-                    })
-                .DisposeMany()
-                .ObserveOn(uiScheduler)
-                .Bind(out var triggersSource)
-                .Subscribe()
-                .AddTo(sourceAnchors);
-
+            SubscribeAndCreate(Source.Triggers, out var triggersSource).AddTo(sourceAnchors);
             TriggerEditors = triggersSource;
 
             SubscribeAndCreate(Source.OnEnterActions, out var onEnterActionsSource).AddTo(sourceAnchors);
@@ -220,10 +209,10 @@ namespace EyeAuras.UI.Core.ViewModels
             SubscribeAndCreate(Source.WhileActiveActions, out var whileActiveActionsSource).AddTo(sourceAnchors);
             WhileActiveActionEditors = whileActiveActionsSource;
             
-            TriggersPositionMonitor = positionMonitorFactory.Create().SyncWith(Source.Triggers, (x, y) => ReferenceEquals(x.Value, y));
-            OnEnterActionsPositionMonitor = positionMonitorFactory.Create().SyncWith(Source.OnEnterActions, (x, y) => ReferenceEquals(x.Value, y));
-            WhileActiveActionsPositionMonitor = positionMonitorFactory.Create().SyncWith(Source.WhileActiveActions, (x, y) => ReferenceEquals(x.Value, y));
-            OnExitActionsPositionMonitor = positionMonitorFactory.Create().SyncWith(Source.OnExitActions, (x, y) => ReferenceEquals(x.Value, y));
+            TriggersPositionMonitor = positionMonitorFactory.Create().AddTo(sourceAnchors).SyncWith(Source.Triggers, (x, y) => ReferenceEquals(x.Value, y));
+            OnEnterActionsPositionMonitor = positionMonitorFactory.Create().AddTo(sourceAnchors).SyncWith(Source.OnEnterActions, (x, y) => ReferenceEquals(x.Value, y));
+            WhileActiveActionsPositionMonitor = positionMonitorFactory.Create().AddTo(sourceAnchors).SyncWith(Source.WhileActiveActions, (x, y) => ReferenceEquals(x.Value, y));
+            OnExitActionsPositionMonitor = positionMonitorFactory.Create().AddTo(sourceAnchors).SyncWith(Source.OnExitActions, (x, y) => ReferenceEquals(x.Value, y));
         }
 
         private IDisposable SubscribeAndCreate<TAuraModel>(

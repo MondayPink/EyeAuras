@@ -305,7 +305,7 @@
                                     </ItemsPanelTemplate>
                                 </ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
-                                    <DataTemplate DataType="{x:Type viewModels1:IOverlayAuraViewModel}">
+                                    <DataTemplate DataType="{x:Type viewModels1:IOverlayAuraTabViewModel}">
                                         <ContentControl Content="{Binding}">
                                             <ContentControl.Visibility>
                                                 <MultiBinding Converter="{StaticResource EqualToVisibleConverter}">

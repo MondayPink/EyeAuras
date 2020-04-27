@@ -7,7 +7,7 @@ using PoeShared.Native;
 
 namespace EyeAuras.UI.Core.ViewModels
 {
-    internal interface IOverlayAuraViewModel : IEyeAuraViewModel
+    internal interface IOverlayAuraTabViewModel : IAuraTabViewModel
     {
         IPropertyEditorViewModel GeneralEditor { [NotNull] get; }
         
