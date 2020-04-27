@@ -10,6 +10,7 @@ using System.Windows.Input;
 using System.Windows.Interop;
 using EyeAuras.DefaultAuras.Triggers.Default;
 using EyeAuras.OnTopReplica.WindowSeekers;
+using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
 using EyeAuras.UI.Core.Services;
 using EyeAuras.UI.MainWindow.Models;
@@ -27,11 +28,11 @@ namespace EyeAuras.UI.RegionSelector.Services
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(RegionSelectorService));
 
-        private readonly ISharedContext sharedContext;
+        private readonly IEyeAuraSharedContext sharedContext;
         private readonly IFactory<RegionSelectorWindow> regionSelectorWindowFactory;
 
         public RegionSelectorService(
-            ISharedContext sharedContext,
+            IEyeAuraSharedContext sharedContext,
             IFactory<RegionSelectorWindow> regionSelectorWindowFactory)
         {
             this.sharedContext = sharedContext;

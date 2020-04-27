@@ -15,29 +15,30 @@ using PoeShared;
 
 namespace EyeAuras.UI.Core.Services
 {
-    internal sealed class SharedContext : DisposableReactiveObject, ISharedContext
+    internal sealed class SharedContext : DisposableReactiveObject, IEyeAuraSharedContext
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(SharedContext));
 
         public IComplexAuraTrigger SystemTrigger { get; }
 
-        public ObservableCollection<IEyeAuraViewModel> AuraList => auraList;
+        public ReadOnlyObservableCollection<IAuraViewModel> AuraList { get; }
+        
+        public ObservableCollection<IAuraTabViewModel> TabList { get; }
 
-        private readonly ISourceList<IEyeAuraViewModel> tabsListSource = new SourceList<IEyeAuraViewModel>();
-        private readonly ObservableCollectionExtended<IEyeAuraViewModel> auraList;
-
-        public SharedContext(
-            [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
+        public SharedContext()
         {
             SystemTrigger = new ComplexAuraTrigger().AddTo(Anchors);
             
-            auraList = new ObservableCollectionExtended<IEyeAuraViewModel>();
-            tabsListSource
-                .Connect()
+            TabList = new ObservableCollection<IAuraTabViewModel>();
+            
+            TabList
+                .ToObservableChangeSet()
                 .DisposeMany()
-                .Bind(auraList)
+                .Transform(x => (IAuraViewModel)x)
+                .Bind(out var auraList)
                 .Subscribe(() => { }, Log.HandleUiException)
                 .AddTo(Anchors);
+            AuraList = auraList;
         }
     }
 }

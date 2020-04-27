@@ -226,8 +226,6 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         
         protected override void ExecuteInternal()
         {
-            Error = null;
-
             if (Hotkey == null || Hotkey.IsEmpty)
             {
                 return;

@@ -1,4 +1,5 @@
 ﻿using EyeAuras.Shared;
+using EyeAuras.Shared.Services;
 using shortid;
 // ReSharper disable StringLiteralTypo
 

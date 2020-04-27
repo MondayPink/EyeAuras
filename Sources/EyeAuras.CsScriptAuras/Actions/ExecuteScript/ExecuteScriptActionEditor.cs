@@ -1,6 +1,7 @@
 using System;
 using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using System.Threading.Tasks;
 using EyeAuras.Shared;
 using JetBrains.Annotations;
 using PoeShared.Prism;
@@ -21,10 +22,21 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
             ExecuteCommand = CommandWrapper.Create(
-                () => Source?.Execute(), 
+                async () =>
+                {
+                    if (Source == null)
+                    {
+                        return;
+                    }
+                    await Task.Run(Source.Execute);
+                }, 
                 this.WhenAnyValue(x => x.Source.State).Select(x => x == ScriptState.ReadyToRun).ObserveOn(uiScheduler));
-
+            this.WhenAnyValue(x => x.Source.SourceCode)
+                .Subscribe(x => LiveSourceCode = x)
+                .AddTo(Anchors);
+            
             this.WhenAnyValue(x => x.LiveSourceCode)
+                .Skip(1)
                 .Throttle(TimeSpan.FromSeconds(0), bgScheduler)
                 .Where(x => Source != null)
                 .Subscribe(x => Source.SourceCode = LiveSourceCode)
@@ -36,7 +48,7 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
             get => liveSourceCode;
             set => this.RaiseAndSetIfChanged(ref liveSourceCode, value);
         }
-
+        
         public bool ExpandEditor
         {
             get => expandEditor;

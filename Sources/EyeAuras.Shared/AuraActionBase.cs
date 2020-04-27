@@ -13,7 +13,7 @@ namespace EyeAuras.Shared
         public string Error
         {
             get => error;
-            private set => RaiseAndSetIfChanged(ref error, value);
+            protected set => RaiseAndSetIfChanged(ref error, value);
         }
 
         public void Execute()

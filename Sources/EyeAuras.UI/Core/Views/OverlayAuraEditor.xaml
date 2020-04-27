@@ -9,7 +9,8 @@
                     xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz"
                     xmlns:utilities="clr-namespace:EyeAuras.UI.Core.Utilities"
                     xmlns:fa="http://schemas.fontawesome.io/icons/"
-                    xmlns:system="clr-namespace:System;assembly=System.Runtime">
+                    xmlns:system="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Styles.xaml" />
@@ -265,7 +266,21 @@
                         <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="General" />
                         <TextBlock Margin="5,0" FontSize="10" VerticalAlignment="Center" Text="{Binding Source.Name}"
                                    MaxWidth="150" TextTrimming="CharacterEllipsis" />
-
+                        <fa:FontAwesome Icon="InfoCircle"
+                                        Margin="5,0"
+                                        Foreground="{StaticResource PositiveBrush}"
+                                        VerticalAlignment="Center"
+                                        FontSize="16">
+                            <fa:FontAwesome.ToolTip>
+                                <TextBlock Text="{Binding Source.Id, StringFormat='AuraId {0}, click to Copy'}"/>
+                            </fa:FontAwesome.ToolTip>
+                            
+                            <i:Interaction.Triggers>
+                                <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
+                                    <i:InvokeCommandAction Command="{Binding CopyIdToClipboard}"></i:InvokeCommandAction>
+                                </i:EventTrigger>
+                            </i:Interaction.Triggers>
+                        </fa:FontAwesome>
                         <Grid Margin="5,0,0,0" Width="140" HorizontalAlignment="Right"
                               IsEnabled="{Binding Source.Overlay.AttachedWindow, Converter={StaticResource NullToFalseConverter}}">
                             <ContentControl Grid.Column="0" Content="{Binding Source.Overlay.LockWindowCommand}"
@@ -385,7 +400,7 @@
                             <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="60"
                                                 Margin="5,0,0,0"
                                                 DefaultValue="1000"
-                                                Increment="100"
+                                                Increment="1000"
                                                 Minimum="0"
                                                 Maximum="86400000"
                                                 materialDesign:HintAssist.IsFloating="false"

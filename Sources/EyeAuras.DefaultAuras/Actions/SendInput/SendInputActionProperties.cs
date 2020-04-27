@@ -6,7 +6,7 @@ using EyeAuras.Shared.Services;
 
 namespace EyeAuras.DefaultAuras.Actions.SendInput
 {
-    internal sealed class SendInputProperties : IAuraProperties
+    public sealed class SendInputProperties : IAuraProperties
     {
         public TimeSpan KeyStrokeDelay { get; set; }
         

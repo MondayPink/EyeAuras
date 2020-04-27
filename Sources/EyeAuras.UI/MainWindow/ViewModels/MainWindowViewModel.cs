@@ -53,10 +53,10 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private static readonly string ExplorerExecutablePath = Environment.ExpandEnvironmentVariables(@"%WINDIR%\explorer.exe");
         private static readonly TimeSpan ConfigSaveSamplingTimeout = TimeSpan.FromSeconds(5);
 
-        private readonly IFactory<IOverlayAuraViewModel, OverlayAuraProperties> auraViewModelFactory;
+        private readonly IFactory<IOverlayAuraTabViewModel, OverlayAuraProperties> auraViewModelFactory;
         private readonly IClipboardManager clipboardManager;
         private readonly IConfigProvider<EyeAurasConfig> configProvider;
-        private readonly ISharedContext sharedContext;
+        private readonly SharedContext sharedContext;
         private readonly IConfigSerializer configSerializer;
         private readonly ISubject<Unit> configUpdateSubject = new Subject<Unit>();
 
@@ -71,7 +71,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private double height;
         private double left;
         private GridLength listWidth;
-        private IEyeAuraViewModel selectedTab;
+        private IAuraTabViewModel selectedTab;
         private double top;
         private double width;
         private WindowState windowState;
@@ -83,7 +83,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             [NotNull] IWindowViewController viewController,
             [NotNull] IUniqueIdGenerator idGenerator,
             [NotNull] IAppArguments appArguments,
-            [NotNull] IFactory<IOverlayAuraViewModel, OverlayAuraProperties> auraViewModelFactory,
+            [NotNull] IFactory<IOverlayAuraTabViewModel, OverlayAuraProperties> auraViewModelFactory,
             [NotNull] IApplicationUpdaterViewModel appUpdater,
             [NotNull] IClipboardManager clipboardManager,
             [NotNull] IConfigSerializer configSerializer,
@@ -96,8 +96,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             [NotNull] IPrismModuleStatusViewModel moduleStatus,
             [NotNull] IMainWindowBlocksProvider mainWindowBlocksProvider,
             [NotNull] IFactory<IRegionSelectorService> regionSelectorServiceFactory,
-            [NotNull] IFactory<LinkedPositionMonitor<IEyeAuraViewModel>> positionMonitorFactory,
-            [NotNull] ISharedContext sharedContext,
+            [NotNull] IFactory<LinkedPositionMonitor<IAuraTabViewModel>> positionMonitorFactory,
+            [NotNull] SharedContext sharedContext,
             [NotNull] IComparisonService comparisonService,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
@@ -133,8 +133,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .Subscribe(x => ShowInTaskbar = WindowState != WindowState.Minimized || !configProvider.ActualConfig.MinimizeToTray, Log.HandleUiException)
                 .AddTo(Anchors);
             
-            TabsList = new ReadOnlyObservableCollection<IEyeAuraViewModel>(sharedContext.AuraList);
-            PositionMonitor = positionMonitorFactory.Create().SyncWith(sharedContext.AuraList, ReferenceEquals).AddTo(Anchors);
+            TabsList = new ReadOnlyObservableCollection<IAuraTabViewModel>(sharedContext.TabList);
+            PositionMonitor = positionMonitorFactory.Create().SyncWith(sharedContext.TabList, ReferenceEquals).AddTo(Anchors);
             ModuleStatus = moduleStatus.AddTo(Anchors);
             var executingAssemblyName = Assembly.GetExecutingAssembly().GetName();
             Title = $"{(appArguments.IsDebugMode ? "[D]" : "")} {executingAssemblyName.Name} v{executingAssemblyName.Version}";
@@ -167,7 +167,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             ShowAppCommand = CommandWrapper.Create(ToggleAppVisibilityCommandExecuted);
             CreateNewTabCommand = CommandWrapper.Create(() => AddNewCommandExecuted(OverlayAuraProperties.Default));
             CloseTabCommand = CommandWrapper
-                .Create<IOverlayAuraViewModel>(CloseTabCommandExecuted, CloseTabCommandCanExecute)
+                .Create<IOverlayAuraTabViewModel>(CloseTabCommandExecuted, CloseTabCommandCanExecute)
                 .RaiseCanExecuteChangedWhen(this.WhenAnyProperty(x => x.SelectedTab));
 
             DuplicateTabCommand = CommandWrapper
@@ -183,7 +183,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             SelectRegionCommand = CommandWrapper.Create(SelectRegionCommandExecuted);
 
             sharedContext
-                .AuraList
+                .TabList
                 .ToObservableChangeSet()
                 .ObserveOn(uiScheduler)
                 .OnItemAdded(x => SelectedTab = x)
@@ -215,7 +215,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     sharedContext.AuraList.ToObservableChangeSet()
                         .Sample(ConfigSaveSamplingTimeout)
                         .Select(x => "Tabs list change"),
-                    sharedContext.AuraList.ToObservableChangeSet()
+                    sharedContext.TabList.ToObservableChangeSet()
                         .WhenPropertyChanged(x => x.Properties)
                         .Sample(ConfigSaveSamplingTimeout)
                         .WithPrevious((prev, curr) => new {prev, curr})
@@ -271,7 +271,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     unlock =>
                     {
                         var allOverlays = TabsList
-                            .OfType<IOverlayAuraViewModel>()
+                            .OfType<IOverlayAuraTabViewModel>()
                             .Where(x => x.Model?.Overlay != null)
                             .Select(y => y.Model.Overlay);
                         if (unlock)
@@ -332,7 +332,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         public IMessageBoxViewModel MessageBox { get; }
 
-        public ReadOnlyObservableCollection<IEyeAuraViewModel> TabsList { get; }
+        public ReadOnlyObservableCollection<IAuraTabViewModel> TabsList { get; }
 
         public PositionMonitor PositionMonitor { get; }
 
@@ -346,7 +346,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         public Size MinSize { get; } = new Size(1150, 750);
 
-        public IEyeAuraViewModel SelectedTab
+        public IAuraTabViewModel SelectedTab
         {
             get => selectedTab;
             set => RaiseAndSetIfChanged(ref selectedTab, value);
@@ -607,12 +607,12 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             CreateAndAddTab(cfg);
         }
 
-        private bool CloseTabCommandCanExecute(IEyeAuraViewModel tab)
+        private bool CloseTabCommandCanExecute(IAuraTabViewModel tab)
         {
             return tab != null;
         }
 
-        private void CloseTabCommandExecuted(IEyeAuraViewModel tab)
+        private void CloseTabCommandExecuted(IAuraTabViewModel tab)
         {
             using var sw = new BenchmarkTimer($"Close tab {tab.TabName}({tab.Id})", Log);
             Guard.ArgumentNotNull(tab, nameof(tab));
@@ -627,7 +627,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 SelectedTab = tabToSelect;
             }
 
-            sharedContext.AuraList.Remove(tab);
+            sharedContext.TabList.Remove(tab);
             sw.Step($"Removed tab from AuraList (current count: {sharedContext.AuraList.Count})");
 
             var cfg = tab.Properties;
@@ -710,7 +710,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             Log.Debug($"Successfully loaded config, tabs count: {TabsList.Count}");
         }
 
-        private IEyeAuraViewModel CreateAndAddTab(OverlayAuraProperties tabProperties)
+        private IAuraTabViewModel CreateAndAddTab(OverlayAuraProperties tabProperties)
         {
             using var sw = new BenchmarkTimer("Create new tab", Log);
 
@@ -724,13 +724,13 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 tabProperties.Id = newId;
             }
 
-            var auraViewModel = (IEyeAuraViewModel)auraViewModelFactory.Create(tabProperties);
+            var auraViewModel = (IAuraTabViewModel)auraViewModelFactory.Create(tabProperties);
             sw.Step($"Created view model of type {auraViewModel.GetType()}: {auraViewModel}");
-            var auraCloseController = new CloseController<IEyeAuraViewModel>(auraViewModel, () => CloseTabCommandExecuted(auraViewModel));
+            var auraCloseController = new CloseController<IAuraTabViewModel>(auraViewModel, () => CloseTabCommandExecuted(auraViewModel));
             auraViewModel.SetCloseController(auraCloseController);
             sw.Step($"Initialized CloseController");
 
-            sharedContext.AuraList.Add(auraViewModel);
+            sharedContext.TabList.Add(auraViewModel);
             sw.Step($"Added to AuraList(current count: {sharedContext.AuraList.Count})");
 
             return auraViewModel;
@@ -742,7 +742,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             {
                 var newTab = CreateAndAddTab(tabProperties);
                 
-                if (newTab is IOverlayAuraViewModel newOverlayTab)
+                if (newTab is IOverlayAuraTabViewModel newOverlayTab)
                 {
                     newOverlayTab.Model.Overlay.UnlockWindowCommand.CanExecute(null);
                     newOverlayTab.Model.Overlay.UnlockWindowCommand.Execute(null);

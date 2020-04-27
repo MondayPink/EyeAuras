@@ -15,9 +15,9 @@ using ReactiveUI;
 
 namespace EyeAuras.UI.Core.ViewModels
 {
-    internal sealed class OverlayAuraViewModel : DisposableReactiveObject, IOverlayAuraViewModel
+    internal sealed class OverlayAuraTabViewModel : DisposableReactiveObject, IOverlayAuraTabViewModel
     {
-        private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraViewModel));
+        private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraTabViewModel));
 
         private readonly Fallback<string> tabName = new Fallback<string>();
         private readonly SerialDisposable loadedModelAnchors = new SerialDisposable();
@@ -31,7 +31,7 @@ namespace EyeAuras.UI.Core.ViewModels
         private ICloseController closeController;
         private IOverlayAuraModel model;
 
-        public OverlayAuraViewModel(
+        public OverlayAuraTabViewModel(
             OverlayAuraProperties initialProperties,
             [NotNull] IFactory<IPropertyEditorViewModel> propertiesEditorFactory,
             [NotNull] IFactory<IOverlayAuraModel> auraModelFactory)
@@ -122,7 +122,7 @@ namespace EyeAuras.UI.Core.ViewModels
 
         private IOverlayAuraModel ReloadModel()
         {
-            using var sw = new BenchmarkTimer(isEnabled ? $"[{TabName}({Id})] Loading new model" : $"[{TabName}({Id})] Unloading model", Log, $"{nameof(OverlayAuraViewModel)}.{nameof(ReloadModel)}");
+            using var sw = new BenchmarkTimer(isEnabled ? $"[{TabName}({Id})] Loading new model" : $"[{TabName}({Id})] Unloading model", Log, $"{nameof(OverlayAuraTabViewModel)}.{nameof(ReloadModel)}");
 
             var modelAnchors = new CompositeDisposable().AssignTo(loadedModelAnchors);
             sw.Step($"Disposed previous model");

@@ -17,24 +17,39 @@ using PoeShared;
 using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using ReactiveUI;
-using Stateless;
+using System.Reactive.Linq;
+using DynamicData.Binding;
+using Unity;
 
 namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
 {
     internal sealed class ExecuteScriptAction : AuraActionBase<ExecuteScriptActionProperties>
     {
+        private readonly ISharedContext sharedContext;
+        private readonly IUnityContainer container;
         private static readonly ILog Log = LogManager.GetLogger(typeof(ExecuteScriptAction));
         
         private string sourceCode;
-        private string error;
         private string scriptCode;
         private IScriptExecutor scriptExecutor;
         private ScriptState state;
+        private string scriptLog;
 
-        public ExecuteScriptAction([NotNull] [Unity.Dependency(WellKnownSchedulers.Background)] IScheduler bgScheduler)
+        public ExecuteScriptAction(
+            ISharedContext sharedContext,
+            IUnityContainer container,
+            [NotNull] [Unity.Dependency(WellKnownSchedulers.Background)] IScheduler bgScheduler)
         {
+            this.sharedContext = sharedContext;
+            this.container = container;
             this.WhenAnyValue(x => x.SourceCode)
-                .Subscribe(async () => await PrepareExecutorAsync())
+                .Subscribe(async () => await PrepareExecutorAsync(), Log.HandleUiException)
+                .AddTo(Anchors);
+
+            this.WhenAnyValue(x => x.ScriptExecutor)
+                .Select(x => x == null ? Observable.Return(default(string)) : x.WhenAnyProperty(y => y.Output).StartWithDefault().Select(y => string.Join(Environment.NewLine, x.Output.Where(record => !string.IsNullOrEmpty(record)))))
+                .Switch()
+                .Subscribe(x => ScriptLog = x, Log.HandleUiException)
                 .AddTo(Anchors);
         }
 
@@ -48,16 +63,16 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
             source.SourceCode = SourceCode;
         }
 
-        public string Error
-        {
-            get => error;
-            private set => this.RaiseAndSetIfChanged(ref error, value);
-        }
-
         public string SourceCode
         {
             get => sourceCode;
             set => this.RaiseAndSetIfChanged(ref sourceCode, value);
+        }
+
+        public string ScriptLog
+        {
+            get => scriptLog;
+            private set => RaiseAndSetIfChanged(ref scriptLog, value);
         }
 
         public string ScriptCode
@@ -82,7 +97,7 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
             set => this.RaiseAndSetIfChanged(ref state, value);
         }
 
-        public override void Execute()
+        protected override void ExecuteInternal()
         {
             try
             {
@@ -93,15 +108,13 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
 
                 Guard.ArgumentNotNull(() => scriptExecutor);
 
-                Error = null;
                 State = ScriptState.Running;
 
                 scriptExecutor.Execute();
             }
             catch (Exception e)
             {
-                Log.Warn($"Error executing script - {e}\n{SourceCode}");
-                Error = e.ToString();
+                throw new ApplicationException($"Error executing script - {e}\n{SourceCode}", e);
             }
             finally
             {
@@ -116,6 +129,8 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
                 "System.Collections.Generic",
                 "System.Windows",
                 typeof(IScriptExecutor).Namespace,
+                typeof(ISharedContext).Namespace,
+                typeof(IUnityContainer).Namespace,
                 typeof(ScriptExecutorBase).Namespace,
                 typeof(Process).Namespace,
                 typeof(ObjectExtensions).Namespace,
@@ -126,7 +141,7 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
                 typeof(List<>).Namespace
             };
             var scriptCode =  @"%USINGS%
-                             public class Script : ScriptExecutorBase
+                             public sealed class Script : ScriptExecutorBase
                              {
                                  public override void Execute()
                                  {
@@ -159,15 +174,17 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
                     Log.Debug($"Code changed during compilation, discarding compiled code");
                     return;
                 }
+
+                executor.SetContext(sharedContext);
+                executor.SetContainer(container);
                 ScriptExecutor = executor;
                 State = ScriptState.ReadyToRun;
-                Error = null;
             }
             catch (Exception e)
             {
                 ScriptExecutor = null;
                 State = ScriptState.NotReady;
-                Log.Warn($"Error compiling script - {e}\n{SourceCode}");
+                Log.Warn($"Error compiling script - {e}\n{SourceCode?.Trim()}");
                 Error = e.ToString();
             }
         }
