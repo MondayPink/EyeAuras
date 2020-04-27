@@ -1,9 +1,13 @@
 using System;
+using System.Reactive.Disposables;
+using System.Windows.Input;
 using WindowsInput;
 using EyeAuras.Interception;
 using log4net;
 using PoeShared.Modularity;
+using PoeShared.Prism;
 using PoeShared.Scaffolding;
+using Unity;
 
 namespace EyeAuras.Usb2kbd
 {
@@ -11,22 +15,30 @@ namespace EyeAuras.Usb2kbd
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(Usb2KbdSimulator));
 
-        private readonly IConfigProvider<Usb2KbdConfig> configProvider;
         private readonly Usb2KbdWrapper wrapper;
         private bool isAvailable = false;
 
-        public Usb2KbdSimulator(IConfigProvider<Usb2KbdConfig> configProvider)
+        public Usb2KbdSimulator(
+            [Dependency(WellKnownKeyboardSimulators.InputSimulator)] IInputSimulatorEx defaultSimulator,
+            IFactory<Usb2KbdWrapper> wrapperFactory,
+            IConfigProvider<Usb2KbdConfig> configProvider)
         {
             try
             {
-                wrapper = new Usb2KbdWrapper();
+                Log.Info($"Initializing Usb2Kbd device");
+                InputDeviceState = defaultSimulator.InputDeviceState;
+                wrapper = wrapperFactory.Create();
+                Keyboard = wrapper;
+                Mouse = wrapper;
+                Log.Info($"Successfully initialized Usb2Kbd device");
             }
             catch (Exception ex)
             {
-                Log.Warn($"Failed to initialize Usb2Kbd", ex);
+                Log.Warn($"Failed to initialize Usb2Kbd device", ex);
+                Keyboard = defaultSimulator.Keyboard;
+                Mouse = defaultSimulator.Mouse;
             }
-            
-            this.configProvider = configProvider;
+
             configProvider.WhenChanged
                 .Subscribe(ApplyConfig)
                 .AddTo(Anchors);
@@ -47,9 +59,9 @@ namespace EyeAuras.Usb2kbd
             }
         }
 
-        public IKeyboardSimulator Keyboard => wrapper;
+        public IKeyboardSimulator Keyboard {get; }
 
-        public IMouseSimulator Mouse => wrapper?.Mouse;
+        public IMouseSimulator Mouse { get; }
         
         public IInputDeviceStateAdaptor InputDeviceState { get; }
 

@@ -1,7 +1,9 @@
 using System;
+using System.Drawing;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Threading;
+using System.Windows.Forms;
 using log4net;
 using PInvoke;
 
@@ -12,7 +14,8 @@ namespace EyeAuras.Interception
         private static readonly ILog Log = LogManager.GetLogger(typeof(InputWrapper));
         private Thread callbackThread;
         private IntPtr context;
-        private int deviceId; /* Very important; which device the driver sends events to */
+        private int keyboardDeviceId; 
+        private int mouseDeviceId; 
         private readonly SafeHandle interceptionLibraryHandle;
 
         public InputWrapper()
@@ -43,6 +46,7 @@ namespace EyeAuras.Interception
             }
 
             KeyboardFilterMode = KeyboardFilterMode.None;
+            MouseFilterMode = MouseFilterMode.None;
         }
 
         /// <summary>
@@ -50,6 +54,8 @@ namespace EyeAuras.Interception
         ///     only...etc). Set this before loading otherwise the driver will not filter any events and no keypresses can be sent.
         /// </summary>
         public KeyboardFilterMode KeyboardFilterMode { get; set; }
+        
+        public MouseFilterMode MouseFilterMode { get; set; }
 
         public bool IsLoaded { get; private set; }
 
@@ -58,26 +64,32 @@ namespace EyeAuras.Interception
          */
         public bool Load()
         {
+            Log.Debug($"Loading virtual keyboard and mouse device driver");
             if (IsLoaded)
             {
+                Log.Warn($"Driver is already loaded");
                 return false;
             }
             
+            Log.Debug($"Creating InterceptionDriver context");
             context = InterceptionDriver.CreateContext();
             if (context == IntPtr.Zero)
             {
+                Log.Warn($"Failed to create InterceptionDriver context");
                 IsLoaded = false;
                 return false;
             }
 
-            callbackThread = new Thread(DriverCallback)
+            Log.Debug($"Starting callback thread");
+            callbackThread = new Thread(KeyboardCallback)
             {
                 Priority = ThreadPriority.Highest, 
                 IsBackground = true,
-                Name = "Interception"
+                Name = "InterceptionKeyboard"
             };
             callbackThread.Start();
 
+            Log.Debug($"Successfully loaded InterceptionDriver");
             IsLoaded = true;
             return true;
         }
@@ -97,21 +109,45 @@ namespace EyeAuras.Interception
                 return;
             }
 
+            keyboardDeviceId = 0;
             callbackThread.Abort();
             InterceptionDriver.DestroyContext(context);
             IsLoaded = false;
         }
-
-        private void DriverCallback()
+        
+        private void KeyboardCallback()
         {
             try
             {
+                Log.Debug($"Setting InterceptionDriver filters, Mouse: {MouseFilterMode}, Keyboard: {KeyboardFilterMode}");
                 InterceptionDriver.SetFilter(context, InterceptionDriver.IsKeyboard, (int) KeyboardFilterMode);
+                InterceptionDriver.SetFilter(context, InterceptionDriver.IsMouse, (int) MouseFilterMode);
 
                 var stroke = new Stroke();
+                int deviceId;
                 while (InterceptionDriver.Receive(context, deviceId = InterceptionDriver.Wait(context), ref stroke, 1) > 0)
                 {
+                    if (keyboardDeviceId <= 0 && InterceptionDriver.IsKeyboard(deviceId) != 0)
+                    {
+                        keyboardDeviceId = deviceId;
+                        Log.Info($"Keyboard detected, deviceId: {deviceId}, resetting KeyboardFilterMode");
+                        InterceptionDriver.SetFilter(context, InterceptionDriver.IsKeyboard, (int)KeyboardFilterMode.None);
+                    }
+                    
+                    if (mouseDeviceId <= 0 && InterceptionDriver.IsMouse(deviceId) != 0)
+                    {
+                        mouseDeviceId = deviceId;
+                        Log.Info($"Mouse detected, deviceId: {deviceId}, resetting MouseFilterMode");
+                        InterceptionDriver.SetFilter(context, InterceptionDriver.IsMouse, (int)MouseFilterMode.None);
+                    }
+                    
                     InterceptionDriver.Send(context, deviceId, ref stroke, 1);
+                    
+                    if (mouseDeviceId > 0 && keyboardDeviceId > 0)
+                    {
+                        Log.Debug($"Keyboard and mouse detected, keyboardId: {keyboardDeviceId}, mouseId: {mouseDeviceId}, terminating loop");
+                        return;
+                    }
                 }
             }
             catch (Exception e)
@@ -120,20 +156,126 @@ namespace EyeAuras.Interception
             }
             finally
             {
-                Log.Debug($"Driver thread terminated, unloading context");
-                Unload();
+                Log.Debug($"Keyboard&mouse handling thread terminated");
             }
         }
 
         public void SendKey(uint interceptionKey, KeyState state)
         {
+            EnsureKeyboardDetected();
             var stroke = new Stroke();
             var keyStroke = new KeyStroke
             {
                 Code = interceptionKey, State = state
             };
             stroke.Key = keyStroke;
-            InterceptionDriver.Send(context, deviceId, ref stroke, 1);
+            Log.Debug($"Sending keystroke to KeyboardDeviceId {keyboardDeviceId}: {keyStroke}");
+            InterceptionDriver.Send(context, keyboardDeviceId, ref stroke, 1);
+        }
+        
+        public void SendMouseEvent(MouseState state)
+        {
+            EnsureMouseDetected();
+
+            var stroke = new Stroke();
+            var mouseStroke = new MouseStroke {State = state};
+
+            if (state == MouseState.ScrollUp)
+            {
+                mouseStroke.Rolling = 120;
+            }
+            else if (state == MouseState.ScrollDown)
+            {
+                mouseStroke.Rolling = -120;
+            }
+            Log.Debug($"Sending mouse event to mouseDeviceId{mouseDeviceId}: {mouseStroke}");
+
+            stroke.Mouse = mouseStroke;
+            InterceptionDriver.Send(context, mouseDeviceId, ref stroke, 1);
+        }
+
+        public void ScrollMouse(ScrollDirection direction)
+        {
+            EnsureMouseDetected();
+            Log.Debug($"Scrolling mouse wheel, direction: {direction}");
+
+            switch (direction)
+            { 
+                case ScrollDirection.Down:
+                    SendMouseEvent(MouseState.ScrollDown);
+                    break;
+                case ScrollDirection.Up:
+                    SendMouseEvent(MouseState.ScrollUp);
+                    break;
+            }
+        }
+
+        /// <summary>
+        /// Warning: This function, if using the driver, does not function reliably and often moves the mouse in unpredictable vectors. An alternate version uses the standard Win32 API to get the current cursor's position, calculates the desired destination's offset, and uses the Win32 API to set the cursor to the new position.
+        /// </summary>
+        public void MoveMouseBy(int deltaX, int deltaY, bool useDriver = false)
+        {
+            Log.Debug($"Moving mouse by DeltaX:{deltaX} DeltaY:{deltaX} (useDriver: {useDriver})");
+            if (useDriver)
+            {
+                EnsureMouseDetected();
+                Stroke stroke = new Stroke();
+                MouseStroke mouseStroke = new MouseStroke();
+
+                mouseStroke.X = deltaX;
+                mouseStroke.Y = deltaY;
+
+                stroke.Mouse = mouseStroke;
+                stroke.Mouse.Flags = MouseFlags.MoveRelative;
+
+                InterceptionDriver.Send(context, mouseDeviceId, ref stroke, 1);
+            }
+            else
+            {
+                var currentPos = Cursor.Position;
+                Cursor.Position = new Point(currentPos.X + deltaX, currentPos.Y - deltaY); // Coordinate system for y: 0 begins at top, and bottom of screen has the largest number
+            }
+        }
+
+        /// <summary>
+        /// Warning: This function, if using the driver, does not function reliably and often moves the mouse in unpredictable vectors. An alternate version uses the standard Win32 API to set the cursor's position and does not use the driver.
+        /// </summary>
+        public void MoveMouseTo(int x, int y, bool useDriver = false)
+        {
+            Log.Debug($"Moving mouse to X:{x} Y:{y} (useDriver: {useDriver})");
+            if (useDriver)
+            {
+                EnsureMouseDetected();
+                Stroke stroke = new Stroke();
+                MouseStroke mouseStroke = new MouseStroke();
+
+                mouseStroke.X = x;
+                mouseStroke.Y = y;
+
+                stroke.Mouse = mouseStroke;
+                stroke.Mouse.Flags = MouseFlags.MoveAbsolute;
+
+                InterceptionDriver.Send(context, mouseDeviceId, ref stroke, 1);
+            }
+            {
+                Cursor.Position = new Point(x, y);
+            }
+        }
+        
+        private void EnsureMouseDetected()
+        {
+            if (mouseDeviceId <= 0)
+            {
+                throw new ApplicationException($"Mouse is not detected yet, please move mouse pointer or press any button before sending mouse commands");
+            }
+        }
+
+        private void EnsureKeyboardDetected()
+        {
+            if (keyboardDeviceId <= 0)
+            {
+                throw new ApplicationException($"Keyboard is not detected yet, please press any key on the keyboard before sending keystrokes");
+            }
         }
     }
 }

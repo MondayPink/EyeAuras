@@ -1,6 +1,7 @@
 using WindowsInput;
 using Unity;
 using Unity.Extension;
+using Unity.Lifetime;
 
 namespace EyeAuras.Interception.Prism
 {
@@ -8,8 +9,8 @@ namespace EyeAuras.Interception.Prism
     {
         protected override void Initialize()
         {
-            Container.RegisterFactory<IInputSimulatorEx>(WellKnownKeyboardSimulators.InputSimulator, x => x.Resolve<WindowsInputSimulator>());
-            Container.RegisterFactory<IInputSimulatorEx>(WellKnownKeyboardSimulators.InterceptionDriver, x => x.Resolve<DriverBasedInputSimulator>());
+            Container.RegisterFactory<IInputSimulatorEx>(WellKnownKeyboardSimulators.InputSimulator, x => x.Resolve<WindowsInputSimulator>(), new ContainerControlledLifetimeManager());
+            Container.RegisterFactory<IInputSimulatorEx>(WellKnownKeyboardSimulators.InterceptionDriver, x => x.Resolve<DriverBasedInputSimulator>(), new ContainerControlledLifetimeManager());
             
             Container.RegisterFactory<IKeyboardSimulator>(WellKnownKeyboardSimulators.InputSimulator, x => x.Resolve<IInputSimulatorEx>(WellKnownKeyboardSimulators.InputSimulator).Keyboard);
             Container.RegisterFactory<IKeyboardSimulator>(WellKnownKeyboardSimulators.InterceptionDriver, x => x.Resolve<IInputSimulatorEx>(WellKnownKeyboardSimulators.InterceptionDriver).Keyboard);

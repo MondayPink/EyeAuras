@@ -8,7 +8,7 @@ using PoeShared.Prism;
 
 namespace EyeAuras.Interception
 {
-    public sealed class KeysConverter : IConverter<VirtualKeyCode, uint>
+    public sealed class VirtualKeyCodeToScanCodeConverter : IConverter<VirtualKeyCode, uint>
     {
         private readonly ConcurrentDictionary<VirtualKeyCode, uint> keyCodeToScanCodeMap = new ConcurrentDictionary<VirtualKeyCode, uint>();
 

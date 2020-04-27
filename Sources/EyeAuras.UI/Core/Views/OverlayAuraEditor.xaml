@@ -8,7 +8,8 @@
                     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
                     xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz"
                     xmlns:utilities="clr-namespace:EyeAuras.UI.Core.Utilities"
-                    xmlns:fa="http://schemas.fontawesome.io/icons/">
+                    xmlns:fa="http://schemas.fontawesome.io/icons/"
+                    xmlns:system="clr-namespace:System;assembly=System.Runtime">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Styles.xaml" />
@@ -80,8 +81,14 @@
     
     <DataTemplate x:Key="AuraActionSelectorTemplateKey" DataType="{x:Type shared:IAuraAction}">
         <DockPanel>
-            <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="{Binding ActionName}" />
-            <TextBlock Margin="5,0" FontSize="10" VerticalAlignment="Center" Text="{Binding ActionDescription}" />
+            <TextBlock FontWeight="Bold" FontSize="14" Text="{Binding ActionName}" />
+            <materialDesign:PackIcon Margin="5,0,0,0" VerticalAlignment="Center" Kind="ShieldWarning"
+                                     Foreground="{StaticResource NegativeBrush}"
+                                     Visibility="{Binding Error, Converter={StaticResource NullToHiddenConverter}}"
+                                     ToolTipService.ShowOnDisabled="True"
+                                     ToolTipService.ShowDuration="{x:Static system:Int32.MaxValue}"
+                                     ToolTip="{Binding Error}"/>
+            <TextBlock Margin="5,0,0,0"  DockPanel.Dock="Right" HorizontalAlignment="Right"  FontSize="10" VerticalAlignment="Center" Text="{Binding ActionDescription}" />
         </DockPanel>
     </DataTemplate>
     

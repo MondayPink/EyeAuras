@@ -73,7 +73,7 @@ namespace EyeAuras.DefaultAuras.Triggers.HotkeyIsActive
 
                         if (HotkeyMode == HotkeyMode.Click)
                         {
-                            if (hotkeyData.KeyDown)
+                            if (!hotkeyData.KeyDown)
                             {
                                 IsActive = !IsActive;
                             }

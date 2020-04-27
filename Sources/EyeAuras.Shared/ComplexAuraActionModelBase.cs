@@ -33,7 +33,7 @@ namespace EyeAuras.Shared
                 .AddTo(Anchors);
         }
 
-        public override void Execute()
+        protected override void ExecuteInternal()
         {
             actions.Items.ForEach(x => x.Execute());
         }

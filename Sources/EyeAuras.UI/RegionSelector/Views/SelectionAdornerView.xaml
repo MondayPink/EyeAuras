@@ -10,8 +10,7 @@
                   IsHitTestVisible="{Binding IsVisible}"
                   Visibility="{Binding IsVisible, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
                   Background="Transparent">
-                <Grid IsHitTestVisible="False" 
-                      Visibility="{Binding ElementName=SelectionAdorner, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                <Grid IsHitTestVisible="False" >
                     <ItemsControl 
                         ItemsSource="{Binding CanvasElements}">
                         <ItemsControl.ItemsPanel>
