@@ -48,7 +48,10 @@
             </controls:ExtendedTextEditor>
 
             <DockPanel DockPanel.Dock="Top" Margin="2,5,2,2" Visibility="{Binding ShowOutput, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
-                <TextBlock DockPanel.Dock="Top" Text="Output" />
+                <DockPanel DockPanel.Dock="Top">
+                    <TextBlock DockPanel.Dock="Top" Text="Output" />
+                    <CheckBox Margin="5,0,0,0" HorizontalAlignment="Right" IsChecked="{Binding ScrollOutputToEnd}">Autoscroll</CheckBox>
+                </DockPanel>
                 <Grid DockPanel.Dock="Top" Height="200">
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="*" />
@@ -72,7 +75,7 @@
                                                  Foreground="{StaticResource OverlayWindowTextBrushKey}"
                                                  BorderThickness="1"
                                                  BorderBrush="{DynamicResource SecondaryAccentBrush}"
-                                                 IsReadOnly="True"
+                                                 IsReadOnly="True" 
                                                  TextContent="{Binding Source.ScriptLog, Mode=OneWay}">
                         <controls:ExtendedTextEditor.Style>
                             <Style TargetType="{x:Type controls:ExtendedTextEditor}">
@@ -82,6 +85,10 @@
                                 <Setter Property="VerticalAlignment" Value="Stretch" />
                             </Style>
                         </controls:ExtendedTextEditor.Style>
+                        
+                        <i:Interaction.Behaviors>
+                            <controls:ScrollToEndBehavior IsEnabled="{Binding ScrollOutputToEnd}" />
+                        </i:Interaction.Behaviors>
                     </controls:ExtendedTextEditor>
                 </Grid>
             </DockPanel>

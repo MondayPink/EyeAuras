@@ -26,6 +26,7 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
         private bool expandEditor;
         private ReadOnlyObservableCollection<KeyValuePair<string, string>> auraVariables;
         private bool showOutput;
+        private bool scrollOutputToEnd = true;
 
         public ExecuteScriptActionEditor(
             [NotNull] [Dependency(WellKnownSchedulers.Background)] IScheduler bgScheduler,
@@ -92,6 +93,12 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
         {
             get => showOutput;
             set => RaiseAndSetIfChanged(ref showOutput, value);
+        }
+
+        public bool ScrollOutputToEnd
+        {
+            get => scrollOutputToEnd;
+            set => RaiseAndSetIfChanged(ref scrollOutputToEnd, value);
         }
         
         public CommandWrapper ExecuteCommand { get; }
