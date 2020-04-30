@@ -8,6 +8,7 @@ namespace EyeAuras.Shared
     public abstract class AuraModelBase : DisposableReactiveObject, IAuraModel
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(AuraModelBase));
+        private IAuraContext context;
 
         protected AuraModelBase()
         {
@@ -20,6 +21,12 @@ namespace EyeAuras.Shared
             set => LoadProperties(value);
         }
 
+        public IAuraContext Context
+        {
+            get => context;
+            set => RaiseAndSetIfChanged(ref context, value);
+        }
+        
         protected abstract void LoadProperties(IAuraProperties source);
 
         protected abstract IAuraProperties SaveProperties();

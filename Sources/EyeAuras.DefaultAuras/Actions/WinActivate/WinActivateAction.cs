@@ -17,14 +17,14 @@ namespace EyeAuras.DefaultAuras.Actions.WinActivate
 
         public WinActivateAction(
             IClock clock,
-            IWindowSelectorViewModel windowSelector)
+            IWindowSelectorService windowSelector)
         {
             this.clock = clock;
             WindowSelector = windowSelector;
             this.RaiseWhenSourceValue(x => x.TargetWindow, windowSelector, x => x.TargetWindow).AddTo(Anchors);
         }
 
-        public IWindowSelectorViewModel WindowSelector { get; }
+        public IWindowSelectorService WindowSelector { get; }
 
         public WindowMatchParams TargetWindow
         {

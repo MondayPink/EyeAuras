@@ -18,6 +18,7 @@ using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using ReactiveUI;
 using System.Reactive.Linq;
+using DynamicData;
 using DynamicData.Binding;
 using Unity;
 
@@ -25,9 +26,10 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
 {
     internal sealed class ExecuteScriptAction : AuraActionBase<ExecuteScriptActionProperties>
     {
+        private static readonly ILog Log = LogManager.GetLogger(typeof(ExecuteScriptAction));
+
         private readonly ISharedContext sharedContext;
         private readonly IUnityContainer container;
-        private static readonly ILog Log = LogManager.GetLogger(typeof(ExecuteScriptAction));
         
         private string sourceCode;
         private string scriptCode;
@@ -89,7 +91,7 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
 
         public override string ActionName { get; } = "C# Script";
         
-        public override string ActionDescription { get; } = "Executes arbitrary C# code";
+        public override string ActionDescription { get; } = "Executes arbitrary C# code - EARLY ALPHA USE WITH CARE";
 
         public ScriptState State
         {
@@ -130,6 +132,8 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
                 "System.Windows",
                 typeof(IScriptExecutor).Namespace,
                 typeof(ISharedContext).Namespace,
+                typeof(IAuraContext).Namespace,
+                typeof(IObservableCache<,>).Namespace,
                 typeof(IUnityContainer).Namespace,
                 typeof(ScriptExecutorBase).Namespace,
                 typeof(Process).Namespace,
@@ -175,7 +179,8 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
                     return;
                 }
 
-                executor.SetContext(sharedContext);
+                executor.SetAuraContext(Context);
+                executor.SetSharedContext(sharedContext);
                 executor.SetContainer(container);
                 ScriptExecutor = executor;
                 State = ScriptState.ReadyToRun;

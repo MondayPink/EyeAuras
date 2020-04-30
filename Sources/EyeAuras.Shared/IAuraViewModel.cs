@@ -14,5 +14,7 @@ namespace EyeAuras.Shared
         bool IsActive { get; }
         
         bool IsEnabled { get; set; }
+        
+        IAuraModel Model { [NotNull] get; }
     }
 }

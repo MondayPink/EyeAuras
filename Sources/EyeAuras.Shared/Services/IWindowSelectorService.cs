@@ -4,7 +4,7 @@ using PoeShared.Scaffolding;
 
 namespace EyeAuras.Shared.Services
 {
-    public interface IWindowSelectorViewModel : IDisposableReactiveObject
+    public interface IWindowSelectorService : IDisposableReactiveObject
     {
         WindowHandle ActiveWindow { [CanBeNull] get; [CanBeNull] set; }
         

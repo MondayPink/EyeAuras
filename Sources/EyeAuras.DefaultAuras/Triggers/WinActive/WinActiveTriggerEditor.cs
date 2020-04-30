@@ -17,7 +17,7 @@ namespace EyeAuras.DefaultAuras.Triggers.WinActive
         private readonly SerialDisposable activeSourceAnchors = new SerialDisposable();
 
         public WinActiveTriggerEditor(
-            [NotNull] IWindowSelectorViewModel windowSelector)
+            [NotNull] IWindowSelectorService windowSelector)
         {
             WindowSelector = windowSelector.AddTo(Anchors);
             activeSourceAnchors.AddTo(Anchors);
@@ -27,7 +27,7 @@ namespace EyeAuras.DefaultAuras.Triggers.WinActive
                 .AddTo(Anchors);
         }
 
-        public IWindowSelectorViewModel WindowSelector { get; }
+        public IWindowSelectorService WindowSelector { get; }
         
          
         private void HandleSourceChange()

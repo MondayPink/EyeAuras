@@ -51,8 +51,8 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
 
         public SendInputAction(
             IUserInputBlocker userInputBlocker,
-            IWindowSelectorViewModel windowSelector,
-            IFactory<WinActivateAction, IWindowSelectorViewModel> winActivateActionFactory,
+            IWindowSelectorService windowSelector,
+            IFactory<WinActivateAction, IWindowSelectorService> winActivateActionFactory,
             [Dependency(WellKnownKeyboardSimulators.InputSimulator)] IInputSimulatorEx windowsInputSimulator,
             [Dependency(WellKnownKeyboardSimulators.InterceptionDriver)] IInputSimulatorEx driverBasedSimulator,
             [Dependency(WellKnownKeyboardSimulators.Usb2Kbd)] IInputSimulatorEx usb2KbdSimulator,
@@ -108,7 +108,7 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         }
         
         [ComparisonIgnore]
-        public IWindowSelectorViewModel WindowSelector { get; }
+        public IWindowSelectorService WindowSelector { get; }
 
         public bool BlockUserInput
         {

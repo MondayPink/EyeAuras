@@ -11,7 +11,9 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
         
         void Execute();
 
-        void SetContext(ISharedContext sharedContext);
+        void SetSharedContext(ISharedContext sharedContext);
+
+        void SetAuraContext(IAuraContext auraContext);
 
         void SetContainer(IUnityContainer container);
     }

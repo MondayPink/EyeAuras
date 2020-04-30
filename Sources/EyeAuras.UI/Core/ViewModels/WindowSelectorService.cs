@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
-using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Windows.Input;
 using DynamicData.Binding;
@@ -10,20 +9,16 @@ using EyeAuras.OnTopReplica;
 using EyeAuras.Shared.Services;
 using JetBrains.Annotations;
 using log4net;
-using PoeShared;
-using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using PoeShared.Scaffolding.WPF;
 using ReactiveUI;
-using Unity;
 
 namespace EyeAuras.UI.Core.ViewModels
 {
-    internal sealed class WindowSelectorViewModel : DisposableReactiveObject, IWindowSelectorViewModel
+    internal sealed class WindowSelectorService : DisposableReactiveObject, IWindowSelectorService
     {
         private readonly IWindowMatcher windowMatcher;
-        private static readonly ILog Log = LogManager.GetLogger(typeof(WindowSelectorViewModel));
-        private static readonly TimeSpan ThrottlingPeriod = TimeSpan.FromMilliseconds(100);
+        private static readonly ILog Log = LogManager.GetLogger(typeof(WindowSelectorService));
 
         private readonly ObservableAsPropertyHelper<bool> enableOverlaySelector;
 
@@ -34,10 +29,9 @@ namespace EyeAuras.UI.Core.ViewModels
         private bool windowTitleIsRegex;
         private IntPtr windowHandle;
 
-        public WindowSelectorViewModel(
+        public WindowSelectorService(
             [NotNull] IWindowMatcher windowMatcher,
-            [NotNull] IWindowListProvider windowListProvider,
-            [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
+            [NotNull] IWindowListProvider windowListProvider)
         {
             this.windowMatcher = windowMatcher;
             WindowList = windowListProvider.WindowList;
@@ -52,8 +46,6 @@ namespace EyeAuras.UI.Core.ViewModels
             windowListProvider.WindowList.ToObservableChangeSet()
                 .ToUnit()
                 .Merge(this.WhenAnyValue(x => x.TargetWindow).ToUnit())
-                .Throttle(ThrottlingPeriod)
-                .ObserveOn(uiScheduler)
                 .Subscribe(x => MatchingWindowList = BuildMatches(windowListProvider.WindowList))
                 .AddTo(Anchors);
                 
@@ -110,8 +102,6 @@ namespace EyeAuras.UI.Core.ViewModels
                         Handle = WindowHandle
                     })
                 .DistinctUntilChanged()
-                .Throttle(ThrottlingPeriod)
-                .ObserveOn(uiScheduler)
                 .Subscribe(x => TargetWindow = x)
                 .AddTo(Anchors);
             

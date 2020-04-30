@@ -2,6 +2,7 @@ using System;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows.Input;
+using EyeAuras.Shared;
 using EyeAuras.UI.Core.Models;
 using JetBrains.Annotations;
 using log4net;
@@ -72,6 +73,8 @@ namespace EyeAuras.UI.Core.ViewModels
             get => isEnabled;
             set => this.RaiseAndSetIfChanged(ref isEnabled, value);
         }
+
+        IAuraModel IAuraViewModel.Model => this.model;
 
         public ICommand RenameCommand { [NotNull] get; }
         

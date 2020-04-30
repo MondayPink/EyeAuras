@@ -7,6 +7,8 @@ using PoeShared.Scaffolding;
 using ReactiveUI;    
 using System;
 using System.Reactive.Linq;
+using DynamicData;
+using DynamicData.Binding;
 
 namespace EyeAuras.UI.Triggers.AuraIsActive
 {
@@ -19,7 +21,14 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
         {
             activeSourceAnchors.AddTo(Anchors);
 
-            AuraList = sharedContext.AuraList;
+            sharedContext.AuraList
+                .ToObservableChangeSet()
+                .Filter(this.WhenAnyValue(x => x.Source.Context.Id).Select(sourceAuraId => new Func<IAuraViewModel, bool>(aura => aura.Id != sourceAuraId)))
+                .Bind(out var auraList)
+                .Subscribe()
+                .AddTo(Anchors);
+
+            AuraList = auraList;
              
             this.WhenAnyValue(x => x.Source)
                 .Subscribe(HandleSourceChange)

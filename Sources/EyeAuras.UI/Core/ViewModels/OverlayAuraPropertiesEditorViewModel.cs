@@ -48,7 +48,7 @@ namespace EyeAuras.UI.Core.ViewModels
         public OverlayAuraPropertiesEditorViewModel(
             [NotNull] IAuraRepository repository,
             [NotNull] IFactory<IPropertyEditorViewModel> propertiesEditorFactory,
-            [NotNull] IWindowSelectorViewModel windowSelector,
+            [NotNull] IWindowSelectorService windowSelector,
             [NotNull] IClipboardManager clipboardManager,
             [NotNull] IFactory<LinkedPositionMonitor<IPropertyEditorViewModel>> positionMonitorFactory,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
@@ -95,7 +95,7 @@ namespace EyeAuras.UI.Core.ViewModels
             set => Source.WhileActiveActionsTimeout = TimeSpan.FromMilliseconds(value);
         }
 
-        public IWindowSelectorViewModel WindowSelector { get; }
+        public IWindowSelectorService WindowSelector { get; }
         
         public ReadOnlyObservableCollection<IAuraTrigger> KnownTriggers { get; }
         

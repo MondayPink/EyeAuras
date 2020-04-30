@@ -34,7 +34,7 @@ using Unity;
 
 namespace EyeAuras.UI.Core.Models
 {
-    internal sealed class OverlayAuraModelBase : AuraModelBase<OverlayAuraProperties>, IOverlayAuraModel
+    internal sealed class OverlayAuraModelBase : AuraModelBase<OverlayAuraProperties>, IOverlayAuraModel, IAuraContext
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraModelBase));
         private static readonly TimeSpan ModelsReloadTimeout = TimeSpan.FromSeconds(1);
@@ -49,6 +49,7 @@ namespace EyeAuras.UI.Core.Models
         private readonly ComplexAuraAction whileActiveActionsHolder = new ComplexAuraAction();
         private readonly ComplexAuraAction onExitActionsHolder = new ComplexAuraAction();
         private readonly ComplexAuraTrigger triggersHolder = new ComplexAuraTrigger();
+        private readonly SourceCache<KeyValuePair<string, object>, string> variables = new SourceCache<KeyValuePair<string, object>, string>(x => x.Key);
 
         private ICloseController closeController;
         private bool isActive;
@@ -79,6 +80,13 @@ namespace EyeAuras.UI.Core.Models
             OnEnterActions = onEnterActionsHolder;
             OnExitActions = onExitActionsHolder;
             WhileActiveActions = whileActiveActionsHolder;
+            Variables = variables;
+            Context = this;
+
+            Triggers.Connect().OnItemAdded(x => x.Context = this).Subscribe().AddTo(Anchors);
+            OnEnterActions.Connect().OnItemAdded(x => x.Context = this).Subscribe().AddTo(Anchors);
+            OnExitActions.Connect().OnItemAdded(x => x.Context = this).Subscribe().AddTo(Anchors);
+            WhileActiveActions.Connect().OnItemAdded(x => x.Context = this).Subscribe().AddTo(Anchors);
             
             this.repository = repository;
             this.configSerializer = configSerializer;
@@ -270,6 +278,18 @@ namespace EyeAuras.UI.Core.Models
         public IComplexAuraAction WhileActiveActions { get; }
 
         public IComplexAuraAction OnExitActions { get; }
+        
+        public SourceCache<KeyValuePair<string, object>, string> Variables { get; }
+
+        public object this[string key]
+        {
+            get
+            {
+                var result = Variables.Lookup(key);
+                return result.HasValue ? result.Value.Value : default;
+            }
+            set => Variables.Edit(x => x.AddOrUpdate(new KeyValuePair<string, object>(key, value)));
+        }
 
         public TimeSpan WhileActiveActionsTimeout
         {
@@ -308,26 +328,32 @@ namespace EyeAuras.UI.Core.Models
             source.TriggerProperties
                 .Select(ToAuraProperties)
                 .Where(ValidateProperty)
-                .Select(x => repository.CreateModel<IAuraTrigger>(x))
+                .Select(CreateModel<IAuraTrigger>)
                 .ForEach(x => Triggers.Add(x));
             
             source.OnEnterActionProperties
                 .Select(ToAuraProperties)
                 .Where(ValidateProperty)
-                .Select(x => repository.CreateModel<IAuraAction>(x))
+                .Select(CreateModel<IAuraAction>)
                 .ForEach(x => OnEnterActions.Add(x));
             
             source.OnExitActionProperties
                 .Select(ToAuraProperties)
                 .Where(ValidateProperty)
-                .Select(x => repository.CreateModel<IAuraAction>(x))
+                .Select(CreateModel<IAuraAction>)
                 .ForEach(x => OnExitActions.Add(x));
             
             source.WhileActiveActionProperties
                 .Select(ToAuraProperties)
                 .Where(ValidateProperty)
-                .Select(x => repository.CreateModel<IAuraAction>(x))
+                .Select(CreateModel<IAuraAction>)
                 .ForEach(x => WhileActiveActions.Add(x));
+        }
+
+        private T CreateModel<T>(IAuraProperties properties) where T : IAuraModel
+        {
+            var result = repository.CreateModel<T>(properties);
+            return result;
         }
 
         protected override void VisitLoad(OverlayAuraProperties source)

@@ -51,7 +51,7 @@ namespace EyeAuras.CsScriptAuras.Controls
                 EnableTextDragDrop = false,
                 EnableVirtualSpace = false,
             };
-            TextArea.Document.UndoStack.SizeLimit = 0;
+            TextArea.Document.UndoStack.SizeLimit = 64;
         }
 
         private static void OnMyContentChanged(object sender, DependencyPropertyChangedEventArgs e)

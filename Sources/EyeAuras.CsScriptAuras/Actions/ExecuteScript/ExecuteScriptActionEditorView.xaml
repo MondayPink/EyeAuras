@@ -3,10 +3,8 @@
                     xmlns:executeScript="clr-namespace:EyeAuras.CsScriptAuras.Actions.ExecuteScript"
                     xmlns:controls="clr-namespace:EyeAuras.CsScriptAuras.Controls"
                     xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
-                    xmlns:eye="http://coderush.net/poeeye/"
-                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-                    xmlns:blue="http://www.nuget.org/Blue.MVVM">
-    
+                    xmlns:eye="http://coderush.net/poeeye/">
+
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Converters.xaml" />
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Colors.xaml" />
@@ -14,80 +12,80 @@
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/CommandWrapperView.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras.Controls;component/Themes/Styles.xaml" />
     </ResourceDictionary.MergedDictionaries>
-    
+
     <DataTemplate DataType="{x:Type executeScript:ExecuteScriptActionEditor}">
-        <DockPanel >
+        <DockPanel>
             <DockPanel DockPanel.Dock="Top">
-                <Button Command="{Binding ExecuteCommand}" Content="Execute script"/>
-                <TextBlock HorizontalAlignment="Right" Margin="5,0,0,0" Text="{Binding Source.State, StringFormat='State: {0}'}"/>
+                <Button Command="{Binding ExecuteCommand}" Content="Execute script" />
+
+                <CheckBox Margin="5,0,0,0" IsChecked="{Binding ShowOutput}">Show Output</CheckBox>
+                <TextBlock DockPanel.Dock="Right" HorizontalAlignment="Right" Margin="5,0,0,0"
+                           Text="{Binding Source.State, StringFormat='State: {0}'}" />
             </DockPanel>
-            <ToggleButton DockPanel.Dock="Bottom"
-                          Style="{StaticResource MaterialDesignActionToggleButton}"
-                          Focusable="False" IsTabStop="False"
-                          Margin="0,2"
-                          IsChecked="{Binding ExpandEditor}">
-                <ToggleButton.Visibility>
-                    <Binding ElementName="SourceCodeEditor" Path="ActualHeight">
-                        <Binding.Converter>
-                            <blue:DoubleToVisibilityConverter TrueValue="Visible" FalseValue="Collapsed">
-                                <blue:DoubleToVisibilityConverter.ComparisonStrategy>
-                                    <blue:DoubleComparisonStrategy Mode="GreaterThanOrEqual" Comparand="400" />
-                                </blue:DoubleToVisibilityConverter.ComparisonStrategy>
-                            </blue:DoubleToVisibilityConverter>
-                        </Binding.Converter>
-                    </Binding>
-                </ToggleButton.Visibility>
-                <ToggleButton.Content>
-                    <TextBlock x:Name="EyeOn" Text="&#xf06e;" ToolTip="Enable Aura" Style="{StaticResource IconTextBlock}" Foreground="{StaticResource PositiveBrush}"/>
-                </ToggleButton.Content>
-                <materialDesign:ToggleButtonAssist.OnContent>
-                    <TextBlock x:Name="EyeOff" Text="&#xf070;" ToolTip="Disable Aura" Style="{StaticResource IconTextBlock}" Foreground="{StaticResource NegativeBrush}"/>
-                </materialDesign:ToggleButtonAssist.OnContent>
-            </ToggleButton>
-            
-            <controls:ExtendedTextEditor DockPanel.Dock="Top" Margin="2,5,2,5" Padding="2" FontSize="14" x:Name="SourceCodeEditor"
+
+            <controls:ExtendedTextEditor DockPanel.Dock="Top" Margin="2,5,2,5" Padding="2" FontSize="14"
+                                         x:Name="SourceCodeEditor"
                                          Foreground="{StaticResource OverlayWindowTextBrushKey}"
                                          BorderThickness="1" BorderBrush="{DynamicResource SecondaryAccentBrush}"
                                          TextContent="{Binding LiveSourceCode, UpdateSourceTrigger=PropertyChanged}">
                 <controls:ExtendedTextEditor.Style>
                     <Style TargetType="{x:Type controls:ExtendedTextEditor}">
-                        <Setter Property="HorizontalScrollBarVisibility" Value="Auto"></Setter>
-                        <Setter Property="VerticalScrollBarVisibility" Value="Auto"></Setter>
-                        <Setter Property="VerticalContentAlignment" Value="Stretch"></Setter>
-                        <Setter Property="VerticalAlignment" Value="Stretch"></Setter>
+                        <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+                        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+                        <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                        <Setter Property="VerticalAlignment" Value="Stretch" />
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding ExpandEditor}" Value="False">
-                                <Setter Property="MaxHeight" Value="400"></Setter>
+                                <Setter Property="MaxHeight" Value="400" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
                 </controls:ExtendedTextEditor.Style>
-                
+
                 <i:Interaction.Behaviors>
-                    <eye:IgnoreMouseWheelBehavior IsEnabled="{Binding ExpandEditor}"/>
+                    <eye:IgnoreMouseWheelBehavior IsEnabled="{Binding ExpandEditor}" />
                 </i:Interaction.Behaviors>
             </controls:ExtendedTextEditor>
-            
-            <TextBlock DockPanel.Dock="Top" Text="Output" Margin="2,5,2,2"/>
-            <controls:ExtendedTextEditor DockPanel.Dock="Top" Margin="2,5,2,5" Padding="2" FontSize="14" x:Name="OutputLog"
-                                         Foreground="{StaticResource OverlayWindowTextBrushKey}"
-                                         BorderThickness="1" BorderBrush="{DynamicResource SecondaryAccentBrush}"
-                                         IsReadOnly="True"
-                                         TextContent="{Binding Source.ScriptLog, Mode=OneWay}">
-                <controls:ExtendedTextEditor.Style>
-                    <Style TargetType="{x:Type controls:ExtendedTextEditor}">
-                        <Setter Property="HorizontalScrollBarVisibility" Value="Auto"></Setter>
-                        <Setter Property="VerticalScrollBarVisibility" Value="Auto"></Setter>
-                        <Setter Property="VerticalContentAlignment" Value="Stretch"></Setter>
-                        <Setter Property="VerticalAlignment" Value="Stretch"></Setter>
-                        <Style.Triggers>
-                            <DataTrigger Binding="{Binding ExpandEditor}" Value="False">
-                                <Setter Property="MaxHeight" Value="200"></Setter>
-                            </DataTrigger>
-                        </Style.Triggers>
-                    </Style>
-                </controls:ExtendedTextEditor.Style>
-            </controls:ExtendedTextEditor>
+
+            <DockPanel DockPanel.Dock="Top" Margin="2,5,2,2" Visibility="{Binding ShowOutput, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                <TextBlock DockPanel.Dock="Top" Text="Output" />
+                <Grid DockPanel.Dock="Top" Height="200">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" MinWidth="240" />
+                    </Grid.ColumnDefinitions>
+                    <DataGrid Grid.Column="2" ItemsSource="{Binding AuraVariables}" Margin="5,0,0,0" 
+                              AutoGenerateColumns="False" IsReadOnly="True"
+                              BorderThickness="1" BorderBrush="{DynamicResource SecondaryAccentBrush}"
+                              MaxHeight="{Binding ElementName=OutputLog, Path=ActualHeight}">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Name" Binding="{Binding Path=Key}" />
+                            <DataGridTextColumn Header="Value" Binding="{Binding Path=Value}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <GridSplitter Grid.Column="1" DockPanel.Dock="Right"
+                                  BorderBrush="{DynamicResource SecondaryAccentBrush}" BorderThickness="1,0,1,0"
+                                  Width="5" HorizontalAlignment="Stretch" />
+                    <controls:ExtendedTextEditor Grid.Column="0" Margin="2,5,2,5" Padding="2" FontSize="14" 
+                                                 x:Name="OutputLog"
+                                                 Foreground="{StaticResource OverlayWindowTextBrushKey}"
+                                                 BorderThickness="1"
+                                                 BorderBrush="{DynamicResource SecondaryAccentBrush}"
+                                                 IsReadOnly="True"
+                                                 TextContent="{Binding Source.ScriptLog, Mode=OneWay}">
+                        <controls:ExtendedTextEditor.Style>
+                            <Style TargetType="{x:Type controls:ExtendedTextEditor}">
+                                <Setter Property="HorizontalScrollBarVisibility" Value="Auto" />
+                                <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+                                <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                                <Setter Property="VerticalAlignment" Value="Stretch" />
+                            </Style>
+                        </controls:ExtendedTextEditor.Style>
+                    </controls:ExtendedTextEditor>
+                </Grid>
+            </DockPanel>
+
         </DockPanel>
     </DataTemplate>
 </ResourceDictionary>

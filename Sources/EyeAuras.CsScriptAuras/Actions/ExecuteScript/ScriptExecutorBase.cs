@@ -3,39 +3,52 @@ using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using EyeAuras.Shared;
+using PoeShared;
 using PoeShared.Scaffolding;
 using Unity;
 
 namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
 {
-    public abstract class ScriptExecutorBase : DisposableReactiveObject, IScriptExecutor 
+    public abstract partial class ScriptExecutorBase : DisposableReactiveObject, IScriptExecutor, IDictionary<string, object>
     {
         private readonly  CircularBuffer<string> output = new CircularBuffer<string>(1024);
 
         public IEnumerable<string> Output => output;
 
-        private ISharedContext context;
+        private ISharedContext sharedContext;
         private IUnityContainer container;
-        
+        private IAuraContext auraContext;
+
         private readonly ConcurrentDictionary<IAuraProperties, IAuraModel> modelByProperties = new ConcurrentDictionary<IAuraProperties, IAuraModel>();
 
-        public ISharedContext Context
+        public ISharedContext SharedContext
         {
-            get => context;
-            private set => RaiseAndSetIfChanged(ref context, value);
+            get => sharedContext ?? throw new InvalidOperationException($"{nameof(SharedContext)} is not initialized yet");
+            private set => RaiseAndSetIfChanged(ref sharedContext, value);
+        }
+
+        public IAuraContext AuraContext
+        {
+            get => auraContext ?? throw new InvalidOperationException($"{nameof(AuraContext)} is not initialized yet");
+            set => RaiseAndSetIfChanged(ref auraContext, value);
         }
 
         public IUnityContainer Container
         {
-            get => container;
+            get => container ?? throw new InvalidOperationException($"{nameof(Container)} is not initialized yet");
             private set => RaiseAndSetIfChanged(ref container, value);
         }
 
         public abstract void Execute();
         
-        public void SetContext(ISharedContext sharedContext)
+        public void SetSharedContext(ISharedContext sharedContext)
         {
-            Context = sharedContext;
+            SharedContext = sharedContext;
+        }
+        
+        public void SetAuraContext(IAuraContext auraContext)
+        {
+            AuraContext = auraContext;
         }
 
         public void SetContainer(IUnityContainer container)
@@ -45,7 +58,7 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
 
         public IAuraViewModel FindAuraById(string auraId)
         {
-            return Context.AuraList.FirstOrDefault(x => x.Id == auraId);
+            return SharedContext.AuraList.FirstOrDefault(x => x.Id == auraId);
         }
 
         public IAuraAction CreateAction(IAuraProperties auraProperties)
@@ -65,11 +78,23 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
                 output.PopBack();
             }
         }
+        
+        public void Log(object objectToDump)
+        {
+            Log(objectToDump.Dump());
+        }
 
         public void Log(string message)
         {
-            output.PushBack(message);
+            var now = Container.Resolve<IClock>().Now;
+            var formattedMessage = $"{now:HH:mm:ss.fff} {message}";
+            output.PushBack(formattedMessage);
             UpdateLog();
+        }
+
+        public void AddOrUpdate<T>(string key, T value)
+        {
+            AuraContext[key] = value;
         }
 
         private T GetOrCreate<T>(IAuraProperties auraProperties) where T : IAuraModel

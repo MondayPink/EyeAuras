@@ -11,7 +11,7 @@
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <DataTemplate DataType="{x:Type viewModels:WindowSelectorViewModel}">
+    <DataTemplate DataType="{x:Type viewModels:WindowSelectorService}">
         <DockPanel MinHeight="45" x:Name="WindowTitleSelector" LastChildFill="True">
             <materialDesign:PopupBox DockPanel.Dock="Left" StaysOpen="False" Margin="5,10,2.5,0"
                                      Padding="0"
