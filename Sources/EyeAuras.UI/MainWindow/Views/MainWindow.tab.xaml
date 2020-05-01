@@ -4,7 +4,8 @@
                     xmlns:viewModels1="clr-namespace:EyeAuras.UI.Core.ViewModels"
                     xmlns:eye="http://coderush.net/poeeye/"
                     xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
-                    xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz">
+                    xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz"
+                    xmlns:treeView="clr-namespace:PoeShared.UI.TreeView;assembly=PoeShared.Wpf">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/CommandWrapperView.xaml" />
@@ -33,20 +34,11 @@
                 </Grid>
             </Grid>
 
-            <ContentControl Content="{Binding DataContext.CloseTabCommand, RelativeSource={RelativeSource AncestorType={x:Type dragablz:TabablzControl}}}"
-                            DockPanel.Dock="Right" ToolTip="Remove aura" x:Name="RemoveAuraButton"
-                            eye:CommandWrapperHelper.Icon="&#xf00d;"
-                            Focusable="False" IsTabStop="False"
-                            Width="24" Height="24" Margin="5,0"
-                            Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type dragablz:DragablzItem}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
-                            ContentTemplate="{StaticResource CommandWrapperIcon}"
-                            eye:CommandWrapperHelper.CommandParameter="{Binding}" />
-
             <ToggleButton DockPanel.Dock="Right"
                           Style="{StaticResource MaterialDesignActionToggleButton}"
                           Focusable="False" IsTabStop="False"
                           Width="20" Height="20" Margin="0,0,10,0"
-                          Visibility="{Binding Path=IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type dragablz:DragablzItem}}, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                          Visibility="{Binding Path=IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
                           IsChecked="{Binding IsEnabled}"
                           Background="{StaticResource PrimaryHueMidBrush}" >
                 <ToggleButton.Content>
@@ -120,7 +112,66 @@
                     </DockPanel>
                 </materialDesign:Flipper.BackContent>
             </materialDesign:Flipper>
+        </DockPanel>
+    </DataTemplate>
+    
+    
+    <DataTemplate x:Key="AuraDirectoryTemplateKey" DataType="{x:Type treeView:IDirectoryTreeViewItemViewModel}">
+        <DockPanel TextBlock.Foreground="WhiteSmoke" HorizontalAlignment="Stretch"
+                   Height="30"
+                   x:Name="AuraContainer">
+            <materialDesign:Flipper DockPanel.Dock="Left"
+                                    VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
+                                    IsHitTestVisible="{Binding RelativeSource={RelativeSource Self}, Path=IsFlipped}"
+                                    Focusable="False"
+                                    Style="{StaticResource SimpleFlipper}"
+                                    x:Name="DirectoryNameFlipper">
+                <materialDesign:Flipper.FrontContent>
+                    <TextBlock
+                        Text="{Binding Name, Mode=OneWay}"
+                        IsHitTestVisible="False"
+                        FontSize="16" TextWrapping="Wrap" VerticalAlignment="Center">
+                    </TextBlock>
+                </materialDesign:Flipper.FrontContent>
 
+                <materialDesign:Flipper.BackContent>
+                    <DockPanel eye:AccessKeyScoper.IsAccessKeyScope="True">
+                        <Button
+                            Command="{Binding RenameCommand}"
+                            Style="{StaticResource InvisibleButtonStyleKey}"
+                            DockPanel.Dock="Right"
+                            IsCancel="True"
+                            Content="Cancel" />
+                        <Button
+                            Command="{Binding RenameCommand}"
+                            CommandParameter="{Binding ElementName=TabNameEditor, Path=Text}"
+                            Style="{StaticResource InvisibleButtonStyleKey}"
+                            DockPanel.Dock="Right"
+                            IsDefault="True"
+                            Content="Commit" />
+                        <TextBox x:Name="TabNameEditor"
+                                 eye:FocusHelper.IsFocused="True"
+                                 TextWrapping="Wrap"
+                                 DockPanel.Dock="Left"
+                                 VerticalContentAlignment="Center"
+                                 mah:TextBoxHelper.AutoWatermark="True"
+                                 FontSize="15">
+                            <TextBox.Style>
+                                <Style TargetType="{x:Type TextBox}">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsFlipped}" Value="True">
+                                            <Setter Property="Text" Value="{Binding TabName, Mode=OneWay}" />
+                                        </DataTrigger>
+                                        <Trigger Property="mah:TextBoxHelper.HasText" Value="True">
+                                            <Setter Property="mah:TextBoxHelper.ClearTextButton" Value="True" />
+                                        </Trigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBox.Style>
+                        </TextBox>
+                    </DockPanel>
+                </materialDesign:Flipper.BackContent>
+            </materialDesign:Flipper>
         </DockPanel>
     </DataTemplate>
 </ResourceDictionary>

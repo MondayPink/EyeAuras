@@ -23,6 +23,7 @@ using EyeAuras.UI.Core.Services;
 using EyeAuras.UI.Core.Utilities;
 using EyeAuras.UI.Core.ViewModels;
 using EyeAuras.UI.MainWindow.Models;
+using EyeAuras.UI.MainWindow.Services;
 using EyeAuras.UI.Prism.Modularity;
 using EyeAuras.UI.RegionSelector.Services;
 using JetBrains.Annotations;
@@ -38,6 +39,7 @@ using PoeShared.Services;
 using PoeShared.Squirrel.Updater;
 using PoeShared.UI;
 using PoeShared.UI.Hotkeys;
+using PoeShared.UI.TreeView;
 using PoeShared.Wpf.UI.Settings;
 using ReactiveUI;
 using Unity;
@@ -99,6 +101,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             [NotNull] IFactory<LinkedPositionMonitor<IAuraTabViewModel>> positionMonitorFactory,
             [NotNull] SharedContext sharedContext,
             [NotNull] IComparisonService comparisonService,
+            [NotNull] EyeTreeViewAdapter treeViewAdapter,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
             using var unused = new OperationTimer(elapsed => Log.Debug($"{nameof(MainWindowViewModel)} initialization took {elapsed.TotalMilliseconds:F0}ms"));
@@ -133,7 +136,13 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .Subscribe(x => ShowInTaskbar = WindowState != WindowState.Minimized || !configProvider.ActualConfig.MinimizeToTray, Log.HandleUiException)
                 .AddTo(Anchors);
             
-            TabsList = new ReadOnlyObservableCollection<IAuraTabViewModel>(sharedContext.TabList);
+            TabsList = sharedContext.TabList;
+            TreeViewItems = treeViewAdapter.TreeViewItems;
+            treeViewAdapter.SyncWith(sharedContext.TabList);
+            treeViewAdapter.WhenAnyValue(x => x.SelectedValue)
+                .Subscribe(x => SelectedTab = x)
+                .AddTo(Anchors);
+            
             PositionMonitor = positionMonitorFactory.Create().SyncWith(sharedContext.TabList, ReferenceEquals).AddTo(Anchors);
             ModuleStatus = moduleStatus.AddTo(Anchors);
             var executingAssemblyName = Assembly.GetExecutingAssembly().GetName();
@@ -181,6 +190,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             UndoCloseTabCommand = CommandWrapper.Create(UndoCloseTabCommandExecuted, UndoCloseTabCommandCanExecute);
             OpenAppDataDirectoryCommand = CommandWrapper.Create(OpenAppDataDirectory);
             SelectRegionCommand = CommandWrapper.Create(SelectRegionCommandExecuted);
+            CreateDirectoryCommand = CommandWrapper.Create(treeViewAdapter.AddDirectory);
 
             sharedContext
                 .TabList
@@ -332,7 +342,9 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         public IMessageBoxViewModel MessageBox { get; }
 
-        public ReadOnlyObservableCollection<IAuraTabViewModel> TabsList { get; }
+        public ObservableCollection<IAuraTabViewModel> TabsList { get; }
+        
+        public ReadOnlyObservableCollection<ITreeViewItemViewModel> TreeViewItems { get; }
 
         public PositionMonitor PositionMonitor { get; }
 
@@ -341,6 +353,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         public CommandWrapper ShowAppCommand { get; }
         
         public CommandWrapper ExitAppCommand { get; }
+        
+        public CommandWrapper CreateDirectoryCommand { get; }
         
         public IGenericSettingsViewModel Settings { get; }
 

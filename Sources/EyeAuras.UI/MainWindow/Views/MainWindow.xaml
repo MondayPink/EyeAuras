@@ -13,6 +13,10 @@
     xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
     xmlns:viewModels1="clr-namespace:EyeAuras.UI.Core.ViewModels"
     xmlns:blue="http://www.nuget.org/Blue.MVVM"
+    xmlns:model="clr-namespace:EyeAuras.UI.MainWindow.Services"
+    xmlns:treeView="clr-namespace:PoeShared.UI.TreeView;assembly=PoeShared.Wpf"
+    xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+    xmlns:behaviors="clr-namespace:EyeAuras.UI.MainWindow.Behaviors"
     mc:Ignorable="d"
     TextElement.Foreground="{StaticResource MaterialDesignBody}"
     TextBlock.Foreground="{StaticResource MaterialDesignBody}"
@@ -47,8 +51,9 @@
             <blue:MultiplyDoubleConverter x:Key="MultiplyDoubleAuraListConverter" Factor="0.95" />
 
             <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource SlimScrollBarStyleKey}" />
-        </ResourceDictionary>
 
+            <eye:BindingProxy x:Key="MainViewModelProxy" Data="{Binding}" />
+        </ResourceDictionary>
     </Window.Resources>
 
     <Window.InputBindings>
@@ -56,11 +61,10 @@
         <KeyBinding Gesture="CTRL+W" Command="{Binding CloseTabCommand}" CommandParameter="{Binding SelectedTab}" />
         <KeyBinding Gesture="CTRL+V" Command="{Binding PasteTabCommand}" />
         <KeyBinding Gesture="CTRL+D" Command="{Binding DuplicateTabCommand}" CommandParameter="{Binding SelectedTab}" />
-        <KeyBinding Gesture="CTRL+C" Command="{Binding CopyTabToClipboardCommand}" CommandParameter="{Binding SelectedTab}" />
+        <KeyBinding Gesture="CTRL+C" Command="{Binding CopyTabToClipboardCommand}"
+                    CommandParameter="{Binding SelectedTab}" />
         <KeyBinding Gesture="CTRL+Z" Command="{Binding UndoCloseTabCommand}" />
     </Window.InputBindings>
-    
-    
 
     <DockPanel>
         <tb:TaskbarIcon Visibility="Visible"
@@ -75,7 +79,7 @@
                 </ContextMenu>
             </tb:TaskbarIcon.ContextMenu>
         </tb:TaskbarIcon>
-        
+
         <StatusBar DockPanel.Dock="Bottom">
             <StatusBarItem DockPanel.Dock="Left">
                 <ItemsControl ItemsSource="{Binding StatusBarItems}">
@@ -86,17 +90,17 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemContainerStyle>
                         <Style TargetType="ContentPresenter">
-                            <Setter Property="DockPanel.Dock" Value="Left"/>
+                            <Setter Property="DockPanel.Dock" Value="Left" />
                         </Style>
                     </ItemsControl.ItemContainerStyle>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <ContentControl Content="{Binding}" />                            
+                            <ContentControl Content="{Binding}" />
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StatusBarItem>
-            
+
             <StatusBarItem DockPanel.Dock="Right">
                 <ToggleButton Style="{StaticResource MaterialDesignToggleButton}"
                               Width="150"
@@ -105,7 +109,9 @@
                               Background="Transparent"
                               IsChecked="{Binding GlobalHotkeyTrigger.IsActive}">
                     <ToggleButton.Content>
-                        <Border Background="{StaticResource NegativeBrush}" BorderThickness="1" BorderBrush="{StaticResource WarningBrush}" HorizontalAlignment="Stretch" CornerRadius="6" ToolTip="Click to Enable all auras">
+                        <Border Background="{StaticResource NegativeBrush}" BorderThickness="1"
+                                BorderBrush="{StaticResource WarningBrush}" HorizontalAlignment="Stretch"
+                                CornerRadius="6" ToolTip="Click to Enable all auras">
                             <DockPanel Margin="5,0,0,0">
                                 <TextBlock Style="{StaticResource IconTextBlock}" Text="&#xf011;" />
                                 <TextBlock Text="Auras are DISABLED" HorizontalAlignment="Center" />
@@ -113,7 +119,8 @@
                         </Border>
                     </ToggleButton.Content>
                     <materialDesign:ToggleButtonAssist.OnContent>
-                        <Border Background="{StaticResource OverlayTitleBackgroundBrushKey}" HorizontalAlignment="Stretch" CornerRadius="6" ToolTip="Click to Disable all auras">
+                        <Border Background="{StaticResource OverlayTitleBackgroundBrushKey}"
+                                HorizontalAlignment="Stretch" CornerRadius="6" ToolTip="Click to Disable all auras">
                             <DockPanel Margin="5,0,0,0">
                                 <TextBlock Text="Auras are running" HorizontalAlignment="Center" />
                             </DockPanel>
@@ -121,22 +128,23 @@
                     </materialDesign:ToggleButtonAssist.OnContent>
                 </ToggleButton>
             </StatusBarItem>
-            
-            <StatusBarItem DockPanel.Dock="Right" Visibility="{Binding ModuleStatus.IsVisible, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
-                <ContentControl Content="{Binding ModuleStatus}"/>
+
+            <StatusBarItem DockPanel.Dock="Right"
+                           Visibility="{Binding ModuleStatus.IsVisible, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                <ContentControl Content="{Binding ModuleStatus}" />
             </StatusBarItem>
-            
-            
+
+
             <StatusBarItem DockPanel.Dock="Right">
                 <ContentControl Content="{Binding OpenAppDataDirectoryCommand}"
                                 eye:CommandWrapperHelper.Icon="&#xF07C;"
                                 ContentTemplate="{StaticResource CommandWrapperIcon}"
                                 ToolTip="Open EyeAuras folder" />
             </StatusBarItem>
-            
-            <Border/> <!-- Reserved filler -->
+
+            <Border /> <!-- Reserved filler -->
         </StatusBar>
-        
+
         <materialDesign:DrawerHost DockPanel.Dock="Top" x:Name="MainDrawerHost">
 
             <Grid>
@@ -160,23 +168,27 @@
 
                                 <!-- Items are upside-down -->
                                 <ContentControl DockPanel.Dock="Left" x:Name="UndoCloseTabButton"
-                                                eye:CommandWrapperHelper.Text="UNDO CLOSE" eye:CommandWrapperHelper.Icon="&#xF0E2;"
+                                                eye:CommandWrapperHelper.Text="UNDO CLOSE"
+                                                eye:CommandWrapperHelper.Icon="&#xF0E2;"
                                                 ToolTip="CTRL+Z Undo close operation"
                                                 Content="{Binding UndoCloseTabCommand}" />
 
                                 <ContentControl DockPanel.Dock="Left" x:Name="CloneTabButton"
-                                                eye:CommandWrapperHelper.Text="CLONE" eye:CommandWrapperHelper.Icon="&#xF24D;"
+                                                eye:CommandWrapperHelper.Text="CLONE"
+                                                eye:CommandWrapperHelper.Icon="&#xF24D;"
                                                 eye:CommandWrapperHelper.CommandParameter="{Binding SelectedTab}"
                                                 ToolTip="CTRL+D Duplicate selected tab"
                                                 Content="{Binding DuplicateTabCommand}" />
 
                                 <ContentControl DockPanel.Dock="Left" x:Name="PasteTabButton"
-                                                eye:CommandWrapperHelper.Text="PASTE" eye:CommandWrapperHelper.Icon="&#xF0EA;"
+                                                eye:CommandWrapperHelper.Text="PASTE"
+                                                eye:CommandWrapperHelper.Icon="&#xF0EA;"
                                                 ToolTip="CTRL+V Paste tab"
                                                 Content="{Binding PasteTabCommand}" />
 
                                 <ContentControl DockPanel.Dock="Left" x:Name="CopyTabButton"
-                                                eye:CommandWrapperHelper.Text="COPY" eye:CommandWrapperHelper.Icon="&#xF0C5;"
+                                                eye:CommandWrapperHelper.Text="COPY"
+                                                eye:CommandWrapperHelper.Icon="&#xF0C5;"
                                                 eye:CommandWrapperHelper.CommandParameter="{Binding SelectedTab}"
                                                 ToolTip="CTRL+C Copy selected tab to clipboard"
                                                 Content="{Binding CopyTabToClipboardCommand}" />
@@ -188,7 +200,7 @@
                                            HorizontalAlignment="Right" />
                             </DockPanel>
                         </Border>
-                        
+
                         <DockPanel>
                             <DockPanel DockPanel.Dock="Top">
                                 <ContentControl DockPanel.Dock="Right" Content="{Binding SelectRegionCommand}"
@@ -201,103 +213,167 @@
                                                 ToolTip="CTRL+T Create new tab" />
                             </DockPanel>
 
-                            <TextBlock DockPanel.Dock="Top" x:Name="NoTabsTip" Grid.Row="0" Grid.Column="0" FontSize="16" Text="Add your first Aura &#x2196;" VerticalAlignment="Top"
-                                       IsEnabled="False" 
+                            <TextBlock DockPanel.Dock="Top" x:Name="NoTabsTip"
+                                       FontSize="16" Text="Add your first Aura &#x2196;" VerticalAlignment="Top"
+                                       IsEnabled="False"
                                        HorizontalAlignment="Center"
                                        Visibility="{Binding SelectedTab, Converter={StaticResource NotNullToCollapsedConverter}}" />
 
-                            <dragablz:TabablzControl Margin="2.5" DockPanel.Dock="Top"
-                                                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                                                 x:Name="AuraList"
-                                                 Style="{StaticResource DragablzVerticalTabablzControl}"
-                                                 utilities:TabablzHelper.PositionMonitor="{Binding PositionMonitor, Mode=OneWay}"
-                                                 ItemsSource="{Binding TabsList}"
-                                                 TabStripPlacement="Left"
-                                                 SelectedItem="{Binding SelectedTab}"
-                                                 VirtualizingPanel.IsVirtualizing="False"
-                                                 VirtualizingPanel.IsContainerVirtualizable="False"
-                                                 HeaderItemTemplate="{StaticResource AuraViewModelHeaderTemplateKey}">
-                            <dragablz:TabablzControl.ContextMenu>
-                                <ContextMenu>
-                                    <MenuItem Header="Rename"
-                                              InputGestureText="F2"
-                                              Command="{Binding SelectedTab.RenameCommand}"
-                                              IsEnabled="{Binding SelectedTab, Converter={StaticResource NullToFalseConverter}}">
-                                        <MenuItem.Icon>
-                                            <TextBlock Text="&#xf044;" Style="{StaticResource IconTextBlock}" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
+                            <DockPanel Background="Transparent">
+                                <!--<DockPanel.ContextMenu>
+                                    <ContextMenu>
+                                        <MenuItem Header="New directory"
+                                                  Command="{Binding CreateDirectoryCommand}">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="&#xf044;" Style="{StaticResource IconTextBlock}" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                        <MenuItem Header="New aura"
+                                                  Command="{Binding CreateNewTabCommand}">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="&#xf044;" Style="{StaticResource IconTextBlock}" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
+                                    </ContextMenu>
+                                </DockPanel.ContextMenu>-->
 
-                                    <MenuItem Header="Copy"
-                                              InputGestureText="CTRL+C"
-                                              Command="{Binding CopyTabToClipboardCommand}"
-                                              CommandParameter="{Binding SelectedTab}">
-                                        <MenuItem.Icon>
-                                            <TextBlock Text="&#xF0C5;" Style="{StaticResource IconTextBlock}" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <MenuItem Header="Paste"
-                                              InputGestureText="CTRL+V"
-                                              Command="{Binding PasteTabCommand}">
-                                        <MenuItem.Icon>
-                                            <TextBlock Text="&#xF0EA;" Style="{StaticResource IconTextBlock}" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <MenuItem Header="Clone"
-                                              InputGestureText="CTRL+D"
-                                              Command="{Binding DuplicateTabCommand}"
-                                              CommandParameter="{Binding SelectedTab}">
-                                        <MenuItem.Icon>
-                                            <TextBlock Text="&#xF24D;" Style="{StaticResource IconTextBlock}" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                    <Separator />
-                                    <MenuItem Header="Close"
-                                              InputGestureText="CTRL+W"
-                                              eye:CommandWrapperHelper.CommandParameter="{Binding SelectedTab}"
-                                              Command="{Binding CloseTabCommand}">
-                                        <MenuItem.Icon>
-                                            <TextBlock Text="&#xf00d;" Style="{StaticResource IconTextBlock}" />
-                                        </MenuItem.Icon>
-                                    </MenuItem>
-                                </ContextMenu>
-                            </dragablz:TabablzControl.ContextMenu>
-                            <dragablz:TabablzControl.ItemContainerStyle>
-                                <Style TargetType="{x:Type dragablz:DragablzItem}"
-                                       BasedOn="{StaticResource DragablzTabItemVerticalStyle}">
-                                    <Setter Property="BorderThickness" Value="0,2,0,2" />
-                                    <Setter Property="BorderBrush" Value="Transparent" />
-                                    <Setter Property="Width" Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ScrollViewer}}, Path=ActualWidth}" />
-                                    <Setter Property="IsSelected" Value="{Binding IsSelected}" />
-                                    <Style.Triggers>
-                                        <DataTrigger
-                                            Binding="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ScrollViewer}}, Path=(ScrollViewer.ComputedVerticalScrollBarVisibility)}"
-                                            Value="{x:Static Visibility.Visible}">
-                                            <Setter Property="Width"
-                                                    Value="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ScrollViewer}}, Path=ActualWidth, Converter={StaticResource MultiplyDoubleAuraListConverter}}" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </dragablz:TabablzControl.ItemContainerStyle>
-                            <dragablz:TabablzControl.InputBindings>
-                                <KeyBinding Key="F2" Command="{Binding SelectedTab.RenameCommand}" />
-                            </dragablz:TabablzControl.InputBindings>
-                        </dragablz:TabablzControl>
+                                <treeView:StretchingTreeView ItemsSource="{Binding TreeViewItems}" Margin="2.5"
+                                                             DockPanel.Dock="Top" 
+                                                             ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                                             HorizontalContentAlignment="Stretch">
+                                    <treeView:StretchingTreeView.Style>
+                                        <Style TargetType="{x:Type TreeView}"
+                                               BasedOn="{StaticResource MaterialDesignTreeView}">
+                                            <Setter Property="Background" Value="{x:Null}" />
+                                            <Setter Property="BorderBrush"
+                                                    Value="{StaticResource SecondaryAccentForegroundBrush}" />
+                                            <Setter Property="BorderThickness" Value="0" />
+                                            <Setter Property="Foreground"
+                                                    Value="{StaticResource PrimaryHueDarkForegroundBrush}" />
+                                        </Style>
+                                    </treeView:StretchingTreeView.Style>
+                                    <TreeView.Resources>
+
+                                        <HierarchicalDataTemplate DataType="{x:Type model:HolderTreeViewItemViewModel}"
+                                                                  ItemsSource="{Binding Path=Children}">
+                                            <DockPanel Background="Transparent">
+                                                <DockPanel.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="Rename"
+                                                                  InputGestureText="F2"
+                                                                  Command="{Binding Value.RenameCommand}"
+                                                                  IsEnabled="{Binding Value, Converter={StaticResource NullToFalseConverter}}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xf044;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+
+                                                        <MenuItem Header="Copy"
+                                                                  InputGestureText="CTRL+C"
+                                                                  Command="{Binding Data.CopyToClipboardCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  CommandParameter="{Binding Value}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xF0C5;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Paste"
+                                                                  InputGestureText="CTRL+V"
+                                                                  Command="{Binding Data.PasteTabCommand, Source={StaticResource MainViewModelProxy}}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xF0EA;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Clone"
+                                                                  InputGestureText="CTRL+D"
+                                                                  Command="{Binding Data.DuplicateTabCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  CommandParameter="{Binding Value}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xF24D;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <Separator />
+                                                        <MenuItem Header="Close"
+                                                                  InputGestureText="CTRL+W"
+                                                                  eye:CommandWrapperHelper.CommandParameter="{Binding Value}"
+                                                                  Command="{Binding Data.CloseTabCommand, Source={StaticResource MainViewModelProxy}}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xf00d;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                    </ContextMenu>
+                                                </DockPanel.ContextMenu>
+
+                                                <ContentControl DockPanel.Dock="Right"
+                                                                Content="{Binding Data.CloseTabCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                ToolTip="Remove aura" x:Name="RemoveAuraButton"
+                                                                eye:CommandWrapperHelper.Icon="&#xf00d;"
+                                                                Focusable="False" IsTabStop="False"
+                                                                Width="24" Height="24" Margin="5,0"
+                                                                Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}"
+                                                                ContentTemplate="{StaticResource CommandWrapperIcon}"
+                                                                eye:CommandWrapperHelper.CommandParameter="{Binding Value}" />
+                                                <ContentControl
+                                                    ContentTemplate="{StaticResource AuraViewModelHeaderTemplateKey}"
+                                                    Content="{Binding Value}" HorizontalContentAlignment="Stretch" />
+                                            </DockPanel>
+                                        </HierarchicalDataTemplate>
+
+                                        <HierarchicalDataTemplate
+                                            DataType="{x:Type model:DirectoryTreeViewItemViewModel}"
+                                            ItemsSource="{Binding Path=Children}">
+                                            <TextBlock Text="{Binding Name}" />
+                                        </HierarchicalDataTemplate>
+                                    </TreeView.Resources>
+
+                                    <TreeView.ItemContainerStyle>
+                                        <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
+                                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                            <Setter Property="Padding" Value="0 5 0 5" />
+                                            <Setter Property="Margin" Value="-25 0 0 0" />
+                                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                            <Style.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="BorderBrush"
+                                                            Value="{StaticResource SecondaryAccentBrush}" />
+                                                    <Setter Property="Background"
+                                                            Value="{StaticResource PrimaryHueDarkBrush}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TreeView.ItemContainerStyle>
+
+                                    <i:Interaction.Behaviors>
+                                        <behaviors:EyeTreeViewDragAndDropBehavior ItemsSource="{Binding TabsList}" />
+                                    </i:Interaction.Behaviors>
+
+                                    <treeView:StretchingTreeView.InputBindings>
+                                        <KeyBinding Key="F2" Command="{Binding SelectedTab.RenameCommand}" />
+                                    </treeView:StretchingTreeView.InputBindings>
+                                </treeView:StretchingTreeView>
+                            </DockPanel>
                         </DockPanel>
-
-                        
                     </DockPanel>
 
-                    <Image x:Name="AppBackgroundImage" Grid.Row="0" Grid.Column="2" Source="pack://application:,,,/Resources/mainIcon.png"
+                    <Image x:Name="AppBackgroundImage" Grid.Row="0" Grid.Column="2"
+                           Source="pack://application:,,,/Resources/mainIcon.png"
                            Opacity="0.2" />
 
-                    <TextBlock x:Name="TabIsNotSelectedTip" Grid.Row="0" Grid.Column="2" FontSize="16" Text="Select or Add Aura" VerticalAlignment="Center"
+                    <TextBlock x:Name="TabIsNotSelectedTip" Grid.Row="0" Grid.Column="2" FontSize="16"
+                               Text="Select or Add Aura" VerticalAlignment="Center"
                                HorizontalAlignment="Center"
                                Visibility="{Binding SelectedTab, Converter={StaticResource NotNullToCollapsedConverter}}" />
 
                     <Border x:Name="SelectedTabContent" Grid.Row="0" Grid.Column="2" Margin="2.5"
                             Visibility="{Binding SelectedTab, Converter={StaticResource NullToCollapsedConverter}}">
-                        <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto" IsTabStop="False" Focusable="False">
+                        <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto" IsTabStop="False"
+                                      Focusable="False">
                             <ItemsControl ItemsSource="{Binding TabsList}" Focusable="False">
                                 <ItemsControl.ItemsPanel>
                                     <ItemsPanelTemplate>
@@ -310,7 +386,8 @@
                                             <ContentControl.Visibility>
                                                 <MultiBinding Converter="{StaticResource EqualToVisibleConverter}">
                                                     <Binding />
-                                                    <Binding Path="DataContext.SelectedTab" ElementName="SelectedTabContent" />
+                                                    <Binding Path="DataContext.SelectedTab"
+                                                             ElementName="SelectedTabContent" />
                                                 </MultiBinding>
                                             </ContentControl.Visibility>
                                         </ContentControl>
@@ -367,25 +444,25 @@
 
 
     <mah:MetroWindow.LeftWindowCommands>
-        <mah:WindowCommands ShowSeparators="True">
-           
-        </mah:WindowCommands>
+        <mah:WindowCommands ShowSeparators="True" />
     </mah:MetroWindow.LeftWindowCommands>
 
     <mah:MetroWindow.RightWindowCommands>
         <mah:WindowCommands ShowSeparators="True">
-            <StackPanel Orientation="Horizontal" ToolTip="Application is running without Administrator privileges, not all features may work correctly, e.g. global hotkeys"
+            <StackPanel Orientation="Horizontal"
+                        ToolTip="Application is running without Administrator privileges, not all features may work correctly, e.g. global hotkeys"
                         Visibility="{Binding IsElevated, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}">
                 <materialDesign:PackIcon VerticalAlignment="Center" Kind="ShieldWarning" />
                 <TextBlock Margin="2.5,0,0,0" Text="USER-MODE" />
             </StackPanel>
-            
+
             <ContentControl Content="{Binding ApplicationUpdater.CheckForUpdatesCommand}"
                             ContentTemplate="{StaticResource CommandWrapperIcon}"
                             eye:CommandWrapperHelper.Progress="{Binding ApplicationUpdater.ProgressPercent}"
                             eye:CommandWrapperHelper.Icon="&#xF0ED;">
                 <ContentControl.ToolTip>
-                    <TextBlock Text="{Binding ApplicationUpdater.UpdateSource.Description, StringFormat='Check for updates @ {0}'}"/>
+                    <TextBlock
+                        Text="{Binding ApplicationUpdater.UpdateSource.Description, StringFormat='Check for updates @ {0}'}" />
                 </ContentControl.ToolTip>
             </ContentControl>
             <Button Content="&#xF085; Settings" FontFamily="{StaticResource FontAwesome}"
