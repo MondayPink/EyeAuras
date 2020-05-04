@@ -40,6 +40,8 @@ namespace EyeAuras.UI.Core.Models
 
         public string Name { get; set; }
         
+        public string Path { get; set; }
+        
         public TimeSpan WhileActiveActionsTimeout { get; set; }
 
         public WindowMatchParams WindowMatch { get; set; }

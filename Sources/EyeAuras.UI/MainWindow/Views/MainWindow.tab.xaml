@@ -5,31 +5,32 @@
                     xmlns:eye="http://coderush.net/poeeye/"
                     xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
                     xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz"
-                    xmlns:treeView="clr-namespace:PoeShared.UI.TreeView;assembly=PoeShared.Wpf">
+                    xmlns:treeView="clr-namespace:PoeShared.UI.TreeView;assembly=PoeShared.Wpf"
+                    xmlns:services="clr-namespace:EyeAuras.UI.MainWindow.Services"
+                    xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/CommandWrapperView.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <DataTemplate x:Key="AuraViewModelHeaderTemplateKey" DataType="{x:Type viewModels1:IAuraTabViewModel}">
+    <DataTemplate x:Key="AuraViewModelHeaderTemplateKey" DataType="{x:Type services:HolderTreeViewItemViewModel}">
         <DockPanel TextBlock.Foreground="WhiteSmoke" HorizontalAlignment="Stretch"
-                   Height="30"
                    x:Name="AuraContainer">
             <Grid DockPanel.Dock="Left" Margin="5,0" VerticalAlignment="Center" Width="16">
-                <Grid Visibility="{Binding IsEnabled, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                <Grid Visibility="{Binding Value.IsEnabled, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
                     <materialDesign:PackIcon
                         Foreground="{StaticResource NegativeBrush}"
                         ToolTip="Aura is NOT active"
-                        Visibility="{Binding IsActive, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"
+                        Visibility="{Binding Value.IsActive, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"
                         Kind="CheckboxBlankCircleOutline" />
                     <materialDesign:PackIcon
                         Foreground="{StaticResource PositiveBrush}"
                         ToolTip="Aura is active"
-                        Visibility="{Binding IsActive, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                        Visibility="{Binding Value.IsActive, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
                         Kind="CheckboxMarkedCircleOutline" />
                 </Grid>
 
-                <Grid Visibility="{Binding IsEnabled, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}">
+                <Grid Visibility="{Binding Value.IsEnabled, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}">
                     <TextBlock Text="&#xf070;" Foreground="{StaticResource NegativeBrush}" ToolTip="Aura is disabled" Style="{StaticResource IconTextBlock}" HorizontalAlignment="Center" />
                 </Grid>
             </Grid>
@@ -39,7 +40,7 @@
                           Focusable="False" IsTabStop="False"
                           Width="20" Height="20" Margin="0,0,10,0"
                           Visibility="{Binding Path=IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
-                          IsChecked="{Binding IsEnabled}"
+                          IsChecked="{Binding Value.IsEnabled}"
                           Background="{StaticResource PrimaryHueMidBrush}" >
                 <ToggleButton.Content>
                     <TextBlock x:Name="EyeOn" Text="&#xf06e;" ToolTip="Enable Aura" Style="{StaticResource IconTextBlock}" Foreground="{StaticResource PositiveBrush}"/>
@@ -58,13 +59,13 @@
                                     x:Name="TabNameFlipper">
                 <materialDesign:Flipper.FrontContent>
                     <TextBlock
-                        Text="{Binding TabName, Mode=OneWay}"
-                        IsHitTestVisible="False"
+                        Text="{Binding Name, Mode=OneWay}"
+                        IsHitTestVisible="False" TextTrimming="CharacterEllipsis"
                         FontSize="16" TextWrapping="Wrap" VerticalAlignment="Center">
                         <TextBlock.Style>
                             <Style TargetType="{x:Type TextBlock}">
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding IsEnabled}" Value="False">
+                                    <DataTrigger Binding="{Binding Value.IsEnabled}" Value="False">
                                         <Setter Property="Opacity" Value="0.5"/>
                                     </DataTrigger>
                                 </Style.Triggers>
@@ -89,18 +90,18 @@
                             IsDefault="True"
                             Content="Commit" />
                         <TextBox x:Name="TabNameEditor"
-                                 eye:FocusHelper.IsFocused="True"
                                  TextWrapping="Wrap"
                                  DockPanel.Dock="Left"
+                                 eye:FocusHelper.IsFocused="True"
                                  VerticalContentAlignment="Center"
                                  mah:TextBoxHelper.AutoWatermark="True"
-                                 mah:TextBoxHelper.Watermark="{Binding DefaultTabName, Mode=OneWay}"
+                                 mah:TextBoxHelper.Watermark="{Binding DefaultName, Mode=OneWay}"
                                  FontSize="15">
                             <TextBox.Style>
                                 <Style TargetType="{x:Type TextBox}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsFlipped}" Value="True">
-                                            <Setter Property="Text" Value="{Binding TabName, Mode=OneWay}" />
+                                            <Setter Property="Text" Value="{Binding Name, Mode=OneWay}" />
                                         </DataTrigger>
                                         <Trigger Property="mah:TextBoxHelper.HasText" Value="True">
                                             <Setter Property="mah:TextBoxHelper.ClearTextButton" Value="True" />
@@ -108,6 +109,10 @@
                                     </Style.Triggers>
                                 </Style>
                             </TextBox.Style>
+                            
+                            <i:Interaction.Behaviors>
+                                <eye:SelectAllOnFocusBehavior/>
+                            </i:Interaction.Behaviors>
                         </TextBox>
                     </DockPanel>
                 </materialDesign:Flipper.BackContent>
@@ -115,22 +120,46 @@
         </DockPanel>
     </DataTemplate>
     
-    
-    <DataTemplate x:Key="AuraDirectoryTemplateKey" DataType="{x:Type treeView:IDirectoryTreeViewItemViewModel}">
+    <DataTemplate x:Key="AuraDirectoryTemplateKey" DataType="{x:Type services:DirectoryTreeViewItemViewModel}">
         <DockPanel TextBlock.Foreground="WhiteSmoke" HorizontalAlignment="Stretch"
-                   Height="30"
                    x:Name="AuraContainer">
-            <materialDesign:Flipper DockPanel.Dock="Left"
+            <materialDesign:PackIcon Kind="Folder" Width="28" Height="28" Visibility="{Binding IsExpanded,Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"/>
+            <materialDesign:PackIcon Kind="FolderOpen" Width="28" Height="28" Visibility="{Binding IsExpanded,Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"/>
+            
+            <ContentControl DockPanel.Dock="Right" x:Name="EyeOn" HorizontalAlignment="Right"
+                            Content="{Binding EnableAurasCommand}"
+                            ToolTip="Enable Auras"
+                            Foreground="{StaticResource PositiveBrush}"
+                            Background="{StaticResource PrimaryHueMidBrush}"
+                            eye:CommandWrapperHelper.Icon="&#xf06e;"
+                            Focusable="False" IsTabStop="False"
+                            Width="24" Height="24" Margin="5,0,0,0"
+                            Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}"
+                            ContentTemplate="{StaticResource CommandWrapperIcon}"/>
+            <ContentControl DockPanel.Dock="Right" x:Name="EyeOff" HorizontalAlignment="Right"
+                            Content="{Binding DisableAurasCommand}"
+                            Foreground="{StaticResource NegativeBrush}"
+                            ToolTip="Disable Auras"
+                            Background="{StaticResource PrimaryHueMidBrush}"
+                            eye:CommandWrapperHelper.Icon="&#xf070;"
+                            Focusable="False" IsTabStop="False"
+                            Width="24" Height="24" Margin="5,0,0,0"
+                            Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}"
+                            ContentTemplate="{StaticResource CommandWrapperIcon}"/>
+            
+            
+            <materialDesign:Flipper DockPanel.Dock="Left" Margin="5,0,0,0"
                                     VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
                                     IsHitTestVisible="{Binding RelativeSource={RelativeSource Self}, Path=IsFlipped}"
+                                    IsFlipped="{Binding IsFlipped, Mode=TwoWay}"
                                     Focusable="False"
                                     Style="{StaticResource SimpleFlipper}"
                                     x:Name="DirectoryNameFlipper">
                 <materialDesign:Flipper.FrontContent>
                     <TextBlock
                         Text="{Binding Name, Mode=OneWay}"
-                        IsHitTestVisible="False"
-                        FontSize="16" TextWrapping="Wrap" VerticalAlignment="Center">
+                        IsHitTestVisible="False" TextTrimming="CharacterEllipsis"
+                        FontSize="16" VerticalAlignment="Center">
                     </TextBlock>
                 </materialDesign:Flipper.FrontContent>
 
@@ -160,7 +189,7 @@
                                 <Style TargetType="{x:Type TextBox}">
                                     <Style.Triggers>
                                         <DataTrigger Binding="{Binding IsFlipped}" Value="True">
-                                            <Setter Property="Text" Value="{Binding TabName, Mode=OneWay}" />
+                                            <Setter Property="Text" Value="{Binding Name, Mode=OneWay}" />
                                         </DataTrigger>
                                         <Trigger Property="mah:TextBoxHelper.HasText" Value="True">
                                             <Setter Property="mah:TextBoxHelper.ClearTextButton" Value="True" />
@@ -168,6 +197,10 @@
                                     </Style.Triggers>
                                 </Style>
                             </TextBox.Style>
+                            
+                            <i:Interaction.Behaviors>
+                                <eye:SelectAllOnFocusBehavior/>
+                            </i:Interaction.Behaviors>
                         </TextBox>
                     </DockPanel>
                 </materialDesign:Flipper.BackContent>

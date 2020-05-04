@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Forms;
@@ -127,11 +128,33 @@ namespace EyeAuras.UI.MainWindow.Behaviors
             }
             StartPoint = null;
 
-            if (itemNode.DataContext is HolderTreeViewItemViewModel targetNode && e.Data.GetData(typeof(HolderTreeViewItemViewModel)) is HolderTreeViewItemViewModel sourceNode && targetNode != sourceNode)
             {
-                var targetIdx = ItemsSource.IndexOf(targetNode.Value);
-                var sourceIdx = ItemsSource.IndexOf(sourceNode.Value);
-                ItemsSource.Move(sourceIdx, targetIdx);
+                if (itemNode.DataContext is HolderTreeViewItemViewModel targetNode && e.Data.GetData(typeof(HolderTreeViewItemViewModel)) is HolderTreeViewItemViewModel sourceNode && targetNode != sourceNode)
+                {
+                    sourceNode.Parent = targetNode.Parent;
+                }
+            }
+            {
+                if (itemNode.DataContext is DirectoryTreeViewItemViewModel targetNode && e.Data.GetData(typeof(HolderTreeViewItemViewModel)) is HolderTreeViewItemViewModel sourceNode)
+                {
+                    sourceNode.Parent = targetNode;
+                }
+            }
+            {
+                if (itemNode.DataContext is DirectoryTreeViewItemViewModel targetNode && e.Data.GetData(typeof(DirectoryTreeViewItemViewModel)) is DirectoryTreeViewItemViewModel sourceNode && targetNode != sourceNode)
+                {
+                    var parents = targetNode.FindParents();
+                    if (!parents.Contains(sourceNode))
+                    {
+                        sourceNode.Parent = targetNode;
+                    }
+                }
+            }
+            {
+                if (itemNode.DataContext is HolderTreeViewItemViewModel targetNode && e.Data.GetData(typeof(DirectoryTreeViewItemViewModel)) is DirectoryTreeViewItemViewModel sourceNode)
+                {
+                    sourceNode.Parent = targetNode.Parent;
+                }
             }
         }
 

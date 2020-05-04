@@ -10,7 +10,5 @@ namespace EyeAuras.UI.Core.ViewModels
     internal interface IOverlayAuraTabViewModel : IAuraTabViewModel
     {
         IPropertyEditorViewModel GeneralEditor { [NotNull] get; }
-        
-        IOverlayAuraModel Model { [CanBeNull] get; }
     }
 }

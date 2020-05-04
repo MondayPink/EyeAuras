@@ -58,6 +58,7 @@ namespace EyeAuras.UI.Core.Models
         private WindowMatchParams targetWindow;
         private string uniqueId;
         private TimeSpan whileActiveActionsTimeout;
+        private string path;
 
         public OverlayAuraModelBase(
             [NotNull] IEyeAuraSharedContext sharedContext,
@@ -191,7 +192,7 @@ namespace EyeAuras.UI.Core.Models
 
             //FIXME Properties mechanism should have inverted logic - only important parameters must matter
             Observable.Merge(
-                    this.WhenAnyProperty(x => x.Name, x => x.TargetWindow, x => x.IsEnabled).Select(x => $"[{Name}].{x.EventArgs.PropertyName} property changed"),
+                    this.WhenAnyProperty(x => x.Name, x => x.TargetWindow, x => x.IsEnabled, x => x.Path).Select(x => $"[{Name}].{x.EventArgs.PropertyName} property changed"),
                     Overlay.WhenAnyProperty().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{nameof(Overlay)}.{x.EventArgs.PropertyName} property changed"),
                     Triggers.Connect().Select(x => $"[{Name}({Id})] Trigger list changed, item count: {Triggers.Count}"),
                     Triggers.Connect().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName} Trigger property changed"),
@@ -318,6 +319,12 @@ namespace EyeAuras.UI.Core.Models
             set => RaiseAndSetIfChanged(ref name, value);
         }
 
+        public string Path
+        {
+            get => path;
+            set => RaiseAndSetIfChanged(ref path, value);
+        }
+
         private void ReloadCollections(OverlayAuraProperties source)
         {
             OnExitActions.Edit(x => x.Clear());;
@@ -366,6 +373,7 @@ namespace EyeAuras.UI.Core.Models
             {
                 Name = source.Name;
             }
+            Path = source.Path;
 
             WhileActiveActionsTimeout = source.WhileActiveActionsTimeout;
             TargetWindow = source.WindowMatch;
@@ -403,6 +411,7 @@ namespace EyeAuras.UI.Core.Models
             properties.BorderThickness = Overlay.BorderThickness;
             properties.IsEnabled = IsEnabled;
             properties.Id = Id;
+            properties.Path = Path;
         }
 
         private IAuraProperties ToAuraProperties(PoeConfigMetadata<IAuraProperties> metadata)
@@ -429,7 +438,6 @@ namespace EyeAuras.UI.Core.Models
             
             if (metadata.Value == null)
             {
-                
                 return new ProxyAuraProperties(metadata);
             }
 

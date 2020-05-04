@@ -12,22 +12,18 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
-using Dragablz;
 using DynamicData;
 using DynamicData.Binding;
 using EyeAuras.DefaultAuras.Triggers.HotkeyIsActive;
-using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
 using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.Services;
-using EyeAuras.UI.Core.Utilities;
 using EyeAuras.UI.Core.ViewModels;
 using EyeAuras.UI.MainWindow.Models;
 using EyeAuras.UI.MainWindow.Services;
 using EyeAuras.UI.Prism.Modularity;
-using EyeAuras.UI.RegionSelector.Services;
+using Humanizer;
 using JetBrains.Annotations;
-using KellermanSoftware.CompareNetObjects;
 using log4net;
 using PoeShared;
 using PoeShared.Modularity;
@@ -39,11 +35,10 @@ using PoeShared.Services;
 using PoeShared.Squirrel.Updater;
 using PoeShared.UI;
 using PoeShared.UI.Hotkeys;
-using PoeShared.UI.TreeView;
 using PoeShared.Wpf.UI.Settings;
 using ReactiveUI;
 using Unity;
-using Unity.Lifetime;
+using Application = System.Windows.Application;
 
 namespace EyeAuras.UI.MainWindow.ViewModels
 {
@@ -98,12 +93,12 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             [NotNull] IPrismModuleStatusViewModel moduleStatus,
             [NotNull] IMainWindowBlocksProvider mainWindowBlocksProvider,
             [NotNull] IFactory<IRegionSelectorService> regionSelectorServiceFactory,
-            [NotNull] IFactory<LinkedPositionMonitor<IAuraTabViewModel>> positionMonitorFactory,
             [NotNull] SharedContext sharedContext,
             [NotNull] IComparisonService comparisonService,
             [NotNull] EyeTreeViewAdapter treeViewAdapter,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
+            TreeViewAdapter = treeViewAdapter;
             using var unused = new OperationTimer(elapsed => Log.Debug($"{nameof(MainWindowViewModel)} initialization took {elapsed.TotalMilliseconds:F0}ms"));
             viewController
                 .WhenRendered
@@ -137,13 +132,10 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .AddTo(Anchors);
             
             TabsList = sharedContext.TabList;
-            TreeViewItems = treeViewAdapter.TreeViewItems;
-            treeViewAdapter.SyncWith(sharedContext.TabList);
             treeViewAdapter.WhenAnyValue(x => x.SelectedValue)
                 .Subscribe(x => SelectedTab = x)
                 .AddTo(Anchors);
             
-            PositionMonitor = positionMonitorFactory.Create().SyncWith(sharedContext.TabList, ReferenceEquals).AddTo(Anchors);
             ModuleStatus = moduleStatus.AddTo(Anchors);
             var executingAssemblyName = Assembly.GetExecutingAssembly().GetName();
             Title = $"{(appArguments.IsDebugMode ? "[D]" : "")} {executingAssemblyName.Name} v{executingAssemblyName.Version}";
@@ -190,7 +182,22 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             UndoCloseTabCommand = CommandWrapper.Create(UndoCloseTabCommandExecuted, UndoCloseTabCommandCanExecute);
             OpenAppDataDirectoryCommand = CommandWrapper.Create(OpenAppDataDirectory);
             SelectRegionCommand = CommandWrapper.Create(SelectRegionCommandExecuted);
-            CreateDirectoryCommand = CommandWrapper.Create(treeViewAdapter.AddDirectory);
+            CreateDirectoryCommand = CommandWrapper.Create<string>(path =>
+            {
+                var result = treeViewAdapter.AddDirectory(path);
+                result.RenameCommand.Execute(null);
+            });
+            RemoveDirectoryCommand = CommandWrapper.Create<string>(path =>
+            {
+                var auras = treeViewAdapter.EnumerateAuras(path).ToArray();
+                if (!auras.Any() || System.Windows.MessageBox.Show(
+                    Application.Current.MainWindow,
+                    $"Are you sure you want to remove folder {path} and {"aura".ToQuantity(auras.Length)} ?", "Confirmation",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes)
+                {
+                    treeViewAdapter.RemoveDirectory(path);
+                }
+            });
 
             sharedContext
                 .TabList
@@ -282,8 +289,10 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     {
                         var allOverlays = TabsList
                             .OfType<IOverlayAuraTabViewModel>()
-                            .Where(x => x.Model?.Overlay != null)
-                            .Select(y => y.Model.Overlay);
+                            .Select(x => x.Model)
+                            .OfType<IOverlayAuraModel>()
+                            .Where(x => x.Overlay != null)
+                            .Select(y => y.Overlay);
                         if (unlock)
                         {
                             allOverlays
@@ -343,10 +352,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         public IMessageBoxViewModel MessageBox { get; }
 
         public ObservableCollection<IAuraTabViewModel> TabsList { get; }
-        
-        public ReadOnlyObservableCollection<ITreeViewItemViewModel> TreeViewItems { get; }
-
-        public PositionMonitor PositionMonitor { get; }
 
         public CommandWrapper OpenAppDataDirectoryCommand { get; }
         
@@ -356,7 +361,11 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         
         public CommandWrapper CreateDirectoryCommand { get; }
         
+        public CommandWrapper RemoveDirectoryCommand { get; }
+        
         public IGenericSettingsViewModel Settings { get; }
+        
+        public EyeTreeViewAdapter TreeViewAdapter { get; }
 
         public Size MinSize { get; } = new Size(1150, 750);
 
@@ -672,6 +681,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             config.Auras = positionedItems.Select(x => x.Properties).ToArray();
             config.MainWindowBounds = new Rect(Left, Top, Width, Height);
             config.ListWidth = ListWidth.Value;
+            config.Directories = TreeViewAdapter.EnumerateDirectories().EmptyIfNull().ToArray();
             return config;
         }
 
@@ -722,6 +732,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 : new GridLength(config.ListWidth, GridUnitType.Pixel);
 
             Log.Debug($"Successfully loaded config, tabs count: {TabsList.Count}");
+            TreeViewAdapter.SyncWith(sharedContext.TabList, config.Directories.EmptyIfNull().ToArray());
         }
 
         private IAuraTabViewModel CreateAndAddTab(OverlayAuraProperties tabProperties)
@@ -758,8 +769,16 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 
                 if (newTab is IOverlayAuraTabViewModel newOverlayTab)
                 {
-                    newOverlayTab.Model.Overlay.UnlockWindowCommand.CanExecute(null);
-                    newOverlayTab.Model.Overlay.UnlockWindowCommand.Execute(null);
+                    if (newOverlayTab.Model is IOverlayAuraModel newOverlayModel && newOverlayModel.Overlay.UnlockWindowCommand.CanExecute(null))
+                    {
+                        newOverlayModel.Overlay.UnlockWindowCommand.Execute(null);
+                    }
+
+                    var treeItem = TreeViewAdapter.FindItemByTab(newOverlayTab);
+                    if (treeItem != null && treeItem.RenameCommand.CanExecute(null))
+                    {
+                        treeItem.RenameCommand.Execute(null);
+                    }
                 }
             }
             catch (Exception e)

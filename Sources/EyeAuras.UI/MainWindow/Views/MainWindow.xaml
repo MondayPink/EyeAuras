@@ -58,6 +58,7 @@
 
     <Window.InputBindings>
         <KeyBinding Gesture="CTRL+T" Command="{Binding CreateNewTabCommand}" />
+        <KeyBinding Gesture="CTRL+N" Command="{Binding CreateDirectoryCommand}" />
         <KeyBinding Gesture="CTRL+W" Command="{Binding CloseTabCommand}" CommandParameter="{Binding SelectedTab}" />
         <KeyBinding Gesture="CTRL+V" Command="{Binding PasteTabCommand}" />
         <KeyBinding Gesture="CTRL+D" Command="{Binding DuplicateTabCommand}" CommandParameter="{Binding SelectedTab}" />
@@ -207,6 +208,10 @@
                                                 eye:CommandWrapperHelper.Icon="&#xf140;"
                                                 ContentTemplate="{StaticResource CommandWrapperIcon}"
                                                 ToolTip="Select Window" />
+                                <ContentControl DockPanel.Dock="Right"  Content="{Binding CreateDirectoryCommand}"
+                                                eye:CommandWrapperHelper.Icon="&#xf07b;"
+                                                eye:CommandWrapperHelper.Text="New folder"
+                                                ToolTip="CTRL+N Create new folder" />
                                 <ContentControl Content="{Binding CreateNewTabCommand}"
                                                 eye:CommandWrapperHelper.Icon="&#xF055;"
                                                 eye:CommandWrapperHelper.Text="New aura"
@@ -220,30 +225,30 @@
                                        Visibility="{Binding SelectedTab, Converter={StaticResource NotNullToCollapsedConverter}}" />
 
                             <DockPanel Background="Transparent">
-                                <!--<DockPanel.ContextMenu>
+                                <DockPanel.ContextMenu>
                                     <ContextMenu>
-                                        <MenuItem Header="New directory"
+                                        <MenuItem Header="New folder"
                                                   Command="{Binding CreateDirectoryCommand}">
                                             <MenuItem.Icon>
-                                                <TextBlock Text="&#xf044;" Style="{StaticResource IconTextBlock}" />
+                                                <TextBlock Text="&#xf07b;" Style="{StaticResource IconTextBlock}" />
                                             </MenuItem.Icon>
                                         </MenuItem>
                                         <MenuItem Header="New aura"
                                                   Command="{Binding CreateNewTabCommand}">
                                             <MenuItem.Icon>
-                                                <TextBlock Text="&#xf044;" Style="{StaticResource IconTextBlock}" />
+                                                <TextBlock Text="&#xF055;" Style="{StaticResource IconTextBlock}" />
                                             </MenuItem.Icon>
                                         </MenuItem>
                                     </ContextMenu>
-                                </DockPanel.ContextMenu>-->
+                                </DockPanel.ContextMenu>
 
-                                <treeView:StretchingTreeView ItemsSource="{Binding TreeViewItems}" Margin="2.5"
+                                <treeView:StretchingTreeView ItemsSource="{Binding TreeViewAdapter.TreeViewItems}" Margin="2.5" x:Name="EyeTreeView"
                                                              DockPanel.Dock="Top" 
+                                                             VirtualizingPanel.IsVirtualizing="False"
                                                              ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                                                              HorizontalContentAlignment="Stretch">
                                     <treeView:StretchingTreeView.Style>
-                                        <Style TargetType="{x:Type TreeView}"
-                                               BasedOn="{StaticResource MaterialDesignTreeView}">
+                                        <Style TargetType="{x:Type TreeView}" BasedOn="{StaticResource MaterialDesignTreeView}">
                                             <Setter Property="Background" Value="{x:Null}" />
                                             <Setter Property="BorderBrush"
                                                     Value="{StaticResource SecondaryAccentForegroundBrush}" />
@@ -252,11 +257,29 @@
                                                     Value="{StaticResource PrimaryHueDarkForegroundBrush}" />
                                         </Style>
                                     </treeView:StretchingTreeView.Style>
-                                    <TreeView.Resources>
 
-                                        <HierarchicalDataTemplate DataType="{x:Type model:HolderTreeViewItemViewModel}"
-                                                                  ItemsSource="{Binding Path=Children}">
-                                            <DockPanel Background="Transparent">
+                                    <TreeView.ItemContainerStyle>
+                                        <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
+                                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                                            <Setter Property="Padding" Value="0 5 0 5" />
+                                            <Setter Property="Margin" Value="0 0 0 0" />
+                                            <Setter Property="HorizontalAlignment" Value="Stretch" />
+                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                            <Style.Triggers>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter Property="BorderBrush"
+                                                            Value="{StaticResource SecondaryAccentBrush}" />
+                                                    <Setter Property="Background"
+                                                            Value="{StaticResource PrimaryHueDarkBrush}" />
+                                                </Trigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TreeView.ItemContainerStyle>
+                                    
+                                    <TreeView.Resources>
+                                        <DataTemplate DataType="{x:Type model:HolderTreeViewItemViewModel}">
+                                            <DockPanel Background="Transparent"  Height="30">
                                                 <DockPanel.ContextMenu>
                                                     <ContextMenu>
                                                         <MenuItem Header="Rename"
@@ -298,7 +321,7 @@
                                                         <Separator />
                                                         <MenuItem Header="Close"
                                                                   InputGestureText="CTRL+W"
-                                                                  eye:CommandWrapperHelper.CommandParameter="{Binding Value}"
+                                                                  CommandParameter="{Binding Value}"
                                                                   Command="{Binding Data.CloseTabCommand, Source={StaticResource MainViewModelProxy}}">
                                                             <MenuItem.Icon>
                                                                 <TextBlock Text="&#xf00d;"
@@ -319,42 +342,82 @@
                                                                 eye:CommandWrapperHelper.CommandParameter="{Binding Value}" />
                                                 <ContentControl
                                                     ContentTemplate="{StaticResource AuraViewModelHeaderTemplateKey}"
-                                                    Content="{Binding Value}" HorizontalContentAlignment="Stretch" />
+                                                    Content="{Binding}" HorizontalContentAlignment="Stretch" />
                                             </DockPanel>
-                                        </HierarchicalDataTemplate>
+                                        </DataTemplate>
 
                                         <HierarchicalDataTemplate
                                             DataType="{x:Type model:DirectoryTreeViewItemViewModel}"
                                             ItemsSource="{Binding Path=Children}">
-                                            <TextBlock Text="{Binding Name}" />
+                                            <DockPanel Background="Transparent"  Height="30">
+                                                <DockPanel.ContextMenu>
+                                                    <ContextMenu>
+                                                        <MenuItem Header="Rename"
+                                                                  InputGestureText="F2"
+                                                                  Command="{Binding RenameCommand}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xf044;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <Separator/>
+                                                        <MenuItem Header="New sub-folder"
+                                                                  Command="{Binding Data.CreateDirectoryCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  CommandParameter="{Binding Path=Path}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xf07b;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Expand All"
+                                                                  Command="{Binding ExpandAllCommand}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xf115;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Collapse All"
+                                                                  Command="{Binding CollapseAllCommand}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xf114;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <Separator/>
+                                                        
+                                                        <MenuItem Header="Remove folder"
+                                                                  Command="{Binding Data.RemoveDirectoryCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  CommandParameter="{Binding Path=Path}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xf00d;" Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                    </ContextMenu>
+                                                </DockPanel.ContextMenu>
+                                                
+                                                <ContentControl DockPanel.Dock="Right"
+                                                                Content="{Binding Data.RemoveDirectoryCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                ToolTip="Remove aura" x:Name="RemoveDirectory"
+                                                                eye:CommandWrapperHelper.Icon="&#xf00d;"
+                                                                Focusable="False" IsTabStop="False"
+                                                                Width="24" Height="24" Margin="5,0"
+                                                                Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}"
+                                                                ContentTemplate="{StaticResource CommandWrapperIcon}"
+                                                                eye:CommandWrapperHelper.CommandParameter="{Binding Path=Path}" />
+
+                                                <ContentControl ContentTemplate="{StaticResource AuraDirectoryTemplateKey}" Height="30"
+                                                                Content="{Binding}"></ContentControl>
+                                                
+                                            </DockPanel>
                                         </HierarchicalDataTemplate>
                                     </TreeView.Resources>
-
-                                    <TreeView.ItemContainerStyle>
-                                        <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
-                                            <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
-                                            <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
-                                            <Setter Property="Padding" Value="0 5 0 5" />
-                                            <Setter Property="Margin" Value="-25 0 0 0" />
-                                            <Setter Property="HorizontalAlignment" Value="Stretch" />
-                                            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                                            <Style.Triggers>
-                                                <Trigger Property="IsSelected" Value="True">
-                                                    <Setter Property="BorderBrush"
-                                                            Value="{StaticResource SecondaryAccentBrush}" />
-                                                    <Setter Property="Background"
-                                                            Value="{StaticResource PrimaryHueDarkBrush}" />
-                                                </Trigger>
-                                            </Style.Triggers>
-                                        </Style>
-                                    </TreeView.ItemContainerStyle>
 
                                     <i:Interaction.Behaviors>
                                         <behaviors:EyeTreeViewDragAndDropBehavior ItemsSource="{Binding TabsList}" />
                                     </i:Interaction.Behaviors>
 
                                     <treeView:StretchingTreeView.InputBindings>
-                                        <KeyBinding Key="F2" Command="{Binding SelectedTab.RenameCommand}" />
+                                        <KeyBinding Key="F2" Command="{Binding ElementName=EyeTreeView, Path=SelectedItem.RenameCommand}" />
                                     </treeView:StretchingTreeView.InputBindings>
                                 </treeView:StretchingTreeView>
                             </DockPanel>

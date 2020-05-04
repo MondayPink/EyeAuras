@@ -7,7 +7,9 @@ namespace EyeAuras.Shared
     {
         string Id { [NotNull] get; }
         
-        string TabName { [NotNull] get; }
+        string TabName { [NotNull] get; [NotNull] set; }
+        
+        string Path { [CanBeNull] get; [CanBeNull] set; }
         
         bool IsSelected { get; set; }
         

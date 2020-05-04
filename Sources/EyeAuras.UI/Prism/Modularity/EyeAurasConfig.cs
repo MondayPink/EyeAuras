@@ -11,6 +11,8 @@ namespace EyeAuras.UI.Prism.Modularity
     internal sealed class EyeAurasConfig : IPoeEyeConfigVersioned
     {
         public OverlayAuraProperties[] Auras { [CanBeNull] get; [CanBeNull] set; } = new OverlayAuraProperties[0];
+        
+        public AuraDirectoryProperties[] Directories { [CanBeNull] get; [CanBeNull] set; } = new AuraDirectoryProperties[0];
 
         public string FreezeAurasHotkey { get; set; } = Keys.None.ToString();
 

@@ -11,7 +11,6 @@ using PoeShared.Native;
 using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using PoeShared.Scaffolding.WPF;
-using Prism.Commands;
 using ReactiveUI;
 
 namespace EyeAuras.UI.Core.ViewModels
@@ -20,7 +19,6 @@ namespace EyeAuras.UI.Core.ViewModels
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraTabViewModel));
 
-        private readonly Fallback<string> tabName = new Fallback<string>();
         private readonly SerialDisposable loadedModelAnchors = new SerialDisposable();
         private readonly IFactory<IOverlayAuraModel> auraModelFactory;
         
@@ -31,6 +29,8 @@ namespace EyeAuras.UI.Core.ViewModels
         private bool isActive;
         private ICloseController closeController;
         private IOverlayAuraModel model;
+        private string path;
+        private string tabName;
 
         public OverlayAuraTabViewModel(
             OverlayAuraProperties initialProperties,
@@ -39,19 +39,18 @@ namespace EyeAuras.UI.Core.ViewModels
         {
             this.auraModelFactory = auraModelFactory;
             loadedModelAnchors.AddTo(Anchors);
-            RenameCommand = new DelegateCommand<string>(RenameCommandExecuted);
-
-            this.RaiseWhenSourceValue(x => x.TabName, tabName, x => x.Value).AddTo(Anchors);
-            this.RaiseWhenSourceValue(x => x.DefaultTabName, tabName, x => x.DefaultValue).AddTo(Anchors);
 
             GeneralEditor = propertiesEditorFactory.Create();
 
             Properties = initialProperties;
             IsEnabled = properties.IsEnabled;
             Id = properties.Id;
-            
-            tabName.SetValue(properties.Name);
-            tabName.SetDefaultValue(properties.Name);
+            Path = properties.Path;
+            TabName = properties.Name;
+
+            this.WhenAnyValue(x => x.TabName)
+                .Subscribe(x => Properties.Name = x)
+                .AddTo(Anchors);
             
             this.WhenAnyValue(x => x.IsEnabled)
                 .Subscribe(() => Model = ReloadModel())
@@ -59,8 +58,6 @@ namespace EyeAuras.UI.Core.ViewModels
             
             EnableCommand = CommandWrapper.Create(() => IsEnabled = true);
         }
-
-        public string DefaultTabName => tabName.DefaultValue;
 
         public bool IsActive
         {
@@ -74,15 +71,17 @@ namespace EyeAuras.UI.Core.ViewModels
             set => this.RaiseAndSetIfChanged(ref isEnabled, value);
         }
 
-        IAuraModel IAuraViewModel.Model => this.model;
+        IAuraModel IAuraViewModel.Model => Model;
 
-        public ICommand RenameCommand { [NotNull] get; }
-        
         public ICommand EnableCommand { get; }
 
         public IPropertyEditorViewModel GeneralEditor { get; }
 
-        public string TabName => tabName.Value;
+        public string TabName
+        {
+            get => tabName;
+            set => RaiseAndSetIfChanged(ref tabName, value);
+        }
 
         public bool IsFlipped
         {
@@ -97,6 +96,12 @@ namespace EyeAuras.UI.Core.ViewModels
         }
 
         public string Id { get; }
+
+        public string Path
+        {
+            get => path;
+            set => RaiseAndSetIfChanged(ref path, value);
+        }
 
         public IOverlayAuraModel Model
         {
@@ -148,11 +153,7 @@ namespace EyeAuras.UI.Core.ViewModels
             sw.Step($"Loaded model Properties");
 
             model.WhenAnyValue(x => x.Name)
-                .Subscribe(x =>
-                {
-                    tabName.SetValue(x);
-                    tabName.SetDefaultValue(x);
-                })
+                .Subscribe(x => TabName = x)
                 .AddTo(modelAnchors);
             
             model.WhenAnyValue(x => x.IsActive)
@@ -168,9 +169,13 @@ namespace EyeAuras.UI.Core.ViewModels
                 .AddTo(modelAnchors);
             
             this.WhenAnyValue(x => x.TabName)
-                .Subscribe(x => model.Name = TabName)
+                .Subscribe(x => model.Name = x)
                 .AddTo(modelAnchors);
-
+            
+            this.WhenAnyValue(x => x.Path)
+                .Subscribe(x => model.Path = x)
+                .AddTo(modelAnchors);
+            
             this.WhenAnyValue(x => x.CloseController)
                 .Where(x => x != null)
                 .Subscribe(x => model.SetCloseController(x))
@@ -179,43 +184,10 @@ namespace EyeAuras.UI.Core.ViewModels
 
             return model;
         }
-        
-        private void RenameCommandExecuted(string value)
-        {
-            if (IsFlipped)
-            {
-                if (value == null)
-                {
-                    // Cancel
-                }
-                else if (string.IsNullOrWhiteSpace(value))
-                {
-                    RenameTabTo(default);
-                }
-                else
-                {
-                    RenameTabTo(value);
-                }
-            }
-
-            IsFlipped = !IsFlipped;
-        }
-
-        private void RenameTabTo(string newTabNameOrDefault)
-        {
-            if (newTabNameOrDefault == tabName.Value)
-            {
-                return;
-            }
-
-            var previousValue = tabName.Value;
-            tabName.SetValue(newTabNameOrDefault);
-            Log.Debug($"[{TabName}({Id})] Changed name of tab {tabName.DefaultValue}, {previousValue} => {tabName.Value}");
-        }
 
         public override string ToString()
         {
-            return new {TabName, DefaultTabName, IsSelected, IsFlipped}.DumpToTextRaw();
+            return new {TabName, IsSelected, IsFlipped}.DumpToTextRaw();
         }
     }
 }

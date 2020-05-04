@@ -1,35 +1,34 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
+using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.ViewModels;
 using EyeAuras.UI.MainWindow.ViewModels;
+using log4net;
+using PoeShared;
 using PoeShared.Scaffolding;
 using PoeShared.UI.TreeView;
-using ReactiveUI;
 
 namespace EyeAuras.UI.MainWindow.Services
 {
     internal sealed class EyeTreeViewAdapter : DisposableReactiveObject, IDisposableReactiveObject
     {
-        private readonly SourceList<ITreeViewItemViewModel> treeViewSource;
+        private static readonly ILog Log = LogManager.GetLogger(typeof(EyeTreeViewAdapter));
 
         private ITreeViewItemViewModel selectedItem;
         private IAuraTabViewModel selectedValue;
+        private readonly DirectoryTreeViewItemViewModel root = new DirectoryTreeViewItemViewModel(null) {};
+        private ObservableCollection<IAuraTabViewModel> itemsSource;
 
         public EyeTreeViewAdapter()
         {
-            treeViewSource = new SourceList<ITreeViewItemViewModel>();
-
-            treeViewSource
-                .Connect()
-                .Bind(out var items)
-                .Subscribe()
-                .AddTo(Anchors);
-            TreeViewItems = items;
+            TreeViewItems = root.Children;
         }
 
         public ReadOnlyObservableCollection<ITreeViewItemViewModel> TreeViewItems { get; }
@@ -46,17 +45,81 @@ namespace EyeAuras.UI.MainWindow.Services
             set => RaiseAndSetIfChanged(ref selectedValue, value);
         }
 
-        public void AddDirectory()
+        public ObservableCollection<IAuraTabViewModel> ItemsSource
         {
-            treeViewSource.Add(new DirectoryTreeViewItemViewModel(null) { Name = "Folder" });
+            get => itemsSource;
+            private set => RaiseAndSetIfChanged(ref itemsSource, value);
         }
 
-        public void SyncWith(ObservableCollection<IAuraTabViewModel> source)
+        public IEnumerable<AuraDirectoryProperties> EnumerateDirectories()
         {
-            treeViewSource.Clear();
-            
-            var root = new DirectoryTreeViewItemViewModel(null);
+            return root.FindChildren(x => x is DirectoryTreeViewItemViewModel).Cast<DirectoryTreeViewItemViewModel>().Select(x => new AuraDirectoryProperties
+            {
+                IsExpanded = x.IsExpanded,
+                Path = x.Path
+            });
+        }
 
+        public IEnumerable<IAuraTabViewModel> EnumerateAuras(string path)
+        {
+            var directory = FindDirectoryByPath(path);
+            if (directory == null)
+            {
+                yield break;
+            }
+
+            foreach (var tabViewModel in directory.FindChildren(x => x is HolderTreeViewItemViewModel).Cast<HolderTreeViewItemViewModel>()
+                .Select(x => x.Value))
+            {
+                yield return tabViewModel;
+            }
+        }
+
+        public DirectoryTreeViewItemViewModel AddDirectory(string path)
+        {
+            const string defaultNewDirectoryName = "New folder";
+            var idx = 1;
+            while (true)
+            {
+                var fullPath = Path.Combine(path ?? string.Empty, idx == 1 ? defaultNewDirectoryName : $"{defaultNewDirectoryName} #{idx}");
+                var existingDirectory = FindDirectoryByPath(fullPath);
+                if (existingDirectory != null)
+                {
+                    idx++;
+                }
+                else
+                {
+                    return FindOrCreateByPath(fullPath);
+                }
+            }
+        }
+
+        public void RemoveDirectory(string path)
+        {
+            var existingDirectory = FindDirectoryByPath(path);
+            if (existingDirectory == null)
+            {
+                throw new InvalidOperationException($"Could not find directory {path}");
+            }
+            var auras = existingDirectory.FindChildren(x => x is HolderTreeViewItemViewModel)
+                .OfType<HolderTreeViewItemViewModel>()
+                .Select(x => x.Value)
+                .ToArray();
+            ItemsSource.RemoveMany(auras);
+            existingDirectory.Parent = null;
+        }
+
+        public void SyncWith(ObservableCollection<IAuraTabViewModel> source, AuraDirectoryProperties[] directoryProperties)
+        {
+            ItemsSource = source;
+            root.Clear();
+
+            foreach (var config in directoryProperties)
+            {
+                var directory = FindOrCreateByPath(config.Path);
+                directory.IsExpanded = config.IsExpanded;
+            }
+            
             source.ToObservableChangeSet()
                 .ForEachItemChange(x =>
                 {
@@ -64,117 +127,91 @@ namespace EyeAuras.UI.MainWindow.Services
                     {
                         case ListChangeReason.Add:
                         {
-                            var item = new HolderTreeViewItemViewModel(x.Current, root);
-                            treeViewSource.Add(item);
-                        }
-                            break;
-                        case ListChangeReason.Moved:
-                        {
-                            treeViewSource.Move(x.PreviousIndex, x.CurrentIndex);
+                            var parent = FindOrCreateByPath(x.Current.Path);
+                            var item = new HolderTreeViewItemViewModel(x.Current, parent);
                         }
                             break;
                         case ListChangeReason.Remove:
                         {
                             var item = FindItemByTab(x.Current);
-                            treeViewSource.Remove(item);
+                            item.Parent = null;
                         }
                             break;
                         case ListChangeReason.Clear:
                         {
-                            treeViewSource.Clear();
+                            root.Clear();
                         }
                              break;
                         default:
                             throw new ArgumentOutOfRangeException($"Unsupported change: {x.Reason}");
                     }
                 })
-                .Subscribe()
+                .Subscribe(() => { }, Log.HandleUiException)
                 .AddTo(Anchors);
 
             source
                 .ToObservableChangeSet()
                 .WhenPropertyChanged(x => x.IsSelected)
                 .Where(x => x.Value)
-                .Subscribe(x => SelectedValue = x.Sender)
+                .Subscribe(x => SelectedValue = x.Sender, Log.HandleUiException)
+                .AddTo(Anchors);
+            
+            source
+                .ToObservableChangeSet()
+                .WhenPropertyChanged(x => x.Path)
+                .Subscribe(x =>
+                {
+                    var node = FindItemByTab(x.Sender);
+                    if (node == null)
+                    {
+                        // node is already removed
+                        return;
+                    }
+                    var directory = FindOrCreateByPath(node.Value.Path);
+                    node.Parent = directory;
+                }, Log.HandleUiException)
                 .AddTo(Anchors);
         }
 
-        private ITreeViewItemViewModel FindItemByTab(IAuraTabViewModel tab)
+        public HolderTreeViewItemViewModel FindItemByTab(IAuraTabViewModel tab)
         {
-            return Find(x => x is HolderTreeViewItemViewModel holderNode && holderNode.Value == tab).Single();
+            return root.FindChildren(x => x is HolderTreeViewItemViewModel holderNode && holderNode.Value == tab).Cast<HolderTreeViewItemViewModel>().SingleOrDefault();
+        }
+        
+        private DirectoryTreeViewItemViewModel FindDirectoryByPath(string path)
+        {
+            return root.FindChildren(x => x is DirectoryTreeViewItemViewModel holderNode && holderNode.Path == path, root.Children).Cast<DirectoryTreeViewItemViewModel>().SingleOrDefault();
         }
 
-        private IEnumerable<ITreeViewItemViewModel> Find(Predicate<ITreeViewItemViewModel> predicate,
-            IEnumerable<ITreeViewItemViewModel> items = null)
+        private DirectoryTreeViewItemViewModel FindOrCreateByPath(string path)
         {
-            foreach (var node in items ?? treeViewSource.Items)
+            if (string.IsNullOrEmpty(path))
             {
-                if (node is IDirectoryTreeViewItemViewModel directoryNode)
+                return root;
+            }
+            
+            var split = path.Split(new [] { EyeTreeItemViewModel.DirectorySeparator }, StringSplitOptions.RemoveEmptyEntries);
+            var currentNode = root;
+            foreach (var directoryName in split)
+            {
+                var directory =  currentNode.Children.OfType<DirectoryTreeViewItemViewModel>().FirstOrDefault(x => x.Name == directoryName);
+                if (directory == null)
                 {
-                    var matchingChildNodes = Find(predicate, directoryNode.Children);
-                    foreach (var treeViewItemViewModel in matchingChildNodes)
+                    var newDirectoryNode = new DirectoryTreeViewItemViewModel(currentNode)
                     {
-                        yield return treeViewItemViewModel;
-                    }
-                }
+                        Name = directoryName, 
+                        Parent = currentNode 
+                    };
 
-                if (predicate(node))
+                    currentNode = newDirectoryNode;
+                }
+                else
                 {
-                    yield return node;
+                    currentNode = directory;
                 }
             }
-        }
 
-        internal class RootTreeViewItemModel : DisposableReactiveObject, IDirectoryTreeViewItemViewModel
-        {
-            public bool IsExpanded { get; set; } = true;
-            public bool IsSelected { get; set; } = false;
-            public ITreeViewItemViewModel Parent { get; } = null;
-            public string Name { get; set; } = "ROOT";
-            public ObservableCollection<ITreeViewItemViewModel> Children { get; }
-        }
-    }
-
-    internal class HolderTreeViewItemViewModel : TreeViewItemViewModel
-    {
-        public HolderTreeViewItemViewModel(IAuraTabViewModel tabViewModel, ITreeViewItemViewModel parent) : base(parent)
-        {
-            Value = tabViewModel;
-
-            tabViewModel.WhenAnyValue(x => x.IsSelected)
-                .Subscribe(x => IsSelected = x)
-                .AddTo(Anchors);
-
-            this.WhenAnyValue(x => x.IsSelected)
-                .Subscribe(x => tabViewModel.IsSelected = x)
-                .AddTo(Anchors);
-        }
-
-        public IAuraTabViewModel Value { get; }
-
-        public override string ToString()
-        {
-            return $"Holder for {Value}";
-        }
-    }
-
-    internal class DirectoryTreeViewItemViewModel : TreeViewItemViewModel
-    {
-        private string name;
-
-        public DirectoryTreeViewItemViewModel(ITreeViewItemViewModel parent) : base(parent)
-        {
-        }
-
-        public string Name
-        {
-            get => name;
-            set => RaiseAndSetIfChanged(ref name, value);
-        }
-
-        public override string ToString()
-        {
-            return $"Directory {Name}";
+            return currentNode;
         }
     }
 }
