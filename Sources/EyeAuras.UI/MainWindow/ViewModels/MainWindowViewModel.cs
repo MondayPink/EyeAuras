@@ -527,8 +527,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 {
                     WindowMatch = new WindowMatchParams
                     {
-                        Title = result.Window.Title,
-                        Handle = result.Window.Handle
+                        Title = result.Window.Handle.ToHexadecimal(),
                     },
                     IsEnabled = true,
                     OverlayBounds = result.AbsoluteSelection,
@@ -536,7 +535,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     MaintainAspectRatio = true
                 };
                 Log.Info($"Quick-Creating new tab using {newTabProperties.DumpToTextRaw()} args...");
-                AddNewCommandExecuted(newTabProperties); 
+                AddNewCommandExecuted(newTabProperties, false); 
             }
             else
             {
@@ -761,7 +760,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             return auraViewModel;
         }
 
-        private void AddNewCommandExecuted(OverlayAuraProperties tabProperties)
+        private void AddNewCommandExecuted(OverlayAuraProperties tabProperties, bool rename = true)
         {
             try
             {
@@ -774,10 +773,13 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                         newOverlayModel.Overlay.UnlockWindowCommand.Execute(null);
                     }
 
-                    var treeItem = TreeViewAdapter.FindItemByTab(newOverlayTab);
-                    if (treeItem != null && treeItem.RenameCommand.CanExecute(null))
+                    if (rename)
                     {
-                        treeItem.RenameCommand.Execute(null);
+                        var treeItem = TreeViewAdapter.FindItemByTab(newOverlayTab);
+                        if (treeItem != null && treeItem.RenameCommand.CanExecute(null))
+                        {
+                            treeItem.RenameCommand.Execute(null);
+                        }
                     }
                 }
             }

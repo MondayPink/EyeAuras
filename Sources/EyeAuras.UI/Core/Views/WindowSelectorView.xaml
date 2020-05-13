@@ -82,6 +82,10 @@
                 <ComboBox.ToolTip>
                     <StackPanel Orientation="Vertical">
                         <DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Window Id" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.Handle, Converter={StaticResource IntPtrToHexadecimalConverter}}"/>
+                        </DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
                             <TextBlock MinWidth="140" Text="Process Name" HorizontalAlignment="Right"/>
                             <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.ProcessName}"/>
                         </DockPanel>
