@@ -525,6 +525,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 Log.Debug($"ScreenRegion selection result: {result}");
                 var newTabProperties = new OverlayAuraProperties
                 {
+                    Name = $"{result.Window.ProcessName} - {result.Window.Title}",
                     WindowMatch = new WindowMatchParams
                     {
                         Title = result.Window.Handle.ToHexadecimal(),

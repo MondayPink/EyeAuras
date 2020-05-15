@@ -10,8 +10,12 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
     {
         public SendInputActionEditor()
         {
-            this.WhenAnyValue(x => x.Source.KeyStrokeDelay)
-                .Subscribe(() => RaisePropertyChanged(nameof(KeyStrokeDelay)))
+            this.WhenAnyValue(x => x.Source.MinKeyStrokeDelay)
+                .Subscribe(() => RaisePropertyChanged(nameof(MinKeyStrokeDelay)))
+                .AddTo(Anchors);
+            
+            this.WhenAnyValue(x => x.Source.MaxKeyStrokeDelay)
+                .Subscribe(() => RaisePropertyChanged(nameof(MaxKeyStrokeDelay)))
                 .AddTo(Anchors);
             
             this.WhenAnyValue(x => x.Source.MouseLocation)
@@ -24,12 +28,22 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
                 .AddTo(Anchors);
         }
 
-        public int KeyStrokeDelay
-        {
-            get => (int)Source.KeyStrokeDelay.TotalMilliseconds;
-            set => Source.KeyStrokeDelay = TimeSpan.FromMilliseconds(value);
-        }
+        public double SystemMinKeyStrokeDelay => Source.SystemMinKeyStrokeDelay.TotalMilliseconds;
+        
+        public double SystemMaxKeyStrokeDelay => Source.SystemMaxKeyStrokeDelay.TotalMilliseconds;
 
+        public int MinKeyStrokeDelay
+        {
+            get => (int)Source.MinKeyStrokeDelay.TotalMilliseconds;
+            set => Source.MinKeyStrokeDelay = TimeSpan.FromMilliseconds(value);
+        }
+        
+        public int MaxKeyStrokeDelay
+        {
+            get => (int)Source.MaxKeyStrokeDelay.TotalMilliseconds;
+            set => Source.MaxKeyStrokeDelay = TimeSpan.FromMilliseconds(value);
+        }
+        
         public int MouseX
         {
             get => (int)Source.MouseLocation.X;

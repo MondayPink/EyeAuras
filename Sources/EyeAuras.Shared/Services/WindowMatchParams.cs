@@ -6,6 +6,7 @@ namespace EyeAuras.Shared.Services
 {
     public struct WindowMatchParams
     {
+        [JsonIgnore]
         public bool IsEmpty => string.IsNullOrEmpty(Title);
 
         public string Title { get; set; }

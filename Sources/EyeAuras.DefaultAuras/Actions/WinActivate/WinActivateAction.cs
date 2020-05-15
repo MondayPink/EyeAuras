@@ -54,10 +54,15 @@ namespace EyeAuras.DefaultAuras.Actions.WinActivate
 
         protected override void ExecuteInternal()
         {
+            if (TargetWindow.IsEmpty)
+            {
+                return;
+            }
+            
             var activeWindow = WindowSelector.ActiveWindow;
             if (activeWindow == null)
             {
-                return;
+                throw new ApplicationException($"Failed to find window that matches {WindowSelector.TargetWindow}");
             }
 
             if (activeWindow.Handle == UnsafeNative.GetForegroundWindow())

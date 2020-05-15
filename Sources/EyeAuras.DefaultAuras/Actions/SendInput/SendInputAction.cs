@@ -32,13 +32,13 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
     internal sealed class SendInputAction : AuraActionBase<SendInputProperties>
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(SendInputAction));
-        private static readonly TimeSpan DefaultModifierKeyStrokeDelay = TimeSpan.FromMilliseconds(100);
 
+        private readonly IRandomNumberGenerator rng;
         private readonly IUserInputBlocker userInputBlocker;
         private readonly IHotkeyConverter hotkeyConverter;
         private readonly WinActivateAction winActivateAction;
 
-        private TimeSpan keyStrokeDelay;
+        private TimeSpan minKeyStrokeDelay;
         private HotkeyGesture hotkey;
         private bool isDriverBasedSimulator;
         private bool isUsb2KbdSimulator;
@@ -48,8 +48,10 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         private IInputSimulatorEx inputSimulator;
         private bool restoreMousePosition;
         private bool blockUserInput;
+        private TimeSpan maxKeyStrokeDelay;
 
         public SendInputAction(
+            IRandomNumberGenerator rng,
             IUserInputBlocker userInputBlocker,
             IWindowSelectorService windowSelector,
             IFactory<WinActivateAction, IWindowSelectorService> winActivateActionFactory,
@@ -60,6 +62,7 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         {
             WindowSelector = windowSelector;
             winActivateAction = winActivateActionFactory.Create(windowSelector).AddTo(Anchors);
+            this.rng = rng;
             this.userInputBlocker = userInputBlocker;
             this.hotkeyConverter = hotkeyConverter;
             IsDriverInstalled = driverBasedSimulator.IsAvailable;
@@ -105,6 +108,8 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
                         Log.Debug($"Initialized simulator, current state: {(IsDriverBasedSimulator ? "Interception-Based" : "InputSimulator")}");
                     }, Log.HandleUiException)
                 .AddTo(Anchors);
+            
+            Properties = new SendInputProperties();
         }
         
         [ComparisonIgnore]
@@ -160,10 +165,20 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
             set => this.RaiseAndSetIfChanged(ref mouseLocation, value);
         }
 
-        public TimeSpan KeyStrokeDelay
+        public TimeSpan SystemMinKeyStrokeDelay { get; } = TimeSpan.FromMilliseconds(50);
+        
+        public TimeSpan SystemMaxKeyStrokeDelay { get; } = TimeSpan.FromMilliseconds(1000);
+
+        public TimeSpan MinKeyStrokeDelay
         {
-            get => keyStrokeDelay;
-            set => this.RaiseAndSetIfChanged(ref keyStrokeDelay, value);
+            get => minKeyStrokeDelay;
+            set => this.RaiseAndSetIfChanged(ref minKeyStrokeDelay, EnsureInRange(value, SystemMinKeyStrokeDelay, SystemMaxKeyStrokeDelay));
+        }
+
+        public TimeSpan MaxKeyStrokeDelay
+        {
+            get => maxKeyStrokeDelay;
+            set => RaiseAndSetIfChanged(ref maxKeyStrokeDelay, EnsureInRange(value, SystemMinKeyStrokeDelay, SystemMaxKeyStrokeDelay));
         }
         
         public HotkeyGesture Hotkey
@@ -176,6 +191,17 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
         {
             get => inputSimulator;
             private set => this.RaiseAndSetIfChanged(ref inputSimulator, value);
+        }
+
+        private TimeSpan EnsureInRange(TimeSpan value, TimeSpan min, TimeSpan max)
+        {
+            return TimeSpan.FromMilliseconds(EnsureInRange(value.TotalMilliseconds, min.TotalMilliseconds,
+                max.TotalMilliseconds));
+        }
+
+        private double EnsureInRange(double value, double min, double max)
+        {
+            return Math.Max(Math.Min(value, max), min);
         }
         
         private void InstallDriverCommandExecuted()
@@ -202,22 +228,27 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
 
         protected override void VisitLoad(SendInputProperties source)
         {
-            KeyStrokeDelay = source.KeyStrokeDelay;
+            MinKeyStrokeDelay = source.KeyStrokeDelay;
+            MaxKeyStrokeDelay = source.MaxKeyStrokeDelay;
+
             Hotkey = hotkeyConverter.ConvertFromString(source.Hotkey);
             WindowSelector.TargetWindow = source.TargetWindow;
             MouseLocation = source.MouseLocation;
             RestoreMousePosition = source.RestoreMousePosition;
             BlockUserInput = source.BlockUserInput;
+            winActivateAction.Timeout = source.WindowActivationTimeout;
         }
 
         protected override void VisitSave(SendInputProperties source)
         {
-            source.KeyStrokeDelay = KeyStrokeDelay;
+            source.KeyStrokeDelay = MinKeyStrokeDelay;
             source.Hotkey = hotkeyConverter.ConvertToString(Hotkey);
             source.TargetWindow = WindowSelector.TargetWindow;
             source.RestoreMousePosition = RestoreMousePosition;
             source.MouseLocation = MouseLocation;
             source.BlockUserInput = BlockUserInput;
+            source.MaxKeyStrokeDelay = MaxKeyStrokeDelay;
+            source.WindowActivationTimeout = winActivateAction.Timeout;
         }
 
         public override string ActionName { get; } = "Send Input";
@@ -234,6 +265,10 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
             try
             {
                 winActivateAction.Execute();
+                if (!string.IsNullOrEmpty(winActivateAction.Error))
+                {
+                    throw new ApplicationException(winActivateAction.Error);
+                }
                 using (blockUserInput ? userInputBlocker.Block() : Disposable.Empty)
                 {
                     PerformInput();
@@ -253,7 +288,15 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
                 (int)((double)location.X / screenSize.Width * 65535),
                 (int)((double)location.Y / screenSize.Height * 65535));
             inputSimulator.Mouse.MoveMouseTo(pLocation.X, pLocation.Y);
-            inputSimulator.Mouse.Sleep(KeyStrokeDelay);
+            inputSimulator.Mouse.Sleep(GenerateDelay());
+        }
+
+        private TimeSpan GenerateDelay()
+        {
+            var minDelayMs = (int)MinKeyStrokeDelay.TotalMilliseconds;
+            var maxDelayMs = (int)MaxKeyStrokeDelay.TotalMilliseconds;
+            var delayMs = minDelayMs != maxDelayMs ? minDelayMs + rng.Next(minDelayMs, maxDelayMs) : minDelayMs;
+            return TimeSpan.FromMilliseconds(delayMs);
         }
 
         private void PerformInput()
@@ -262,17 +305,17 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Control))
             {
                 inputSimulator.Keyboard.KeyDown(VirtualKeyCode.CONTROL);
-                inputSimulator.Keyboard.Sleep(DefaultModifierKeyStrokeDelay);
+                inputSimulator.Keyboard.Sleep(GenerateDelay());
             }
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Alt))
             {
                 inputSimulator.Keyboard.KeyDown(VirtualKeyCode.MENU);
-                inputSimulator.Keyboard.Sleep(DefaultModifierKeyStrokeDelay);
+                inputSimulator.Keyboard.Sleep(GenerateDelay());
             }
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Shift))
             {
                 inputSimulator.Keyboard.KeyDown(VirtualKeyCode.SHIFT);
-                inputSimulator.Keyboard.Sleep(DefaultModifierKeyStrokeDelay);
+                inputSimulator.Keyboard.Sleep(GenerateDelay());
             }
 
             if (Hotkey.MouseButton != null)
@@ -294,27 +337,27 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
                 {
                     case MouseButton.Left:
                         inputSimulator.Mouse.LeftButtonDown();
-                        inputSimulator.Mouse.Sleep(KeyStrokeDelay);
+                        inputSimulator.Mouse.Sleep(GenerateDelay());
                         inputSimulator.Mouse.LeftButtonUp();
                         break;
                     case MouseButton.Middle:
                         inputSimulator.Mouse.MiddleButtonDown();
-                        inputSimulator.Mouse.Sleep(KeyStrokeDelay);
+                        inputSimulator.Mouse.Sleep(GenerateDelay());
                         inputSimulator.Mouse.MiddleButtonUp();
                         break;
                     case MouseButton.Right:
                         inputSimulator.Mouse.RightButtonDown();
-                        inputSimulator.Mouse.Sleep(KeyStrokeDelay);
+                        inputSimulator.Mouse.Sleep(GenerateDelay());
                         inputSimulator.Mouse.RightButtonUp();
                         break;
                     case MouseButton.XButton1:
                         inputSimulator.Mouse.XButtonDown(1);
-                        inputSimulator.Mouse.Sleep(KeyStrokeDelay);
+                        inputSimulator.Mouse.Sleep(GenerateDelay());
                         inputSimulator.Mouse.XButtonUp(1);
                         break;
                     case MouseButton.XButton2:
                         inputSimulator.Mouse.XButtonDown(2);
-                        inputSimulator.Mouse.Sleep(KeyStrokeDelay);
+                        inputSimulator.Mouse.Sleep(GenerateDelay());
                         inputSimulator.Mouse.XButtonUp(2);
                         break;
                     default:
@@ -324,30 +367,30 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
                 if (RestoreMousePosition)
                 {
                     Log.Debug($"Restoring mouse coordinates to {initialMouseLocation}");
-                    inputSimulator.Mouse.Sleep(KeyStrokeDelay);
+                    inputSimulator.Mouse.Sleep(GenerateDelay());
                     MoveMouseTo(initialMouseLocation);
                 }
             } else if (Hotkey.Key != Key.None)
             {
                 inputSimulator.Keyboard.KeyDown(vk);
-                inputSimulator.Keyboard.Sleep(KeyStrokeDelay);
+                inputSimulator.Keyboard.Sleep(GenerateDelay());
                 inputSimulator.Keyboard.KeyUp(vk);
             }
 
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Control))
             {
                 inputSimulator.Keyboard.KeyUp(VirtualKeyCode.CONTROL);
-                inputSimulator.Keyboard.Sleep(DefaultModifierKeyStrokeDelay);
+                inputSimulator.Keyboard.Sleep(GenerateDelay());
             }
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Alt))
             {
                 inputSimulator.Keyboard.KeyUp(VirtualKeyCode.MENU);
-                inputSimulator.Keyboard.Sleep(DefaultModifierKeyStrokeDelay);
+                inputSimulator.Keyboard.Sleep(GenerateDelay());
             }
             if (Hotkey.ModifierKeys.HasFlag(ModifierKeys.Shift))
             {
                 inputSimulator.Keyboard.KeyUp(VirtualKeyCode.SHIFT);
-                inputSimulator.Keyboard.Sleep(DefaultModifierKeyStrokeDelay);
+                inputSimulator.Keyboard.Sleep(GenerateDelay());
             }
         }
     }

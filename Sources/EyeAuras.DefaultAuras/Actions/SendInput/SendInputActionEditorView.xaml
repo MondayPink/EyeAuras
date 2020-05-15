@@ -26,16 +26,40 @@
                                        VerticalAlignment="Center" AcceptsMouseKeys="True"/>
                 </DockPanel>
                 
-                <TextBlock Margin="5,0,0,0" Text="Up/Down Delay, ms" />
-                <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="60"
-                                    Margin="5,0,0,0"
-                                    DefaultValue="0"
-                                    Increment="100"
-                                    Minimum="0"
-                                    Maximum="86400000"
-                                    materialDesign:HintAssist.IsFloating="false"
-                                    Style="{StaticResource MaterialNumericUpDownStyleKey}"
-                                    Value="{Binding KeyStrokeDelay, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+               <DockPanel ToolTip="Random delay between Key/Mouse Down and Up events">
+                   <TextBlock Margin="5,0,0,0" Text="KeyUp/Down Delay" />
+                   <TextBlock DockPanel.Dock="Right" Margin="5,0,0,0" MinWidth="60">
+                       <TextBlock.Visibility>
+                           <MultiBinding Converter="{StaticResource EqualToCollapsedConverter}">
+                               <Binding Path="MinKeyStrokeDelay"/>
+                               <Binding Path="MaxKeyStrokeDelay"/>
+                           </MultiBinding>
+                       </TextBlock.Visibility>
+                       <TextBlock.Inlines>
+                           <Run Text="{Binding MinKeyStrokeDelay}"/>
+                           <Run Text=" - "/>
+                           <Run Text="{Binding MaxKeyStrokeDelay}"/>
+                           <Run Text="ms"/>
+                       </TextBlock.Inlines>
+                   </TextBlock>
+                   <TextBlock DockPanel.Dock="Right" Margin="5,0,0,0" MinWidth="60">
+                       <TextBlock.Visibility>
+                           <MultiBinding Converter="{StaticResource EqualToVisibleConverter}">
+                               <Binding Path="MinKeyStrokeDelay"/>
+                               <Binding Path="MaxKeyStrokeDelay"/>
+                           </MultiBinding>
+                       </TextBlock.Visibility>
+                       <TextBlock.Inlines>
+                           <Run Text="{Binding MinKeyStrokeDelay}"/>
+                           <Run Text="ms"/>
+                       </TextBlock.Inlines>
+                   </TextBlock>
+                   <xctk:RangeSlider Minimum="{Binding SystemMinKeyStrokeDelay, Mode=OneWay}" Maximum="{Binding SystemMaxKeyStrokeDelay, Mode=OneWay}" LowerValue="{Binding MinKeyStrokeDelay}" HigherValue="{Binding MaxKeyStrokeDelay}"
+                                     MinWidth="60"
+                                     Margin="5,2,0,0"
+                   ></xctk:RangeSlider>
+               </DockPanel>
+
                 <CheckBox Margin="5,0,0,0" IsChecked="{Binding Source.BlockUserInput}" 
                           Visibility="Collapsed"
                           IsEnabled="False" 

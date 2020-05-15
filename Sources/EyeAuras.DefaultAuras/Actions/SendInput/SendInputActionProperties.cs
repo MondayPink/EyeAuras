@@ -8,7 +8,11 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
 {
     public sealed class SendInputProperties : IAuraProperties
     {
+        public TimeSpan WindowActivationTimeout { get; set; } = TimeSpan.FromSeconds(1);
+        
         public TimeSpan KeyStrokeDelay { get; set; }
+        
+        public TimeSpan MaxKeyStrokeDelay { get; set; }
         
         public string Hotkey { get; set; } = Keys.None.ToString();
         
