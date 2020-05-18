@@ -228,6 +228,10 @@ namespace EyeAuras.DefaultAuras.Actions.SendInput
 
         protected override void VisitLoad(SendInputProperties source)
         {
+            if (source.MaxKeyStrokeDelay == TimeSpan.Zero || source.MaxKeyStrokeDelay < source.KeyStrokeDelay)
+            {
+                source.MaxKeyStrokeDelay = source.KeyStrokeDelay;
+            }
             MinKeyStrokeDelay = source.KeyStrokeDelay;
             MaxKeyStrokeDelay = source.MaxKeyStrokeDelay;
 
