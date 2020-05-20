@@ -14,7 +14,6 @@ namespace EyeAuras.UI.MainWindow.Services
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(EyeTreeItemViewModel));
 
-        public static readonly char DirectorySeparator = Path.DirectorySeparatorChar;
         private bool isFlipped;
         protected readonly Fallback<string> tabName = new Fallback<string>();
 
@@ -79,12 +78,12 @@ namespace EyeAuras.UI.MainWindow.Services
             {
                 if (node is DirectoryTreeViewItemViewModel parentDir)
                 {
-                    result.Insert(0, parentDir.Name + DirectorySeparator);
+                    result.Insert(0, parentDir.Name + Path.DirectorySeparatorChar);
                 }
 
                 node = node.Parent;
             }
-            return result.ToString().Trim(DirectorySeparator);
+            return result.ToString().Trim(Path.DirectorySeparatorChar);
         }
          
         private void RenameCommandExecuted(string value)

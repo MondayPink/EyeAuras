@@ -190,7 +190,7 @@ namespace EyeAuras.UI.MainWindow.Services
                 return root;
             }
             
-            var split = path.Split(new [] { EyeTreeItemViewModel.DirectorySeparator }, StringSplitOptions.RemoveEmptyEntries);
+            var split = path.Split(new [] { Path.DirectorySeparatorChar }, StringSplitOptions.RemoveEmptyEntries);
             var currentNode = root;
             foreach (var directoryName in split)
             {

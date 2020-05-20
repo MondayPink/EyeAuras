@@ -11,6 +11,8 @@ namespace EyeAuras.Shared
         
         string Path { [CanBeNull] get; [CanBeNull] set; }
         
+        string FullPath { [NotNull] get; }
+        
         bool IsSelected { get; set; }
         
         bool IsActive { get; }

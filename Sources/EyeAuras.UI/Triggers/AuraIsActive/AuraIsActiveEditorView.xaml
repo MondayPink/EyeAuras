@@ -2,7 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:auraIsActive="clr-namespace:EyeAuras.UI.Triggers.AuraIsActive"
                     xmlns:viewModels="clr-namespace:EyeAuras.UI.Core.ViewModels"
-                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes">
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/materialdesigntheme.button.xaml" />
         <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/materialdesigntheme.textbox.xaml" />
@@ -10,9 +11,44 @@
 
     <DataTemplate DataType="{x:Type auraIsActive:AuraIsActiveTriggerEditor}">
         <DockPanel>
-            <Grid DockPanel.Dock="Right" >
+            <DockPanel DockPanel.Dock="Right" Margin="5,0,0,0" Width="500">
+                <TextBlock Text="for at least"/>
+                <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="40" MaxWidth="140"
+                                    Margin="5,2.5,0,0"
+                                    DefaultValue="0"
+                                    Increment="100"
+                                    Minimum="0"
+                                    Maximum="86400000"
+                                    Style="{StaticResource MaterialNumericUpDownStyleKey}"
+                                    Value="{Binding ActivationTimeout, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                <TextBlock Margin="5,0,0,0" Text="ms"/>
+                
+                <DockPanel Visibility="{Binding TimeLeftTillNextActivation, Converter={StaticResource NullToCollapsedConverter}}" Margin="5,0,0,0">
+                    <DockPanel Visibility="{Binding Source.NextIsActiveValue, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                        <materialDesign:PackIcon Margin="2.5,0"  VerticalAlignment="Center"
+                                                 Foreground="{StaticResource PositiveBrush}"
+                                                 Kind="CheckboxMarkedCircleOutline" />
+                        <TextBlock Text="Activation in" Foreground="{StaticResource PositiveBrush}" />
+                        <TextBlock Margin="5,0,0,0" MinWidth="30"
+                                   Text="{Binding TimeLeftTillNextActivation, Converter={StaticResource TimeSpanToHumanReadableStringConverter}}"/>
+                    </DockPanel>
+            
+                    <DockPanel Visibility="{Binding Source.NextIsActiveValue, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}">
+                        <materialDesign:PackIcon Margin="2.5,0"  VerticalAlignment="Center"
+                                                 Foreground="{StaticResource NegativeBrush}"
+                                                 Kind="CheckboxBlankCircleOutline" />
+                        <TextBlock Text="Deactivation in" Foreground="{StaticResource NegativeBrush}" />
+                        <TextBlock Margin="5,0,0,0" MinWidth="30"
+                                   Text="{Binding TimeLeftTillNextActivation, Converter={StaticResource TimeSpanToHumanReadableStringConverter}}"/>
+                    </DockPanel>
+
+                    <ProgressBar Margin="5,0" 
+                                 Value="{Binding ActivationProgress, Mode=OneWay}" Minimum="0" Maximum="100"/>
+                </DockPanel>
+            </DockPanel>
+            <Grid DockPanel.Dock="Right" Margin="5,0,0,0">
                 <StackPanel Orientation="Horizontal"
-                            Visibility="{Binding Source.IsInverted, Converter={StaticResource TrueToHiddenFalseToVisibleConverter}}">
+                            Visibility="{Binding Source.IsInverted, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}">
                     <TextBlock Text="aura must" />
                     <TextBlock Text=" BE ACTIVE " Foreground="{StaticResource PositiveBrush}" />
                     <materialDesign:PackIcon Margin="2.5,0"  VerticalAlignment="Center"
@@ -20,7 +56,7 @@
                                              Kind="CheckboxMarkedCircleOutline" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" 
-                            Visibility="{Binding Source.IsInverted, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}">
+                            Visibility="{Binding Source.IsInverted, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
                     <TextBlock Text="aura must" />
                     <TextBlock Text=" NOT BE ACTIVE " Foreground="{StaticResource NegativeBrush}" />
                     <materialDesign:PackIcon Margin="2.5,0" VerticalAlignment="Center"
@@ -28,12 +64,27 @@
                                              Kind="CheckboxBlankCircleOutline" />
                 </StackPanel>
             </Grid>
-            <ComboBox DockPanel.Dock="Left" 
-                      Margin="5, 0"
+            <ComboBox MinWidth="200"
                       ItemsSource="{Binding AuraList}" SelectedItem="{Binding AuraTab}">
                 <ComboBox.ItemTemplate>
                     <DataTemplate DataType="{x:Type viewModels:IAuraTabViewModel}">
-                        <TextBlock Text="{Binding TabName}"/>
+                        <DockPanel>
+                            <materialDesign:PackIcon
+                                DockPanel.Dock="Left"
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource NegativeBrush}"
+                                ToolTip="Aura is NOT active"
+                                Visibility="{Binding IsActive, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"
+                                Kind="CheckboxBlankCircleOutline" />
+                            <materialDesign:PackIcon
+                                DockPanel.Dock="Left"
+                                VerticalAlignment="Center"
+                                Foreground="{StaticResource PositiveBrush}"
+                                ToolTip="Aura is active"
+                                Visibility="{Binding IsActive, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                                Kind="CheckboxMarkedCircleOutline" />
+                            <TextBlock Margin="5,0,0,0" Text="{Binding FullPath}"/>
+                        </DockPanel>
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>

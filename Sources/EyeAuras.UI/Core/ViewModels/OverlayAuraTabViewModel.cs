@@ -4,6 +4,7 @@ using System.Reactive.Linq;
 using System.Windows.Input;
 using EyeAuras.Shared;
 using EyeAuras.UI.Core.Models;
+using EyeAuras.UI.MainWindow.Services;
 using JetBrains.Annotations;
 using log4net;
 using PoeShared;
@@ -21,7 +22,7 @@ namespace EyeAuras.UI.Core.ViewModels
 
         private readonly SerialDisposable loadedModelAnchors = new SerialDisposable();
         private readonly IFactory<IOverlayAuraModel> auraModelFactory;
-        
+
         private bool isFlipped;
         private bool isSelected;
         private OverlayAuraProperties properties;
@@ -54,6 +55,10 @@ namespace EyeAuras.UI.Core.ViewModels
             
             this.WhenAnyValue(x => x.IsEnabled)
                 .Subscribe(() => Model = ReloadModel())
+                .AddTo(Anchors);
+
+            this.WhenAnyProperty(x => x.Path, x => x.TabName)
+                .Subscribe(x => RaisePropertyChanged(nameof(FullPath)))
                 .AddTo(Anchors);
             
             EnableCommand = CommandWrapper.Create(() => IsEnabled = true);
@@ -88,6 +93,8 @@ namespace EyeAuras.UI.Core.ViewModels
             get => isFlipped;
             set => RaiseAndSetIfChanged(ref isFlipped, value);
         }
+
+        public string FullPath => System.IO.Path.Combine(Path ?? string.Empty, TabName);
 
         public bool IsSelected
         {

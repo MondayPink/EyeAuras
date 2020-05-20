@@ -3,12 +3,15 @@ using log4net;
 using ReactiveUI;
 using System;
 using System.Linq;
+using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
 using JetBrains.Annotations;
 using PoeShared;
+using PoeShared.Prism;
 using PoeShared.Scaffolding;
+using Unity;
 
 namespace EyeAuras.UI.Triggers.AuraIsActive
 {
@@ -18,8 +21,14 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
 
         private string auraId;
         private IAuraViewModel aura;
+        private TimeSpan activationTimeout;
+        private DateTime? nextActivationTimestamp;
+        private bool nextIsActiveValue;
 
-        public AuraIsActiveTrigger([NotNull] ISharedContext sharedContext)
+        public AuraIsActiveTrigger(
+            [NotNull] ISharedContext sharedContext,
+            IClock clock,
+            [NotNull] [Dependency(WellKnownSchedulers.Background)] IScheduler bgScheduler)
         {
             this.WhenAnyValue(x => x.AuraId)
                 .Select(x => sharedContext.AuraList.FirstOrDefault(y => y.Id == AuraId))
@@ -43,19 +52,59 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
                             .Take(1);
                     })
                 .Switch()
-                .Do(y => Log.Debug(y != null ? $"Child Aura {y.TabName}({y.Id}) is selected as source, isActive{y.IsActive}" : $"Child aura selection is reset to null, auraId {AuraId}"))
+                .Do(y => Log.Debug(y != null ? $"Aura {y.TabName}({y.Id}) is selected as Source, isActive{y.IsActive}" : $"Source aura selection is reset to null, auraId {AuraId}"))
                 .Subscribe(x => AuraTab = x, Log.HandleUiException)
                 .AddTo(Anchors);
             
-            this.WhenAnyValue(x => x.AuraTab)
+            var isActiveSource = this.WhenAnyValue(x => x.AuraTab, x => x.ActivationTimeout)
                 .Select(_ => AuraTab == null 
                     ? Observable.Return(false) 
-                    : AuraTab.WhenAnyValue(y => y.IsActive).Do(y => Log.Debug($"Child Aura {AuraTab.TabName}({AuraTab.Id}) IsActive changed to {AuraTab.IsActive}")))
+                    : AuraTab.WhenAnyValue(y => y.IsActive).Do(y => Log.Debug($"Source Aura {AuraTab.TabName}({AuraTab.Id}) IsActive changed to {AuraTab.IsActive}")))
+                .Switch();
+                
+            this.WhenAnyValue(x => x.ActivationTimeout, x => x.IsInverted)
+                .Select(() =>
+                {
+                    if (ActivationTimeout == default)
+                    {
+                        NextActivationTimestamp = null;
+                        return isActiveSource;
+                    }
+
+                    IsActive = false;
+                    return isActiveSource.Do(x =>
+                    {
+                        NextActivationTimestamp = clock.Now + ActivationTimeout;
+                        NextIsActiveValue = x ^ IsInverted;
+                    }).Throttle(ActivationTimeout, bgScheduler);
+                })
                 .Switch()
-                .Subscribe(isActive => IsActive = isActive, Log.HandleUiException)
+                .Subscribe(sourceIsActive =>
+                {
+                    Log.Info($"AuraIsActive for aura {AuraTab} changed, IsActive = {sourceIsActive}, ActivationTimeout = {ActivationTimeout}");
+                    IsActive = sourceIsActive;
+                }, Log.HandleUiException)
                 .AddTo(Anchors);
         }
 
+        public DateTime? NextActivationTimestamp
+        {
+            get => nextActivationTimestamp;
+            private set => RaiseAndSetIfChanged(ref nextActivationTimestamp, value);
+        }
+
+        public bool NextIsActiveValue
+        {
+            get => nextIsActiveValue;
+            private set => RaiseAndSetIfChanged(ref nextIsActiveValue, value);
+        }
+
+        public TimeSpan ActivationTimeout
+        {
+            get => activationTimeout;
+            set => RaiseAndSetIfChanged(ref activationTimeout, value);
+        }
+        
         public IAuraViewModel AuraTab
         {
             get => aura;
@@ -76,12 +125,13 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
         {
             base.VisitLoad(source);
             AuraId = source.AuraId;
+            ActivationTimeout = source.ActivationTimeout;
         }
 
         protected override void VisitSave(AuraIsActiveTriggerProperties source)
         {
-            source.AuraId = auraId;
-            source.IsInverted = IsInverted;
+            source.AuraId = AuraId;
+            source.ActivationTimeout = ActivationTimeout;
             base.VisitSave(source);
         }
     }
