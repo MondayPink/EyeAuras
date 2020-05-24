@@ -11,41 +11,6 @@
 
     <DataTemplate DataType="{x:Type auraIsActive:AuraIsActiveTriggerEditor}">
         <DockPanel>
-            <DockPanel DockPanel.Dock="Right" Margin="5,0,0,0" Width="500">
-                <TextBlock Text="for at least"/>
-                <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="40" MaxWidth="140"
-                                    Margin="5,2.5,0,0"
-                                    DefaultValue="0"
-                                    Increment="100"
-                                    Minimum="0"
-                                    Maximum="86400000"
-                                    Style="{StaticResource MaterialNumericUpDownStyleKey}"
-                                    Value="{Binding ActivationTimeout, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                <TextBlock Margin="5,0,0,0" Text="ms"/>
-                
-                <DockPanel Visibility="{Binding TimeLeftTillNextActivation, Converter={StaticResource NullToCollapsedConverter}}" Margin="5,0,0,0">
-                    <DockPanel Visibility="{Binding Source.NextIsActiveValue, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
-                        <materialDesign:PackIcon Margin="2.5,0"  VerticalAlignment="Center"
-                                                 Foreground="{StaticResource PositiveBrush}"
-                                                 Kind="CheckboxMarkedCircleOutline" />
-                        <TextBlock Text="Activation in" Foreground="{StaticResource PositiveBrush}" />
-                        <TextBlock Margin="5,0,0,0" MinWidth="30"
-                                   Text="{Binding TimeLeftTillNextActivation, Converter={StaticResource TimeSpanToHumanReadableStringConverter}}"/>
-                    </DockPanel>
-            
-                    <DockPanel Visibility="{Binding Source.NextIsActiveValue, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}">
-                        <materialDesign:PackIcon Margin="2.5,0"  VerticalAlignment="Center"
-                                                 Foreground="{StaticResource NegativeBrush}"
-                                                 Kind="CheckboxBlankCircleOutline" />
-                        <TextBlock Text="Deactivation in" Foreground="{StaticResource NegativeBrush}" />
-                        <TextBlock Margin="5,0,0,0" MinWidth="30"
-                                   Text="{Binding TimeLeftTillNextActivation, Converter={StaticResource TimeSpanToHumanReadableStringConverter}}"/>
-                    </DockPanel>
-
-                    <ProgressBar Margin="5,0" 
-                                 Value="{Binding ActivationProgress, Mode=OneWay}" Minimum="0" Maximum="100"/>
-                </DockPanel>
-            </DockPanel>
             <Grid DockPanel.Dock="Right" Margin="5,0,0,0">
                 <StackPanel Orientation="Horizontal"
                             Visibility="{Binding Source.IsInverted, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}">

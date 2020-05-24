@@ -48,20 +48,8 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
             this.WhenAnyValue(x => x.Source)
                 .Subscribe(HandleSourceChange)
                 .AddTo(Anchors);
-            
-            this.WhenAnyProperty(x => x.TimeLeftTillNextActivation)
-                .Subscribe(() => RaisePropertyChanged(nameof(ActivationProgress)))
-                .AddTo(Anchors);
         }
         
-        public TimeSpan? TimeLeftTillNextActivation => Source?.NextActivationTimestamp == null || Source.NextActivationTimestamp < clock.Now || Source.NextIsActiveValue == Source.IsActive ? null : Source.NextActivationTimestamp - clock.Now;
-        
-        public double ActivationProgress => Source == null 
-            ? 0
-            : TimeLeftTillNextActivation == null 
-                ? 0
-                : (Source.ActivationTimeout.TotalMilliseconds - TimeLeftTillNextActivation.Value.TotalMilliseconds) / Source.ActivationTimeout.TotalMilliseconds * 100;
-
         public ReadOnlyObservableCollection<IAuraViewModel> AuraList { get; }
 
         public IAuraViewModel AuraTab
@@ -70,12 +58,6 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
             set => this.RaiseAndSetIfChanged(ref aura, value);
         }
 
-        public int ActivationTimeout
-        {
-            get => (int)Source.ActivationTimeout.TotalMilliseconds;
-            set => Source.ActivationTimeout = TimeSpan.FromMilliseconds(value);
-        }
-        
         private void HandleSourceChange()
         {
             var sourceAnchors = new CompositeDisposable().AssignTo(activeSourceAnchors);
@@ -87,16 +69,6 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
             
             Source.WhenAnyValue(x => x.AuraTab).Subscribe(aura => AuraTab = aura).AddTo(sourceAnchors);
             this.WhenAnyValue(x => x.AuraTab).Where(x => x != null).Subscribe(x => Source.AuraId = x?.Id).AddTo(sourceAnchors);
-            
-            Observable
-                .Timer(DateTimeOffset.Now, TimeSpan.FromMilliseconds(250), bgScheduler)
-                .ObserveOn(uiScheduler)
-                .Subscribe(
-                    () =>
-                    {
-                        RaisePropertyChanged(nameof(TimeLeftTillNextActivation));
-                    })
-                .AddTo(sourceAnchors);
         }
     }
 }

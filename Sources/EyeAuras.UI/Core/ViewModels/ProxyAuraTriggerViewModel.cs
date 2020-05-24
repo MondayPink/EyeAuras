@@ -1,3 +1,4 @@
+using System;
 using EyeAuras.Shared;
 using EyeAuras.UI.Core.Models;
 using ReactiveUI;
@@ -31,6 +32,14 @@ namespace EyeAuras.UI.Core.ViewModels
         }
 
         public bool IsActive => false ^ IsInverted;
+
+        public TimeSpan? TimeLeftTillNextActivation { get; } = null;
+        
+        public TimeSpan ActivationTimeout { get; set; }
+        
+        public double ActivationProgress { get; }
+        
+        public bool NextIsActiveValue { get; }
 
         protected override void LoadProperties(IAuraProperties source)
         {

@@ -1,3 +1,5 @@
+using System;
+
 namespace EyeAuras.Shared
 {
     public interface IAuraTrigger : IAuraModel
@@ -13,5 +15,13 @@ namespace EyeAuras.Shared
         bool IsInverted { get; set; }
 
         bool IsActive { get; }
+        
+        TimeSpan? TimeLeftTillNextActivation { get; }
+
+        TimeSpan ActivationTimeout { get; set; }
+        
+        double ActivationProgress { get; }
+
+        bool NextIsActiveValue { get; }
     }
 }

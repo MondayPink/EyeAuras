@@ -21,9 +21,6 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
 
         private string auraId;
         private IAuraViewModel aura;
-        private TimeSpan activationTimeout;
-        private DateTime? nextActivationTimestamp;
-        private bool nextIsActiveValue;
 
         public AuraIsActiveTrigger(
             [NotNull] ISharedContext sharedContext,
@@ -55,54 +52,21 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
                 .Do(y => Log.Debug(y != null ? $"Aura {y.TabName}({y.Id}) is selected as Source, isActive{y.IsActive}" : $"Source aura selection is reset to null, auraId {AuraId}"))
                 .Subscribe(x => AuraTab = x, Log.HandleUiException)
                 .AddTo(Anchors);
-            
-            var isActiveSource = this.WhenAnyValue(x => x.AuraTab, x => x.ActivationTimeout)
-                .Select(_ => AuraTab == null 
-                    ? Observable.Return(false) 
-                    : AuraTab.WhenAnyValue(y => y.IsActive).Do(y => Log.Debug($"Source Aura {AuraTab.TabName}({AuraTab.Id}) IsActive changed to {AuraTab.IsActive}")))
-                .Switch();
-                
-            this.WhenAnyValue(x => x.ActivationTimeout, x => x.IsInverted)
-                .Select(() =>
-                {
-                    if (ActivationTimeout == default)
-                    {
-                        NextActivationTimestamp = null;
-                        return isActiveSource;
-                    }
 
-                    TriggerValue = false;
-                    return isActiveSource.Do(x =>
-                    {
-                        NextActivationTimestamp = clock.Now + ActivationTimeout;
-                        NextIsActiveValue = x;
-                    }).Throttle(ActivationTimeout, bgScheduler);
-                })
+            var isActiveSource = this.WhenAnyValue(x => x.AuraTab, x => x.ActivationTimeout)
+                .Select(_ => AuraTab == null
+                    ? Observable.Return(false)
+                    : AuraTab.WhenAnyValue(y => y.IsActive).Do(y =>
+                        Log.Debug(
+                            $"Source Aura {AuraTab.TabName}({AuraTab.Id}) IsActive changed to {AuraTab.IsActive}")))
                 .Switch()
                 .Subscribe(sourceIsActive =>
                 {
-                    Log.Info($"AuraIsActive for aura {AuraTab} changed, IsActive = {sourceIsActive}, ActivationTimeout = {ActivationTimeout}");
+                    Log.Info(
+                        $"AuraIsActive for aura {AuraTab} changed, IsActive = {sourceIsActive}, ActivationTimeout = {ActivationTimeout}");
                     TriggerValue = sourceIsActive;
                 }, Log.HandleUiException)
                 .AddTo(Anchors);
-        }
-
-        public DateTime? NextActivationTimestamp
-        {
-            get => nextActivationTimestamp;
-            private set => RaiseAndSetIfChanged(ref nextActivationTimestamp, value);
-        }
-
-        public bool NextIsActiveValue
-        {
-            get => nextIsActiveValue;
-            private set => RaiseAndSetIfChanged(ref nextIsActiveValue, value);
-        }
-
-        public TimeSpan ActivationTimeout
-        {
-            get => activationTimeout;
-            set => RaiseAndSetIfChanged(ref activationTimeout, value);
         }
         
         public IAuraViewModel AuraTab
