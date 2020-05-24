@@ -14,7 +14,7 @@
             <CheckBox Content="Is Active" 
                       Padding="5,0,0,0"
                       VerticalContentAlignment="Center" 
-                      IsChecked="{Binding Source.IsActive}" />
+                      IsChecked="{Binding Source.TriggerValue}" />
 
             <TextBlock Text="Hotkey: " Margin="20,0,0,0" />
             <hotkeys:HotKeyBox Margin="5,0,0,0" 

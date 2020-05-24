@@ -5,6 +5,6 @@
         <CheckBox Content="Is Active" 
                   Padding="5,0,0,0"
                   VerticalContentAlignment="Center" 
-                  IsChecked="{Binding Source.IsActive}" />
+                  IsChecked="{Binding Source.TriggerValue}" />
     </DataTemplate>
 </ResourceDictionary>

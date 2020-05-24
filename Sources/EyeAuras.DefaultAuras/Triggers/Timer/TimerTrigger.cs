@@ -31,7 +31,7 @@ namespace EyeAuras.DefaultAuras.Triggers.Timer
                 .Select(
                     x =>
                     {
-                        IsActive = false;
+                        TriggerValue = false;
                         NextActivationTimestamp = clock.Now + ActualActivationPeriod;
                         NextDeactivationTimestamp = null;
                         return Observable
@@ -39,7 +39,7 @@ namespace EyeAuras.DefaultAuras.Triggers.Timer
                             .Do(
                                 _ =>
                                 {
-                                    IsActive = true;
+                                    TriggerValue = true;
                                     NextActivationTimestamp = null;
                                     NextDeactivationTimestamp = clock.Now + DeactivationTimeout;
                                 })
@@ -48,7 +48,7 @@ namespace EyeAuras.DefaultAuras.Triggers.Timer
                             .Do(
                                 _ =>
                                 {
-                                    IsActive = false;
+                                    TriggerValue = false;
                                     NextActivationTimestamp = clock.Now + ActualActivationPeriod;
                                     NextDeactivationTimestamp = null;
                                 })

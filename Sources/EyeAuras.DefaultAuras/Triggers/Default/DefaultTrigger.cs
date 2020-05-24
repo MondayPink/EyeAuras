@@ -12,21 +12,18 @@ namespace EyeAuras.DefaultAuras.Triggers.Default
 
         public DefaultTrigger()
         {
-            this.RaiseWhenSourceValue(x => x.TriggerValue, this, x => x.IsActive).AddTo(Anchors);
         }
 
         protected override void VisitLoad(DefaultTriggerProperties source)
         {
             base.VisitLoad(source);
-            IsActive = source.TriggerValue;
+            TriggerValue = source.TriggerValue;
         }
-
-        public bool TriggerValue => IsActive;
 
         protected override void VisitSave(DefaultTriggerProperties source)
         {
             base.VisitSave(source);
-            source.TriggerValue = IsActive;
+            source.TriggerValue = TriggerValue;
         }
     }
 }

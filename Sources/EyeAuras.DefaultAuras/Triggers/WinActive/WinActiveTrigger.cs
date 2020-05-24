@@ -53,7 +53,7 @@ namespace EyeAuras.DefaultAuras.Triggers.WinActive
 
             if (TargetWindow.IsEmpty)
             {
-                IsActive = false;
+                TriggerValue = false;
                 return;
             }
 
@@ -73,7 +73,7 @@ namespace EyeAuras.DefaultAuras.Triggers.WinActive
                 .Do(x => Log.Debug($"WinActiveTrigger data updated(target: {TargetWindow}): {x}"))
                 .Select(x => new WindowHandle(x.ActiveWindowHandle))
                 .Select(x => new { Window = x, IsMatch = windowMatcher.IsMatch(x, targetWindow) })
-                .Subscribe(x => IsActive = x.IsMatch);
+                .Subscribe(x => TriggerValue = x.IsMatch);
         }
 
         protected override void VisitLoad(WinActiveTriggerProperties source)

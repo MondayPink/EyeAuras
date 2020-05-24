@@ -40,7 +40,7 @@ namespace EyeAuras.Shared
                     triggers.Connect().WhenPropertyChanged(x => x.IsActive).ToUnit(),
                     triggers.Connect().ToUnit())
                 .StartWithDefault()
-                .Subscribe(() => IsActive = triggers.Items.All(x => x.IsActive))
+                .Subscribe(() => TriggerValue = triggers.Items.All(x => x.IsActive))
                 .AddTo(Anchors);
         }
 

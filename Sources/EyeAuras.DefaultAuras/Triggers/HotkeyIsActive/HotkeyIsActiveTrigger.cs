@@ -39,7 +39,7 @@ namespace EyeAuras.DefaultAuras.Triggers.HotkeyIsActive
             Disposable
                 .Create(() => Log.Debug($"Disposing HotkeyTrigger, gesture: {Hotkey} (mode: {HotkeyMode})"))
                 .AddTo(Anchors);
-            IsActive = true;
+            base.TriggerValue = false;
             this.RaiseWhenSourceValue(x => x.Properties, this, x => x.IsActive).AddTo(Anchors);
 
             this.WhenAnyValue(x => x.Hotkey)
@@ -75,12 +75,12 @@ namespace EyeAuras.DefaultAuras.Triggers.HotkeyIsActive
                         {
                             if (!hotkeyData.KeyDown)
                             {
-                                IsActive = !IsActive;
+                                base.TriggerValue = !base.TriggerValue;
                             }
                         }
                         else
                         {
-                            IsActive = !IsActive;
+                            base.TriggerValue = !base.TriggerValue;
                         }
                     },
                     Log.HandleUiException)
@@ -115,7 +115,6 @@ namespace EyeAuras.DefaultAuras.Triggers.HotkeyIsActive
             HotkeyMode = source.HotkeyMode;
             Hotkey = hotkeyConverter.ConvertFromString(source.Hotkey);
             SuppressKey = source.SuppressKey;
-            IsActive = source.TriggerValue;
         }
 
         protected override void VisitSave(HotkeyIsActiveProperties source)
@@ -124,7 +123,6 @@ namespace EyeAuras.DefaultAuras.Triggers.HotkeyIsActive
             source.HotkeyMode = hotkeyMode;
             source.Hotkey = hotkeyConverter.ConvertToString(hotkey);
             source.SuppressKey = suppressKey;
-            source.TriggerValue = IsActive;
         }
 
         private bool IsConfiguredHotkey(HotkeyData data)

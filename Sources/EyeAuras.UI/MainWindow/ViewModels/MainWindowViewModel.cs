@@ -254,8 +254,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
             GlobalHotkeyTrigger = hotkeyTriggerFactory.Create();
             sharedContext.SystemTrigger.Add(GlobalHotkeyTrigger);
-            GlobalHotkeyTrigger.IsActive = true;
             GlobalHotkeyTrigger.SuppressKey = true;
+            GlobalHotkeyTrigger.TriggerValue = true;
             Observable.Merge(
                     configProvider.ListenTo(x => x.FreezeAurasHotkey).ToUnit(),
                     configProvider.ListenTo(x => x.FreezeAurasHotkeyMode).ToUnit())
@@ -281,7 +281,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             var globalUnlockHotkeyTrigger = hotkeyTriggerFactory.Create().AddTo(Anchors);
             globalUnlockHotkeyTrigger.SuppressKey = true;
             globalUnlockHotkeyTrigger.HotkeyMode = HotkeyMode.Hold;
-            globalUnlockHotkeyTrigger.IsActive = false;
             globalUnlockHotkeyTrigger.WhenAnyProperty(x => x.IsActive)
                 .Select(x => globalUnlockHotkeyTrigger.IsActive)
                 .Subscribe(
@@ -492,8 +491,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             var selectRegionHotkeyTrigger = hotkeyTriggerFactory.Create().AddTo(Anchors);
             selectRegionHotkeyTrigger.SuppressKey = true;
             selectRegionHotkeyTrigger.HotkeyMode = HotkeyMode.Hold;
-            selectRegionHotkeyTrigger.IsActive = false;
-
             Observable.Merge(configProvider.ListenTo(x => x.RegionSelectHotkey).ToUnit())
                 .Select(
                     () => new

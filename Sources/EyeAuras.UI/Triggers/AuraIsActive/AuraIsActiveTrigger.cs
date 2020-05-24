@@ -71,18 +71,18 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
                         return isActiveSource;
                     }
 
-                    IsActive = false;
+                    TriggerValue = false;
                     return isActiveSource.Do(x =>
                     {
                         NextActivationTimestamp = clock.Now + ActivationTimeout;
-                        NextIsActiveValue = x ^ IsInverted;
+                        NextIsActiveValue = x;
                     }).Throttle(ActivationTimeout, bgScheduler);
                 })
                 .Switch()
                 .Subscribe(sourceIsActive =>
                 {
                     Log.Info($"AuraIsActive for aura {AuraTab} changed, IsActive = {sourceIsActive}, ActivationTimeout = {ActivationTimeout}");
-                    IsActive = sourceIsActive;
+                    TriggerValue = sourceIsActive;
                 }, Log.HandleUiException)
                 .AddTo(Anchors);
         }

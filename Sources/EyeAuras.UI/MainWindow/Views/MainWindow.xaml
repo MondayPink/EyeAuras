@@ -108,7 +108,7 @@
                               Margin="2.5,0"
                               materialDesign:ButtonAssist.CornerRadius="2"
                               Background="Transparent"
-                              IsChecked="{Binding GlobalHotkeyTrigger.IsActive}">
+                              IsChecked="{Binding GlobalHotkeyTrigger.TriggerValue}">
                     <ToggleButton.Content>
                         <Border Background="{StaticResource NegativeBrush}" BorderThickness="1"
                                 BorderBrush="{StaticResource WarningBrush}" HorizontalAlignment="Stretch"

@@ -8,11 +8,16 @@ namespace EyeAuras.Shared
     {
         private bool isActive;
         private bool isInverted;
+        private bool triggerValue;
 
         protected AuraTriggerBase()
         {
             this.WhenAnyValue(x => x.IsInverted)
                 .Subscribe(x => RaisePropertyChanged(nameof(IsActive)))
+                .AddTo(Anchors);
+
+            this.WhenAnyValue(x => x.TriggerValue, x => x.IsInverted)
+                .Subscribe(() => IsActive = TriggerValue ^ isInverted)
                 .AddTo(Anchors);
         }
 
@@ -28,8 +33,14 @@ namespace EyeAuras.Shared
 
         public bool IsActive
         {
-            get => isActive ^ isInverted;
-            set => RaiseAndSetIfChanged(ref isActive, value);
+            get => isActive;
+            private set => RaiseAndSetIfChanged(ref isActive, value);
+        }
+
+        public bool TriggerValue
+        {
+            get => triggerValue;
+            set => RaiseAndSetIfChanged(ref triggerValue, value);
         }
 
         protected override void VisitLoad(TAuraProperties source)
