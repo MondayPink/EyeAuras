@@ -123,24 +123,26 @@ namespace EyeAuras.UI.Core.Models
                 .AddTo(Anchors);
             sw.Step($"Overlay view model initialized: {overlayViewModel}");
 
-            Observable.CombineLatest(
-                    triggersHolder.WhenAnyValue(x => x.IsActive),  
+            var triggerIsActive = Observable.CombineLatest(
+                    triggersHolder.WhenAnyValue(x => x.IsActive),
                     sharedContext.SystemTrigger.WhenValueChanged(x => x.IsActive))
-                .DistinctUntilChanged()
+                .Select(x => Triggers.Count > 0 && x.All(isActive => isActive))
+                .DistinctUntilChanged();
+            
+            //FIXME Move Trigger processing to BG scheduler
+            triggerIsActive
                 .ObserveOn(uiScheduler)
-                .Subscribe(x => IsActive = x.Count > 0 && x.All(isActive => isActive), Log.HandleUiException)
+                .Subscribe(x => IsActive = x)
                 .AddTo(Anchors);
 
             var triggerActivates =
-                triggersHolder.WhenAnyValue(x => x.IsActive)
-                    .Where(x => Triggers.Count > 0)
+                triggerIsActive
                     .WithPrevious((prev, curr) => new {prev, curr})
                     .Where(x => x.prev == false && x.curr)
                  .Publish();
             
             var triggerDeactivates = 
-                triggersHolder.WhenAnyValue(x => x.IsActive)
-                    .Where(x => Triggers.Count > 0)
+                triggerIsActive
                     .WithPrevious((prev, curr) => new {prev, curr})
                     .Where(x => x.prev == true && !x.curr)
                     .Publish();
@@ -154,12 +156,12 @@ namespace EyeAuras.UI.Core.Models
                 .Subscribe(ExecuteOnExitActions, Log.HandleUiException)
                 .AddTo(Anchors);
             
-            triggersHolder.WhenAnyValue(x => x.IsActive)
+            triggerIsActive
                 .Select(
-                    () =>
+                    isActive =>
                     {
                         Log.Debug($"Reinitializing WhileActive for Aura {this}, IsActive: {triggersHolder.IsActive}");
-                        return triggersHolder.IsActive && Triggers.Count > 0
+                        return isActive
                             ? Observable.Timer(DateTimeOffset.Now, TimeSpan.FromMilliseconds(50), bgScheduler).ToUnit()
                             : Observable.Empty<Unit>();
                     })

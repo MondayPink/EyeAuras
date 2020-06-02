@@ -211,20 +211,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .Subscribe(x => Log.Debug($"Selected tab: {x}"))
                 .AddTo(Anchors);
 
-            LoadConfig();
-            Log.Info($"Updating configuration format");
-            rootConfigProvider.Save();
-
-            if (sharedContext.AuraList.Count == 0)
-            {
-                CreateNewTabCommand.Execute(null);
-            }
-
-            configUpdateSubject
-                .Sample(ConfigSaveSamplingTimeout)
-                .Subscribe(SaveConfig, Log.HandleException)
-                .AddTo(Anchors);
-
             Observable.Merge(
                     this.WhenAnyProperty(x => x.Left, x => x.Top, x => x.Width, x => x.Height)
                         .Sample(ConfigSaveSamplingTimeout)
@@ -252,37 +238,17 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     Log.HandleUiException)
                 .AddTo(Anchors);
 
-            GlobalHotkeyTrigger = hotkeyTriggerFactory.Create();
+            GlobalHotkeyTrigger = CreateFreezeAurasTrigger();
             sharedContext.SystemTrigger.Add(GlobalHotkeyTrigger);
-            GlobalHotkeyTrigger.SuppressKey = true;
-            GlobalHotkeyTrigger.TriggerValue = true;
-            Observable.Merge(
-                    configProvider.ListenTo(x => x.FreezeAurasHotkey).ToUnit(),
-                    configProvider.ListenTo(x => x.FreezeAurasHotkeyMode).ToUnit())
-                .Select(
-                    () => new
-                    {
-                        FreezeAurasHotkey = hotkeyConverter.ConvertFromString(configProvider.ActualConfig.FreezeAurasHotkey),
-                        configProvider.ActualConfig.FreezeAurasHotkeyMode
-                    })
-                .DistinctUntilChanged()
-                .WithPrevious((prev, curr) => new {prev, curr})
+
+            RegisterSelectRegionHotkey()
+                .Where(isActive => isActive)
                 .ObserveOn(uiScheduler)
-                .Subscribe(
-                    cfg =>
-                    {
-                        Log.Debug($"Setting new FreezeAurasHotkey configuration, {cfg.prev.DumpToTextRaw()} => {cfg.curr.DumpToTextRaw()}");
-                        GlobalHotkeyTrigger.Hotkey = cfg.curr.FreezeAurasHotkey;
-                        GlobalHotkeyTrigger.HotkeyMode = cfg.curr.FreezeAurasHotkeyMode;
-                    },
-                    Log.HandleException)
+                .Subscribe(isActive => SelectRegionCommandExecuted(), Log.HandleUiException)
                 .AddTo(Anchors);
 
-            var globalUnlockHotkeyTrigger = hotkeyTriggerFactory.Create().AddTo(Anchors);
-            globalUnlockHotkeyTrigger.SuppressKey = true;
-            globalUnlockHotkeyTrigger.HotkeyMode = HotkeyMode.Hold;
-            globalUnlockHotkeyTrigger.WhenAnyProperty(x => x.IsActive)
-                .Select(x => globalUnlockHotkeyTrigger.IsActive)
+            RegisterGlobalUnlockHotkey()
+                .ObserveOn(uiScheduler)
                 .Subscribe(
                     unlock =>
                     {
@@ -307,33 +273,22 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     }, Log.HandleUiException)
                 .AddTo(Anchors);
 
-            Observable.Merge(
-                    configProvider.ListenTo(x => x.UnlockAurasHotkey).ToUnit(),
-                    configProvider.ListenTo(x => x.UnlockAurasHotkeyMode).ToUnit())
-                .Select(
-                    () => new
-                    {
-                        UnlockAurasHotkey = hotkeyConverter.ConvertFromString(configProvider.ActualConfig.UnlockAurasHotkey),
-                        configProvider.ActualConfig.UnlockAurasHotkeyMode
-                    })
-                .DistinctUntilChanged()
-                .WithPrevious((prev, curr) => new {prev, curr})
-                .ObserveOn(uiScheduler)
-                .Subscribe(
-                    cfg =>
-                    {
-                        Log.Debug($"Setting new UnlockAurasHotkey configuration, {cfg.prev.DumpToTextRaw()} => {cfg.curr.DumpToTextRaw()}");
-                        globalUnlockHotkeyTrigger.Hotkey = cfg.curr.UnlockAurasHotkey;
-                        globalUnlockHotkeyTrigger.HotkeyMode = cfg.curr.UnlockAurasHotkeyMode;
-                    },
-                    Log.HandleUiException)
+            LoadConfig();
+            Log.Info($"Updating configuration format");
+            rootConfigProvider.Save();
+
+            if (sharedContext.AuraList.Count == 0)
+            {
+                CreateNewTabCommand.Execute(null);
+            }
+
+            configUpdateSubject
+                .Sample(ConfigSaveSamplingTimeout)
+                .Subscribe(SaveConfig, Log.HandleException)
                 .AddTo(Anchors);
 
-            RegisterSelectRegionHotkey()
-                .Where(isActive => isActive)
-                .ObserveOn(uiScheduler)
-                .Subscribe(isActive => SelectRegionCommandExecuted(), Log.HandleUiException)
-                .AddTo(Anchors);
+            Log.Info($"Enabling Auras...");
+            GlobalHotkeyTrigger.TriggerValue = true;
         }
 
         public IPrismModuleStatusViewModel ModuleStatus { get; }
@@ -484,6 +439,65 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             {
                 viewController.Minimize();
             }
+        }
+
+        private HotkeyIsActiveTrigger CreateFreezeAurasTrigger()
+        {
+            var result = hotkeyTriggerFactory.Create();
+            result.SuppressKey = true;
+            result.TriggerValue = false;
+            Observable.Merge(
+                    configProvider.ListenTo(x => x.FreezeAurasHotkey).ToUnit(),
+                    configProvider.ListenTo(x => x.FreezeAurasHotkeyMode).ToUnit())
+                .Select(
+                    () => new
+                    {
+                        FreezeAurasHotkey = hotkeyConverter.ConvertFromString(configProvider.ActualConfig.FreezeAurasHotkey),
+                        configProvider.ActualConfig.FreezeAurasHotkeyMode
+                    })
+                .DistinctUntilChanged()
+                .WithPrevious((prev, curr) => new {prev, curr})
+                .Subscribe(
+                    cfg =>
+                    {
+                        Log.Debug($"Setting new FreezeAurasHotkey configuration, {cfg.prev.DumpToTextRaw()} => {cfg.curr.DumpToTextRaw()}");
+                        result.Hotkey = cfg.curr.FreezeAurasHotkey;
+                        result.HotkeyMode = cfg.curr.FreezeAurasHotkeyMode;
+                    },
+                    Log.HandleException)
+                .AddTo(Anchors);
+
+            return result;
+        }
+        
+        private IObservable<bool> RegisterGlobalUnlockHotkey()
+        {
+            var globalUnlockHotkeyTrigger = hotkeyTriggerFactory.Create().AddTo(Anchors);
+            globalUnlockHotkeyTrigger.SuppressKey = true;
+            globalUnlockHotkeyTrigger.HotkeyMode = HotkeyMode.Hold;
+
+            Observable.Merge(
+                    configProvider.ListenTo(x => x.UnlockAurasHotkey).ToUnit(),
+                    configProvider.ListenTo(x => x.UnlockAurasHotkeyMode).ToUnit())
+                .Select(
+                    () => new
+                    {
+                        UnlockAurasHotkey = hotkeyConverter.ConvertFromString(configProvider.ActualConfig.UnlockAurasHotkey),
+                        configProvider.ActualConfig.UnlockAurasHotkeyMode
+                    })
+                .DistinctUntilChanged()
+                .WithPrevious((prev, curr) => new {prev, curr})
+                .Subscribe(
+                    cfg =>
+                    {
+                        Log.Debug($"Setting new UnlockAurasHotkey configuration, {cfg.prev.DumpToTextRaw()} => {cfg.curr.DumpToTextRaw()}");
+                        globalUnlockHotkeyTrigger.Hotkey = cfg.curr.UnlockAurasHotkey;
+                        globalUnlockHotkeyTrigger.HotkeyMode = cfg.curr.UnlockAurasHotkeyMode;
+                    },
+                    Log.HandleUiException)
+                .AddTo(Anchors);
+
+            return globalUnlockHotkeyTrigger.WhenAnyValue(x => x.IsActive).DistinctUntilChanged();
         }
         
         private IObservable<bool> RegisterSelectRegionHotkey()
