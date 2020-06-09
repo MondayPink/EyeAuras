@@ -199,18 +199,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 }
             });
 
-            sharedContext
-                .TabList
-                .ToObservableChangeSet()
-                .ObserveOn(uiScheduler)
-                .OnItemAdded(x => SelectedTab = x)
-                .Subscribe()
-                .AddTo(Anchors);
-
-            this.WhenAnyValue(x => x.SelectedTab)
-                .Subscribe(x => Log.Debug($"Selected tab: {x}"))
-                .AddTo(Anchors);
-
             Observable.Merge(
                     this.WhenAnyProperty(x => x.Left, x => x.Top, x => x.Width, x => x.Height)
                         .Sample(ConfigSaveSamplingTimeout)
@@ -287,6 +275,18 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .Subscribe(SaveConfig, Log.HandleException)
                 .AddTo(Anchors);
 
+            sharedContext
+                .TabList
+                .ToObservableChangeSet()
+                .ObserveOn(uiScheduler)
+                .OnItemAdded(x => SelectedTab = x)
+                .Subscribe()
+                .AddTo(Anchors);
+
+            this.WhenAnyValue(x => x.SelectedTab)
+                .Subscribe(x => Log.Debug($"Selected tab: {x}"))
+                .AddTo(Anchors);
+            
             Log.Info($"Enabling Auras...");
             GlobalHotkeyTrigger.TriggerValue = true;
         }

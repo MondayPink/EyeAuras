@@ -38,6 +38,7 @@ namespace EyeAuras.UI.Core.Models
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraModelBase));
         private static readonly TimeSpan ModelsReloadTimeout = TimeSpan.FromSeconds(1);
+        private static readonly TimeSpan TriggerDefaultThrottle = TimeSpan.FromMilliseconds(10);
         private static int GlobalAuraIdx;
 
         private readonly IAuraRepository repository;
@@ -75,7 +76,7 @@ namespace EyeAuras.UI.Core.Models
             defaultAuraName = $"Aura #{Interlocked.Increment(ref GlobalAuraIdx)}";
             Name = defaultAuraName;
             Id = idGenerator.Next();
-            using var sw = new BenchmarkTimer($"[{Name}({Id})] OverlayAuraModel initialization", Log, nameof(OverlayAuraModelBase));
+            using var sw = new BenchmarkTimer($"[{this}] OverlayAuraModel initialization", Log, nameof(OverlayAuraModelBase));
             var bgScheduler = schedulerProvider.GetOrCreate($"{defaultAuraName}");
             Triggers = triggersHolder;
             OnEnterActions = onEnterActionsHolder;
@@ -125,47 +126,55 @@ namespace EyeAuras.UI.Core.Models
 
             var triggerIsActive = Observable.CombineLatest(
                     triggersHolder.WhenAnyValue(x => x.IsActive),
-                    sharedContext.SystemTrigger.WhenValueChanged(x => x.IsActive))
-                .Select(x => Triggers.Count > 0 && x.All(isActive => isActive))
-                .DistinctUntilChanged();
+                    sharedContext.SystemTrigger.WhenAnyValue(x => x.IsActive))
+                .Select(x => (Triggers.Count > 0 && Triggers.IsActive || Triggers.Count == 0) && sharedContext.SystemTrigger.IsActive)
+                .DistinctUntilChanged()
+                .WithPrevious((prev, curr) => new {prev, curr, triggers = $"{Triggers.Items.Select(x => x.ToString()).DumpToTextRaw()}", systemTriggers = $"{sharedContext.SystemTrigger.Items.Select(x => x.ToString()).DumpToTextRaw()}"})
+                .Throttle(TriggerDefaultThrottle);
             
             //FIXME Move Trigger processing to BG scheduler
             triggerIsActive
                 .ObserveOn(uiScheduler)
-                .Subscribe(x => IsActive = x)
+                .Subscribe(x =>
+                {
+                    Log.Debug($"[{this}] Updating IsActive {IsActive} => {x.curr}, change: {x}");
+                    IsActive = x.curr;
+                })
                 .AddTo(Anchors);
 
             var triggerActivates =
                 triggerIsActive
-                    .WithPrevious((prev, curr) => new {prev, curr})
                     .Where(x => x.prev == false && x.curr)
-                 .Publish();
+                    .Publish();
             
             var triggerDeactivates = 
                 triggerIsActive
-                    .WithPrevious((prev, curr) => new {prev, curr})
                     .Where(x => x.prev == true && !x.curr)
                     .Publish();
             
             triggerActivates
+                .Where(x => OnEnterActions.Count > 0)
                 .ObserveOn(bgScheduler)
                 .Subscribe(ExecuteOnEnterActions, Log.HandleUiException)
                 .AddTo(Anchors);
             triggerDeactivates
+                .Where(x => OnExitActions.Count > 0)
                 .ObserveOn(bgScheduler)
                 .Subscribe(ExecuteOnExitActions, Log.HandleUiException)
                 .AddTo(Anchors);
             
+            //FIXME Fix WhileActive mess - remove timer, make it event-driven
             triggerIsActive
                 .Select(
-                    isActive =>
+                    x =>
                     {
-                        Log.Debug($"Reinitializing WhileActive for Aura {this}, IsActive: {triggersHolder.IsActive}");
-                        return isActive
+                        Log.Debug($"[{this}] IsActive changed, IsActive: {x}");
+                        return x.curr
                             ? Observable.Timer(DateTimeOffset.Now, TimeSpan.FromMilliseconds(50), bgScheduler).ToUnit()
                             : Observable.Empty<Unit>();
                     })
                 .Switch()
+                .Where(x => WhileActiveActions.Count > 0)
                 .ObserveOn(bgScheduler)
                 .Subscribe(ExecuteWhileActiveActions, Log.HandleUiException)
                 .AddTo(Anchors);
@@ -209,7 +218,7 @@ namespace EyeAuras.UI.Core.Models
             sw.Step($"Overlay model properties initialized");
 
             overlayController.RegisterChild(overlayViewModel).AddTo(Anchors);
-            sw.Step($"Overlay registration completed: {this}");
+            sw.Step($"Overlay registration completed");
             
             triggersHolder.AddTo(Anchors);
             whileActiveActionsHolder.AddTo(Anchors);
@@ -218,25 +227,26 @@ namespace EyeAuras.UI.Core.Models
             Disposable.Create(() =>
             {
                 Log.Debug(
-                    $"Disposed Aura {Name}({Id}) (aka {defaultAuraName}), triggers: {Triggers.Count}, actions: {OnEnterActions.Count}");
+                    $"[{this}] Disposed Aura {Name}({Id}) (aka {defaultAuraName}), triggers: {Triggers.Count}");
             }).AddTo(Anchors);
         }
 
         private void ExecuteOnEnterActions()
         {
-            Log.Debug($"[{Name}({Id})] Trigger state changed, executing OnEnter Actions");
-            onEnterActionsHolder.Items.ForEach(x => x.Execute());
+            Log.Debug($"[{this}] Executing OnEnter actions: {OnEnterActions.Items.Select(x => x.ToString()).DumpToTextRaw()}, triggers: {Triggers.Items.Select(x => x.ToString()).DumpToTextRaw()}");
+            OnEnterActions.Items.ForEach(x => x.Execute());
         }
         
         private void ExecuteOnExitActions()
         {
-            Log.Debug($"[{Name}({Id})] Trigger state changed, executing OnExit Actions");
-            onExitActionsHolder.Items.ForEach(x => x.Execute());
+            Log.Debug($"[{this}] Executing OnExit actions: {OnExitActions.Items.Select(x => x.ToString()).DumpToTextRaw()}, triggers: {Triggers.Items.Select(x => x.ToString()).DumpToTextRaw()}");
+            OnExitActions.Items.ForEach(x => x.Execute());
         }
         
         private void ExecuteWhileActiveActions()
         {
-            foreach (var action in whileActiveActionsHolder.Items)
+            Log.Debug($"[{this}] Executing WhileActive actions: {WhileActiveActions.Items.Select(x => x.ToString()).DumpToTextRaw()}, triggers: {Triggers.Items.Select(x => x.ToString()).DumpToTextRaw()}");
+            foreach (var action in WhileActiveActions.Items)
             {
                 if (!IsActive)
                 {
@@ -329,8 +339,8 @@ namespace EyeAuras.UI.Core.Models
 
         private void ReloadCollections(OverlayAuraProperties source)
         {
-            OnExitActions.Edit(x => x.Clear());;
             WhileActiveActions.Edit(x => x.Clear());;
+            OnExitActions.Edit(x => x.Clear());;
             OnEnterActions.Edit(x => x.Clear());;
             Triggers.Edit(x => x.Clear());;
             
@@ -379,7 +389,6 @@ namespace EyeAuras.UI.Core.Models
 
             WhileActiveActionsTimeout = source.WhileActiveActionsTimeout;
             TargetWindow = source.WindowMatch;
-            ReloadCollections(source);
             IsEnabled = source.IsEnabled;
             Overlay.ThumbnailOpacity = source.ThumbnailOpacity;
             Overlay.Region.SetValue(source.SourceRegionBounds);
@@ -393,6 +402,8 @@ namespace EyeAuras.UI.Core.Models
             Overlay.Top = bounds.Top;
             Overlay.Height = bounds.Height;
             Overlay.Width = bounds.Width;
+            
+            ReloadCollections(source);
         }
 
         protected override void VisitSave(OverlayAuraProperties properties)
@@ -420,7 +431,7 @@ namespace EyeAuras.UI.Core.Models
         {
             if (metadata.Value == null)
             {
-                Log.Warn($"Trying to re-serialize metadata type {metadata.TypeName} (v{metadata.Version}) {metadata.AssemblyName}...");
+                Log.Debug($"Trying to re-serialize metadata type {metadata.TypeName} (v{metadata.Version}) {metadata.AssemblyName}...");
                 var serialized = configSerializer.Serialize(metadata);
                 if (string.IsNullOrEmpty(serialized))
                 {
@@ -471,11 +482,16 @@ namespace EyeAuras.UI.Core.Models
             
             if (properties is EmptyAuraProperties)
             {
-                Log.Warn($"[{Name}({Id})] {nameof(EmptyAuraProperties)} should never be used for Models Save/Load purposes - too generic");
+                Log.Warn($"[{this}] {nameof(EmptyAuraProperties)} should never be used for Models Save/Load purposes - too generic");
                 return false;
             }
 
             return true;
+        }
+
+        public override string ToString()
+        {
+            return $"[{Name}({Id}){(IsActive ? " Active" : string.Empty)}]";
         }
     }
 }

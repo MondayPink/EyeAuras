@@ -161,6 +161,11 @@ namespace EyeAuras.DefaultAuras.Triggers.HotkeyIsActive
                 .Merge(hotkeyUp);
         }
 
+        public override string ToString()
+        {
+            return $"{base.ToString()} ({nameof(Hotkey)}:{Hotkey} {HotkeyMode})";
+        }
+
         private struct HotkeyData
         {
             public KeyEventArgs KeyEventArgs { get; set; }

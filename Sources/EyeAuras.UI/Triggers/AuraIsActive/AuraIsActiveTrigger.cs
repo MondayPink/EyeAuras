@@ -98,5 +98,10 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
             source.ActivationTimeout = ActivationTimeout;
             base.VisitSave(source);
         }
+
+        public override string ToString()
+        {
+            return $"{base.ToString()} ({nameof(AuraId)}: {AuraId})";
+        }
     }
 }

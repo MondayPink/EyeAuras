@@ -116,5 +116,10 @@ namespace EyeAuras.Shared
         {
             source.IsInverted = IsInverted;
         }
+
+        public override string ToString()
+        {
+            return $"{TriggerName}: {IsActive}";
+        }
     }
 }
