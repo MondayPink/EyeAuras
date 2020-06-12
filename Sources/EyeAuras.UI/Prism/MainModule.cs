@@ -1,11 +1,9 @@
-﻿using EyeAuras.Interception.Prism;
-using EyeAuras.Shared;
+﻿using EyeAuras.Shared;
 using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.ViewModels;
 using EyeAuras.UI.MainWindow.ViewModels;
 using EyeAuras.UI.Prism.Modularity;
 using EyeAuras.UI.Triggers.AuraIsActive;
-using EyeAuras.Usb2kbd.Prism;
 using PoeShared;
 using PoeShared.Modularity;
 using PoeShared.Prism;
@@ -36,8 +34,6 @@ namespace EyeAuras.UI.Prism
             container.AddNewExtension<UpdaterRegistrations>();
             container.AddNewExtension<NativeRegistrations>();
             container.AddNewExtension<CommonRegistrations>();
-            container.AddNewExtension<InterceptionRegistrations>();
-            container.AddNewExtension<Usb2KbdRegistrations>();
         }
 
         public void OnInitialized(IContainerProvider containerProvider)

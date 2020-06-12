@@ -9,7 +9,7 @@ using PoeShared.Scaffolding;
 
 namespace EyeAuras.DefaultAuras.Actions.WinActivate
 {
-    internal sealed class WinActivateAction : AuraActionBase<WinActivateActionProperties>
+    public sealed class WinActivateAction : AuraActionBase<WinActivateActionProperties>
     {
         private readonly IClock clock;
         private static readonly ILog Log = LogManager.GetLogger(typeof(WinActivateAction));

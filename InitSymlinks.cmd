@@ -12,4 +12,9 @@ mklink /J /D EyeAuras.OpenCVAuras "../Submodules/EyeAuras.Plus/EyeAuras.OpenCVAu
 mklink /J /D EyeAuras.AdvancedAuras "../Submodules/EyeAuras.Plus/EyeAuras.AdvancedAuras"
 mklink /J /D EyeAuras.Loader "../Submodules/EyeAuras.Plus/EyeAuras.Loader"
 mklink /J /D EyeAuras.Web "../Submodules/EyeAuras.Plus/EyeAuras.Web"
+mklink /J /D EyeAuras.Roxy "../Submodules/EyeAuras.Plus/EyeAuras.Roxy"
+mklink /J /D EyeAuras.Roxy.U2K "../Submodules/EyeAuras.Plus/EyeAuras.Roxy.U2K"
+mklink /J /D EyeAuras.Roxy.Kernel "../Submodules/EyeAuras.Plus/EyeAuras.Roxy.Kernel"
+mklink /J /D EyeAuras.Roxy.Shared "../Submodules/EyeAuras.Plus/EyeAuras.Roxy.Shared"
+mklink /J /D EyeAuras.Plus.Tests "../Submodules/EyeAuras.Plus/EyeAuras.Plus.Tests"
 

@@ -5,7 +5,7 @@ using PoeShared.Audio.Services;
 
 namespace EyeAuras.DefaultAuras.Actions.PlaySound
 {
-    internal sealed class PlaySoundAction : AuraActionBase<PlaySoundActionProperties>
+    public sealed class PlaySoundAction : AuraActionBase<PlaySoundActionProperties>
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(PlaySoundAction));
 

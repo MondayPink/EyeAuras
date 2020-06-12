@@ -3,7 +3,7 @@ using EyeAuras.Shared;
 
 namespace EyeAuras.DefaultAuras.Actions.Delay
 {
-    internal sealed class DelayActionProperties : IAuraProperties
+    public sealed class DelayActionProperties : IAuraProperties
     {
         public TimeSpan Delay { get; set; }
 

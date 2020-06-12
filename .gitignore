@@ -220,15 +220,21 @@ ModelManifest.xml
 *.nuspec.bak
 *.nuspec
 
+Sources/OnTopReplica
+
 Sources/PoeShared
 Sources/PoeShared.Core
 Sources/PoeShared.Wpf
 Sources/PoeShared.Tests
 Sources/PoeShared.OpenCV
 Sources/PoeShared.Squirrel
-Sources/OnTopReplica
+Sources/PoeShared.Native
+
+Sources/EyeAuras.Plus.Tests
 Sources/EyeAuras.OpenCVAuras
 Sources/EyeAuras.AdvancedAuras
 Sources/EyeAuras.Loader
 Sources/EyeAuras.Web
-Sources/PoeShared.Native
+Sources/EyeAuras.Roxy
+Sources/EyeAuras.Plus.Tests
+Sources/EyeAuras.Roxy*

@@ -6,7 +6,7 @@ using log4net;
 
 namespace EyeAuras.DefaultAuras.Actions.Delay
 {
-    internal sealed class DelayAction : AuraActionBase<DelayActionProperties>
+    public sealed class DelayAction : AuraActionBase<DelayActionProperties>
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(DelayAction));
         private TimeSpan delay;

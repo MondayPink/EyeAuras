@@ -26,7 +26,6 @@
       <ProjectReference Include="..\EyeAuras.DefaultAuras\EyeAuras.DefaultAuras.csproj" />
       <ProjectReference Include="..\EyeAuras.OnTopReplica\EyeAuras.OnTopReplica.csproj" />
       <ProjectReference Include="..\EyeAuras.Shared\EyeAuras.Shared.csproj" />
-      <ProjectReference Include="..\EyeAuras.Usb2kbd\EyeAuras.Usb2kbd.csproj" />
       <ProjectReference Include="..\PoeShared\PoeShared.csproj" />
       <ProjectReference Include="..\PoeShared.Native\PoeShared.Native.csproj" />
       <ProjectReference Include="..\PoeShared.Squirrel\PoeShared.Squirrel.csproj" />
@@ -36,6 +35,7 @@
     <Choose>
         <When Condition="'$(Configuration)' == 'Debug.Plus' Or '$(Configuration)' == 'Release.Plus'">
             <ItemGroup>
+                <ProjectReference Include="..\EyeAuras.Roxy\EyeAuras.Roxy.csproj" />
                 <ProjectReference Include="..\EyeAuras.Loader\EyeAuras.Loader.csproj" />
                 <ProjectReference Include="..\EyeAuras.OpenCVAuras\EyeAuras.OpenCVAuras.csproj" />
                 <ProjectReference Include="..\EyeAuras.AdvancedAuras\EyeAuras.AdvancedAuras.csproj" />
