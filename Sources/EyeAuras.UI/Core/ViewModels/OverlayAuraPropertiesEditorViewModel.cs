@@ -70,6 +70,7 @@ namespace EyeAuras.UI.Core.ViewModels
                 .ToObservableChangeSet()
                 .Filter(x => x is IAuraTrigger)
                 .Transform(x => x as IAuraTrigger)
+                .Sort(new SortExpressionComparer<IAuraTrigger>().ThenByAscending(x => x.TriggerName))
                 .Bind(out var knownTriggers)
                 .Subscribe()
                 .AddTo(Anchors);
@@ -79,6 +80,7 @@ namespace EyeAuras.UI.Core.ViewModels
                 .ToObservableChangeSet()
                 .Filter(x => x is IAuraAction)
                 .Transform(x => x as IAuraAction)
+                .Sort(new SortExpressionComparer<IAuraAction>().ThenByAscending(x => x.ActionName))
                 .Bind(out var knownActions)
                 .Subscribe()
                 .AddTo(Anchors);
