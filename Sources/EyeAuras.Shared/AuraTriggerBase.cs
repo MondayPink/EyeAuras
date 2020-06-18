@@ -3,8 +3,6 @@ using System;
 using System.Reactive.Linq;
 using log4net;
 using PoeShared.Scaffolding;
-using System.Reactive;
-using System;
 
 namespace EyeAuras.Shared
 {

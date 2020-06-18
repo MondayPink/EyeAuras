@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <UseWPF>true</UseWPF>
-        <TargetFramework>net461</TargetFramework>
+        <TargetFramework>netcoreapp3.0</TargetFramework>
         <Configurations>Debug;Release</Configurations>
         <Platforms>AnyCPU</Platforms>
         <WarningsAsErrors />
