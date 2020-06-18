@@ -43,9 +43,11 @@ namespace EyeAuras.UI
 
                 Log.Debug($"Arguments: {arguments.DumpToText()}");
                 Log.Debug($"Parsed args: {AppArguments.Instance.DumpToText()}");
-                Log.Debug($"OS Version: {Environment.OSVersion}, is64bit: {Environment.Is64BitProcess} (OS: {Environment.Is64BitOperatingSystem})");
-                Log.Debug($"Is Elevated: {AppArguments.Instance.IsElevated}");
+                Log.Debug($"OS: { new { Environment.OSVersion, Environment.Is64BitProcess, Environment.Is64BitOperatingSystem }})");
+                Log.Debug($"Environment: {new { Environment.MachineName, Environment.UserName, Environment.WorkingSet, Environment.SystemDirectory, Environment.UserInteractive }})");
+                Log.Debug($"Runtime: {new { System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription, System.Runtime.InteropServices.RuntimeInformation.OSDescription }}");
                 Log.Debug($"Culture: {Thread.CurrentThread.CurrentCulture}, UICulture: {Thread.CurrentThread.CurrentUICulture}");
+                Log.Debug($"Is Elevated: {AppArguments.Instance.IsElevated}");
 
                 Log.Debug($"UI Scheduler: {RxApp.MainThreadScheduler}");
                 RxApp.MainThreadScheduler = DispatcherScheduler.Current;
