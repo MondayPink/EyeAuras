@@ -37,14 +37,15 @@ namespace EyeAuras.UI.Prism
 
         protected override DependencyObject CreateShell()
         {
+            Log.Info("Creating shell...");
             return Container.Resolve<MainWindow.Views.MainWindow>();
         }
 
         protected override void InitializeShell()
         {
+            Log.Info("Initializing shell...");
             base.InitializeShell();
 
-            Log.Info("Initializing shell...");
             var sw = Stopwatch.StartNew();
 
             var window = (Window) Shell;
@@ -90,8 +91,8 @@ namespace EyeAuras.UI.Prism
 
         protected override void ConfigureContainer()
         {
-            base.ConfigureContainer();
             Log.Debug($"Configuring {Container}, catalog: {ModuleCatalog} (type: {ModuleCatalog.GetType()})");
+            base.ConfigureContainer();
             if (ModuleCatalog is IAppModuleLoader appModuleLoader)
             {
                 Container.RegisterInstance(appModuleLoader, new ContainerControlledLifetimeManager());
@@ -104,6 +105,7 @@ namespace EyeAuras.UI.Prism
 
         protected override void ConfigureModuleCatalog()
         {
+            Log.Debug($"Configuring ModuleCatalog");
             var mainModule = typeof(MainModule);
             
             ModuleCatalog.AddModule(

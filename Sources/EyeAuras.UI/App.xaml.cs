@@ -13,6 +13,7 @@ using PoeShared;
 using PoeShared.Native;
 using PoeShared.Scaffolding;
 using PoeShared.Wpf.UI.ExceptionViewer;
+using Prism.Unity;
 using ReactiveUI;
 using Unity;
 
@@ -69,7 +70,7 @@ namespace EyeAuras.UI
             }
             catch (Exception ex)
             {
-                Log.HandleException(ex);
+                ReportCrash(ex);
                 throw;
             }
         }
@@ -185,6 +186,7 @@ namespace EyeAuras.UI
             AppDomain.CurrentDomain.UnhandledException -= CurrentDomainOnUnhandledException;
             TaskScheduler.UnobservedTaskException -= TaskSchedulerOnUnobservedTaskException;
             Dispatcher.CurrentDispatcher.UnhandledException -= DispatcherOnUnhandledException;
+            
             var reporter = aurasBootstrapper.Container.Resolve<IExceptionDialogDisplayer>();
             reporter.ShowDialogAndTerminate(exception);
         }

@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>WinExe</OutputType>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <TargetFramework>netcoreapp5.0</TargetFramework>
         <UseWPF>true</UseWPF>
         <AssemblyName>EyeAuras</AssemblyName>
         <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
@@ -16,9 +16,15 @@
         <OutputPath>..\bin\</OutputPath>
         <WarningsAsErrors />
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
+        <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
         <GenerateDependencyFile>false</GenerateDependencyFile>
     </PropertyGroup>
+
+    <ItemGroup>
+        <TrimmerRootAssembly Include="System.Runtime" />
+        <TrimmerRootAssembly Include="System.Runtime.Extensions" />
+        <TrimmerRootAssembly Include="System.Diagnostics.Debug" />
+    </ItemGroup>
 
     <ItemGroup>
       <ProjectReference Include="..\EyeAuras.Controls\EyeAuras.Controls.csproj" />
@@ -60,6 +66,7 @@
       <PackageReference Include="MahApps.Metro.Resources" Version="0.6.1" />
       <PackageReference Include="MaterialDesignColors" Version="1.2.0" />
       <PackageReference Include="MaterialDesignThemes" Version="3.0.0-ci683" />
+      <PackageReference Include="Microsoft.NETCore.Targets" Version="5.0.0-preview.5.20278.1" />
       <PackageReference Include="MouseKeyHook" Version="5.6.0" />
       <PackageReference Include="Prism.Core" Version="7.2.0.1367" />
       <PackageReference Include="Prism.Unity" Version="7.2.0.1367" />
