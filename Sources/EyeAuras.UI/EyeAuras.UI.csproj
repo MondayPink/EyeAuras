@@ -16,7 +16,7 @@
         <OutputPath>..\bin\</OutputPath>
         <WarningsAsErrors />
         <PlatformTarget>AnyCPU</PlatformTarget>
-        <GenerateRuntimeConfigurationFiles>false</GenerateRuntimeConfigurationFiles>
+        <GenerateRuntimeConfigurationFiles>true</GenerateRuntimeConfigurationFiles>
         <GenerateDependencyFile>false</GenerateDependencyFile>
     </PropertyGroup>
 
