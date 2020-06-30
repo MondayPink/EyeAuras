@@ -53,6 +53,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EyeAuras.Roxy.Kernel", "Eye
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EyeAuras.Roxy.U2K", "EyeAuras.Roxy.U2K\EyeAuras.Roxy.U2K.csproj", "{49DC7A54-50E6-48BE-8A2B-19A24CEB4E38}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EyeAuras.Loader.Shared", "EyeAuras.Loader.Shared\EyeAuras.Loader.Shared.csproj", "{5FB9ECFA-65D2-4F3A-A22F-23CDC7195A79}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug.Plus|Any CPU = Debug.Plus|Any CPU
@@ -229,6 +231,14 @@ Global
 		{6910C866-7006-4C14-ACC3-E1A7FF72DAF4}.Debug.Plus|Any CPU.Deploy.0 = Debug|Any CPU
 		{6910C866-7006-4C14-ACC3-E1A7FF72DAF4}.Release.Plus|Any CPU.ActiveCfg = Release|Any CPU
 		{6910C866-7006-4C14-ACC3-E1A7FF72DAF4}.Release.Plus|Any CPU.Build.0 = Release|Any CPU
+		{5FB9ECFA-65D2-4F3A-A22F-23CDC7195A79}.Debug.Plus|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FB9ECFA-65D2-4F3A-A22F-23CDC7195A79}.Debug.Plus|Any CPU.Build.0 = Debug|Any CPU
+		{5FB9ECFA-65D2-4F3A-A22F-23CDC7195A79}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FB9ECFA-65D2-4F3A-A22F-23CDC7195A79}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5FB9ECFA-65D2-4F3A-A22F-23CDC7195A79}.Release.Plus|Any CPU.ActiveCfg = Debug|Any CPU
+		{5FB9ECFA-65D2-4F3A-A22F-23CDC7195A79}.Release.Plus|Any CPU.Build.0 = Debug|Any CPU
+		{5FB9ECFA-65D2-4F3A-A22F-23CDC7195A79}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5FB9ECFA-65D2-4F3A-A22F-23CDC7195A79}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -253,5 +263,6 @@ Global
 		{6AC86EBD-870E-4718-983F-9BBCB0EAED8C} = {B04557B7-8AD0-45FC-BD56-A61305351360}
 		{E580B977-3F8E-49F5-ADF4-2ED052F53FE8} = {6AC86EBD-870E-4718-983F-9BBCB0EAED8C}
 		{6910C866-7006-4C14-ACC3-E1A7FF72DAF4} = {6AC86EBD-870E-4718-983F-9BBCB0EAED8C}
+		{5FB9ECFA-65D2-4F3A-A22F-23CDC7195A79} = {B04557B7-8AD0-45FC-BD56-A61305351360}
 	EndGlobalSection
 EndGlobal

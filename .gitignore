@@ -234,6 +234,7 @@ Sources/EyeAuras.Plus.Tests
 Sources/EyeAuras.OpenCVAuras
 Sources/EyeAuras.AdvancedAuras
 Sources/EyeAuras.Loader
+Sources/EyeAuras.Loader.Shared
 Sources/EyeAuras.Web
 Sources/EyeAuras.Plus.Tests
 Sources/EyeAuras.Roxy*
