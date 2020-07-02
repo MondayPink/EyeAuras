@@ -63,7 +63,7 @@
         <KeyBinding Gesture="CTRL+V" Command="{Binding PasteTabCommand}" />
         <KeyBinding Gesture="CTRL+D" Command="{Binding DuplicateTabCommand}" CommandParameter="{Binding SelectedTab}" />
         <KeyBinding Gesture="CTRL+C" Command="{Binding CopyTabToClipboardCommand}"
-                    CommandParameter="{Binding SelectedTab}" />
+                    CommandParameter="{Binding TreeViewAdapter.SelectedItem}" />
         <KeyBinding Gesture="CTRL+Z" Command="{Binding UndoCloseTabCommand}" />
     </Window.InputBindings>
 
@@ -190,7 +190,7 @@
                                 <ContentControl DockPanel.Dock="Left" x:Name="CopyTabButton"
                                                 eye:CommandWrapperHelper.Text="COPY"
                                                 eye:CommandWrapperHelper.Icon="&#xF0C5;"
-                                                eye:CommandWrapperHelper.CommandParameter="{Binding SelectedTab}"
+                                                eye:CommandWrapperHelper.CommandParameter="{Binding TreeViewAdapter.SelectedItem}"
                                                 ToolTip="CTRL+C Copy selected tab to clipboard"
                                                 Content="{Binding CopyTabToClipboardCommand}" />
 
@@ -239,6 +239,14 @@
                                                 <TextBlock Text="&#xF055;" Style="{StaticResource IconTextBlock}" />
                                             </MenuItem.Icon>
                                         </MenuItem>
+                                        <MenuItem Header="Paste"
+                                                  InputGestureText="CTRL+V"
+                                                  Command="{Binding PasteTabCommand}">
+                                            <MenuItem.Icon>
+                                                <TextBlock Text="&#xF0EA;"
+                                                           Style="{StaticResource IconTextBlock}" />
+                                            </MenuItem.Icon>
+                                        </MenuItem>
                                     </ContextMenu>
                                 </DockPanel.ContextMenu>
 
@@ -282,6 +290,15 @@
                                             <DockPanel Background="Transparent"  Height="30">
                                                 <DockPanel.ContextMenu>
                                                     <ContextMenu>
+                                                        <MenuItem Header="New aura"
+                                                                  Command="{Binding Data.CreateNewTabInDirectoryCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  CommandParameter="{Binding}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xF055;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <Separator/>
                                                         <MenuItem Header="Rename"
                                                                   InputGestureText="F2"
                                                                   Command="{Binding Value.RenameCommand}"
@@ -294,7 +311,7 @@
 
                                                         <MenuItem Header="Copy"
                                                                   InputGestureText="CTRL+C"
-                                                                  Command="{Binding Data.CopyToClipboardCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  Command="{Binding Data.CopyTabToClipboardCommand, Source={StaticResource MainViewModelProxy}}"
                                                                   CommandParameter="{Binding Value}">
                                                             <MenuItem.Icon>
                                                                 <TextBlock Text="&#xF0C5;"
@@ -352,15 +369,14 @@
                                             <DockPanel Background="Transparent"  Height="30">
                                                 <DockPanel.ContextMenu>
                                                     <ContextMenu>
-                                                        <MenuItem Header="Rename"
-                                                                  InputGestureText="F2"
-                                                                  Command="{Binding RenameCommand}">
+                                                        <MenuItem Header="New aura"
+                                                                  Command="{Binding Data.CreateNewTabInDirectoryCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  CommandParameter="{Binding}">
                                                             <MenuItem.Icon>
-                                                                <TextBlock Text="&#xf044;"
+                                                                <TextBlock Text="&#xF055;"
                                                                            Style="{StaticResource IconTextBlock}" />
                                                             </MenuItem.Icon>
                                                         </MenuItem>
-                                                        <Separator/>
                                                         <MenuItem Header="New sub-folder"
                                                                   Command="{Binding Data.CreateDirectoryCommand, Source={StaticResource MainViewModelProxy}}"
                                                                   CommandParameter="{Binding Path=Path}">
@@ -369,6 +385,25 @@
                                                                            Style="{StaticResource IconTextBlock}" />
                                                             </MenuItem.Icon>
                                                         </MenuItem>
+                                                        <Separator/>
+                                                        <MenuItem Header="Rename"
+                                                                  InputGestureText="F2"
+                                                                  Command="{Binding RenameCommand}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xf044;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Copy"
+                                                                  InputGestureText="CTRL+C"
+                                                                  Command="{Binding Data.CopyTabToClipboardCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  CommandParameter="{Binding}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xF0C5;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <Separator/>
                                                         <MenuItem Header="Expand All"
                                                                   Command="{Binding ExpandAllCommand}">
                                                             <MenuItem.Icon>
@@ -414,6 +449,7 @@
 
                                     <i:Interaction.Behaviors>
                                         <behaviors:EyeTreeViewDragAndDropBehavior ItemsSource="{Binding TabsList}" />
+                                        <eye:BindableSelectedItemBehavior SelectedItem="{Binding TreeViewAdapter.SelectedItem, Mode=OneWayToSource}" />
                                     </i:Interaction.Behaviors>
 
                                     <treeView:StretchingTreeView.InputBindings>

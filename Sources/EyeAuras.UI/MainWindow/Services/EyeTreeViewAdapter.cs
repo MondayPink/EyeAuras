@@ -119,7 +119,6 @@ namespace EyeAuras.UI.MainWindow.Services
                 var directory = FindOrCreateByPath(config.Path);
                 directory.IsExpanded = config.IsExpanded;
             }
-            
             source.ToObservableChangeSet()
                 .ForEachItemChange(x =>
                 {
@@ -153,7 +152,10 @@ namespace EyeAuras.UI.MainWindow.Services
                 .ToObservableChangeSet()
                 .WhenPropertyChanged(x => x.IsSelected)
                 .Where(x => x.Value)
-                .Subscribe(x => SelectedValue = x.Sender, Log.HandleUiException)
+                .Subscribe(x =>
+                {
+                    SelectedValue = x.Sender;
+                }, Log.HandleUiException)
                 .AddTo(Anchors);
             
             source

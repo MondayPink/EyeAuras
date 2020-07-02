@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.IO;
@@ -35,6 +36,7 @@ using PoeShared.Services;
 using PoeShared.Squirrel.Updater;
 using PoeShared.UI;
 using PoeShared.UI.Hotkeys;
+using PoeShared.UI.TreeView;
 using PoeShared.Wpf.UI.Settings;
 using ReactiveUI;
 using Unity;
@@ -166,7 +168,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     System.Windows.Application.Current.Shutdown();
                 });
             ShowAppCommand = CommandWrapper.Create(ToggleAppVisibilityCommandExecuted);
-            CreateNewTabCommand = CommandWrapper.Create(() => AddNewCommandExecuted(OverlayAuraProperties.Default));
+            CreateNewTabCommand = CommandWrapper.Create(CreateNewTabCommandExecuted);
+            CreateNewTabInDirectoryCommand = CommandWrapper.Create<object>(CreateNewTabInDirectoryCommandExecuted);
             CloseTabCommand = CommandWrapper
                 .Create<IOverlayAuraTabViewModel>(CloseTabCommandExecuted, CloseTabCommandCanExecute)
                 .RaiseCanExecuteChangedWhen(this.WhenAnyProperty(x => x.SelectedTab));
@@ -175,8 +178,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .Create(DuplicateTabCommandExecuted, DuplicateTabCommandCanExecute)
                 .RaiseCanExecuteChangedWhen(this.WhenAnyProperty(x => x.SelectedTab));
             CopyTabToClipboardCommand = CommandWrapper
-                .Create(CopyTabToClipboardExecuted, CopyTabToClipboardCommandCanExecute)
-                .RaiseCanExecuteChangedWhen(this.WhenAnyProperty(x => x.SelectedTab).Select(x => x));
+                .Create<object>(CopyTabToClipboardExecuted);
 
             PasteTabCommand = CommandWrapper.Create(PasteTabCommandExecuted);
             UndoCloseTabCommand = CommandWrapper.Create(UndoCloseTabCommandExecuted, UndoCloseTabCommandCanExecute);
@@ -384,6 +386,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         }
 
         public CommandWrapper CreateNewTabCommand { get; }
+        
+        public CommandWrapper CreateNewTabInDirectoryCommand { get; }
 
         public CommandWrapper CloseTabCommand { get; }
 
@@ -571,19 +575,57 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 });
         }
 
-        private bool CopyTabToClipboardCommandCanExecute()
+        private void CreateNewTabCommandExecuted()
         {
-            return selectedTab != null;
+            CreateAndAddTab(OverlayAuraProperties.Default);
         }
 
-        private void CopyTabToClipboardExecuted()
+        private void CreateNewTabInDirectoryCommandExecuted(object parameter)
         {
-            Guard.ArgumentIsTrue(() => CopyTabToClipboardCommandCanExecute());
+            var path = parameter switch
+            {
+                HolderTreeViewItemViewModel treeItemForAura => treeItemForAura.Value.Path,
+                IAuraTabViewModel auraTab => auraTab.Path,
+                DirectoryTreeViewItemViewModel treeDirectory => treeDirectory.Path,
+                var _ => throw new ArgumentOutOfRangeException(nameof(parameter), parameter,
+                    $"Something went wrong - failed to copy parameter of type {parameter.GetType()}: {parameter}")
+            };
 
-            Log.Debug($"Copying tab {selectedTab}...");
+            var properties = OverlayAuraProperties.Default.CloneJson();
+            properties.Path = path;
+            CreateAndAddTab(properties);
+        }
+        
+        private bool CopyTabToClipboardCommandCanExecute(object parameter)
+        {
+            Log.Info($"Recalculating for {parameter}");
+            return parameter is IAuraTabViewModel || parameter is ITreeViewItemViewModel;
+        }
 
-            var cfg = selectedTab.Properties;
-            var data = configSerializer.Compress(cfg);
+        private void CopyTabToClipboardExecuted(object parameter)
+        {
+            if (!CopyTabToClipboardCommandCanExecute(parameter))
+            {
+                return;
+            }
+
+            Log.Debug($"Copying {parameter}...");
+
+            object dataToSerialize = parameter switch
+            {
+                IAuraTabViewModel auraTab => auraTab.Properties,
+                HolderTreeViewItemViewModel treeItemForAura => treeItemForAura.Value.Properties,
+                DirectoryTreeViewItemViewModel treeDirectory => treeDirectory
+                    .FindChildrenOfType<HolderTreeViewItemViewModel>()
+                    .Select(x => x.Value)
+                    .OfType<IAuraTabViewModel>()
+                    .Select(x => x.Properties)
+                    .ToArray(),
+                var _ => throw new ArgumentOutOfRangeException(nameof(parameter), parameter,
+                    $"Something went wrong - failed to copy parameter of type {parameter.GetType()}: {parameter}")
+            };
+
+            var data = configSerializer.Serialize(dataToSerialize);
             clipboardManager.SetText(data);
         }
 
@@ -613,8 +655,21 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             {
                 content = clipboardManager.GetText() ?? "";
                 content = content.Trim();
-                var cfg = configSerializer.Decompress<OverlayAuraProperties>(content);
-                CreateAndAddTab(cfg);
+
+                var tabsToPaste = new List<OverlayAuraProperties>();
+                try
+                {
+                    var cfg = configSerializer.Deserialize<OverlayAuraProperties>(content);
+                    tabsToPaste.Add(cfg);
+                } catch { }
+                
+                try
+                {
+                    var cfg = configSerializer.Deserialize<List<OverlayAuraProperties>>(content);
+                    tabsToPaste.Add(cfg);
+                } catch { }
+
+                tabsToPaste.ForEach(x => CreateAndAddTab(x));
             }
             catch (Exception e)
             {
