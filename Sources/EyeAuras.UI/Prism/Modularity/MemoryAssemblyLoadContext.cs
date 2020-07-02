@@ -1,3 +1,5 @@
+using System;
+using System.Linq;
 using System.Reflection;
 using System.Runtime.Loader;
 using log4net;
@@ -8,23 +10,33 @@ namespace EyeAuras.UI.Prism.Modularity
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(MemoryAssemblyLoadContext));
         
-        public MemoryAssemblyLoadContext(string contextName) : base(contextName)
+        private readonly AssemblyDependencyResolver resolver;
+        
+        public MemoryAssemblyLoadContext(string contextName, string assemblyPath) : base(contextName)
         {
+            resolver = new AssemblyDependencyResolver(assemblyPath);
             this.Resolving += OnResolving;
         }
         
         protected override Assembly? Load(AssemblyName assemblyName)
         {
             Log.Debug($"[{Name}] Loading assembly {assemblyName}");
-            var result = base.Load(assemblyName);
-            if (result == null)
+            
+            var defaultAssembly = AssemblyLoadContext.Default.Assemblies.Any(x => x.FullName == assemblyName.FullName);
+            
+            if (defaultAssembly)
             {
-                Log.Warn($"[{Name}] Failed to load assembly {assemblyName}");
+                return AssemblyLoadContext.Default.LoadFromAssemblyName(assemblyName);
             }
-            else
+            
+            var assemblyPath = resolver.ResolveAssemblyToPath(assemblyName);
+            if (assemblyPath == null)
             {
-                Log.Debug($"[{Name}] Loaded assembly {assemblyName}: {result?.FullName}");
+                Log.Warn($"[{Name}] Failed to resolve assembly name to assembly path {assemblyName}");
+                return null;
             }
+            var result = base.LoadFromAssemblyPath(assemblyPath);
+            Log.Debug($"[{Name}] Loaded assembly {assemblyName}: {result?.FullName}");
             return result;
         }
 

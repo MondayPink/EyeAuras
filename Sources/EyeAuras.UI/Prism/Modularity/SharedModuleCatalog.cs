@@ -17,7 +17,9 @@ using PoeShared;
 using PoeShared.Modularity;
 using PoeShared.Scaffolding;
 using Prism.Modularity;
-using IModule = Prism.Modularity.IModule;
+using SharpCompress.Archives;
+using SharpCompress.Archives.SevenZip;
+using SharpCompress.Readers;
 
 namespace EyeAuras.UI.Prism.Modularity
 {
@@ -25,24 +27,62 @@ namespace EyeAuras.UI.Prism.Modularity
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(SharedModuleCatalog));
         private static readonly string PrismModuleInterfaceName = typeof(IDynamicModule).FullName;
-        
+        public static readonly string ModulesFolderName = "modules";
+        private static readonly HashSet<string> SupportedArchives = new HashSet<string>() { ".zip", ".7z" };
+
         private IModuleCatalog moduleCatalog;
         private IModuleManager manager;
         private Collection<string> defaultModuleList;
         private readonly CompositeDisposable anchors = new CompositeDisposable();
-        private readonly Collection<MemoryAssemblyLoadContext> loadedModules = new Collection<MemoryAssemblyLoadContext>();
 
         public SharedModuleCatalog()
         {
-            var modulesDir = AppDomain.CurrentDomain.BaseDirectory;
-            Log.Debug($"Creating {nameof(SharedModuleCatalog)}, modulesDirectory: {modulesDir}");
-            ModulesDirectory = new DirectoryInfo(modulesDir);
+            ModulesDirectory = new DirectoryInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ModulesFolderName));
+            Log.Debug($"Creating {nameof(SharedModuleCatalog)}, modulesDirectory: {ModulesDirectory}");
+            AssemblyLoadContext.Default.Resolving += DefaultOnResolving;
+        }
+        private const string NeutralCultureName = "neutral";
+        private Assembly? DefaultOnResolving(AssemblyLoadContext context, AssemblyName assemblyName)
+        {
+            if (!string.IsNullOrEmpty(assemblyName.CultureName) &&
+                !string.Equals(assemblyName.CultureName, NeutralCultureName, StringComparison.OrdinalIgnoreCase))
+            {
+                // resource resolution
+                return null;
+            }
+
+            var modules = moduleCatalog.Modules.Select(x => x.Ref)
+                .Where(x => !string.IsNullOrEmpty(x))
+                .Select(Path.GetDirectoryName)
+                .Where(x => !string.IsNullOrEmpty(x) && Directory.Exists(x))
+                .Distinct()
+                .ToArray();
+
+            foreach (var moduleDirectory in modules)
+            {
+                if (string.IsNullOrEmpty(moduleDirectory))
+                {
+                    continue;
+                }
+                var assemblyDllName = $"{assemblyName.Name}.dll";
+                var assemblyCandidatePath = Path.Combine(moduleDirectory, assemblyDllName);
+                if (!File.Exists(assemblyCandidatePath))
+                {
+                    continue;
+                }
+
+                return context.LoadFromAssemblyPath(assemblyCandidatePath);
+            }
+
+            return null;
         }
 
         /// <summary>
         ///     Directory containing modules to search for.
         /// </summary>
         public DirectoryInfo ModulesDirectory { get; }
+        
+        public DirectoryInfo AppDomainDirectory { get; } = new DirectoryInfo(AppDomain.CurrentDomain.BaseDirectory);
 
         /// <summary>
         ///     Drives the main logic of building the child domain and searching for the assemblies.
@@ -56,14 +96,94 @@ namespace EyeAuras.UI.Prism.Modularity
             Log.Debug($"Default modules list:\r\n\t {defaultModuleList.DumpToTable()}");
             LoadModuleCatalog();
         }
+        
+        public DirectoryInfo UnzipCompressedModule(string moduleName, byte[] zipBytes)
+        {
+            Log.Debug($"Unzipping compressed module {moduleName} of size {zipBytes.Length}b into directory {ModulesDirectory}");
+            var archivePath = Path.Combine(ModulesDirectory.FullName, moduleName) + ".zip";
+            var modulePath = BuildModulePath(moduleName);
+            File.WriteAllBytes(archivePath, zipBytes);
+            UnpackModule(moduleName, new FileInfo(archivePath), modulePath);
+            return modulePath;
+        }
 
-        private void LoadModuleCatalog()
+        private void UnpackModules()
         {
             if (!ModulesDirectory.Exists)
             {
                 throw new InvalidOperationException($"Directory {ModulesDirectory} could not be found.");
             }
 
+            Log.Info($"Enumerating modules in {ModulesDirectory.Name}");
+            Log.Debug($"Enumerating compressed modules in directory {ModulesDirectory}");
+            var compressedModules = ModulesDirectory.GetFiles("*", SearchOption.TopDirectoryOnly).Where(x => SupportedArchives.Contains(x.Extension)).ToArray();
+            Log.Debug($"Found {compressedModules.Length} compressed modules in directory {ModulesDirectory}: {compressedModules.Select(x => x.Name).DumpToTextRaw()}");
+            foreach (var compressedModule in compressedModules)
+            {
+                Log.Debug($"Processing compressed module {compressedModule}");
+                var moduleName = Path.GetFileNameWithoutExtension(compressedModule.Name);
+                var modulePath = BuildModulePath(moduleName);
+                if (modulePath.Exists)
+                {
+                    Log.Info($"Removing existing module {moduleName} directory {modulePath}");                    
+                    modulePath.Delete(true);
+                    modulePath.Refresh();
+                    if (modulePath.Exists)
+                    {
+                        throw new ApplicationException($"Failed to remove module directory {modulePath}");
+                    }
+                }
+
+                UnpackModule(moduleName, compressedModule, modulePath);
+            }
+        }
+
+        private DirectoryInfo BuildModulePath(string moduleName)
+        {
+            return new DirectoryInfo(Path.Combine(ModulesDirectory.FullName, moduleName));
+        }
+
+        private void UnpackModule(string moduleName, FileInfo compressedModule, DirectoryInfo modulePath)
+        {
+            Log.Info($"Unpacking module {moduleName}");
+            Log.Debug($"Unpacking compressed module {moduleName} into {moduleName}");
+            ArchiveFactory.WriteToDirectory(compressedModule.FullName, modulePath.FullName, new ExtractionOptions()
+            {
+                ExtractFullPath = true,
+                PreserveFileTime = true,
+                Overwrite = true
+            });
+            modulePath.Refresh();
+            if (!modulePath.Exists)
+            {
+                throw new ApplicationException($"Failed to unpack module {moduleName} to directory {modulePath}");
+            }
+                
+            Log.Debug($"Removing Module {compressedModule}");
+            compressedModule.Delete();
+            Log.Info($"Module {moduleName} unpacked");
+        }
+
+        private void BackupCompressedModule(FileInfo compressedModule)
+        {
+            var oldCompressedModulePath = compressedModule.FullName;
+            var bakCompressedModulePath = Path.ChangeExtension(compressedModule.FullName, compressedModule.Extension + ".bak");
+            Log.Debug($"Renaming compressed module {oldCompressedModulePath} to {bakCompressedModulePath} (exists: {File.Exists(bakCompressedModulePath)})");
+            if (File.Exists(bakCompressedModulePath))
+            {
+                Log.Debug($"Removing old backup of compressed module {bakCompressedModulePath}");
+                File.Delete(bakCompressedModulePath);
+            }
+            compressedModule.MoveTo(bakCompressedModulePath);
+            if (File.Exists(oldCompressedModulePath) || !File.Exists(bakCompressedModulePath))
+            {
+                throw new ApplicationException($"Failed to rename compressed module {oldCompressedModulePath} (exists: {File.Exists(oldCompressedModulePath)}) to {bakCompressedModulePath} (exists: {File.Exists(bakCompressedModulePath)})");
+            }
+            compressedModule.Refresh();
+        }
+
+        private void LoadModuleCatalog()
+        {
             var loadedAssemblies = GetLoadedAssemblies();
             Log.Debug($"Loaded assembly list:\n\t{loadedAssemblies.Select(x => new {x.FullName, x.Location}).DumpToTable()}");
 
@@ -71,8 +191,15 @@ namespace EyeAuras.UI.Prism.Modularity
             Log.Debug(
                 $"Default Modules list:\n\t{existingModules.Select(x => new {x.ModuleName, x.ModuleType, x.Ref, x.State, x.InitializationMode, x.DependsOn}).DumpToTable()}");
 
+            if (!ModulesDirectory.Exists)
+            {
+                Log.Warn($"Directory {ModulesDirectory} could not be found.");
+                return;
+            }
+            UnpackModules();
+            
             var potentialModules = (
-                from dllFile in ModulesDirectory.GetFiles("*.dll")
+                from dllFile in new[] { AppDomainDirectory.GetFiles("*.dll", SearchOption.TopDirectoryOnly), ModulesDirectory.GetFiles("*.dll", SearchOption.AllDirectories) }.SelectMany(x => x)
                 let loadedModules = loadedAssemblies.Where(x => !string.IsNullOrEmpty(x.Location))
                     .Select(x => new FileInfo(x.Location))
                     .Where(x => x.Exists)
@@ -104,7 +231,7 @@ namespace EyeAuras.UI.Prism.Modularity
                 else
                 {
                     var assemblyBytes = File.ReadAllBytes(module.dllFile.FullName);
-                    LoadModulesFromBytes(assemblyBytes);
+                    LoadModulesFromBytes(assemblyBytes, module.dllFile.FullName);
                 }
             }
         }
@@ -123,13 +250,14 @@ namespace EyeAuras.UI.Prism.Modularity
             return result;
         }
         
-        private ModuleInfo PrepareModuleInfo(IType prismBootstrapperType)
+        private ModuleInfo PrepareModuleInfo(IType prismBootstrapperType, string moduleRef)
         {
             var result = new ModuleInfo
             {
                 InitializationMode = InitializationMode.OnDemand,
                 ModuleName = $"[Memory] {prismBootstrapperType.FullName}",
                 ModuleType = prismBootstrapperType.AssemblyQualifiedName,
+                Ref = moduleRef,
                 DependsOn = defaultModuleList
             };
 
@@ -148,11 +276,13 @@ namespace EyeAuras.UI.Prism.Modularity
             var loadedModule = moduleCatalog.Modules.FirstOrDefault(x => x.ModuleName == module.ModuleName || x.ModuleType == module.ModuleType);
             if (loadedModule != null)
             {
-                throw new ApplicationException($"Duplicate module found, loaded module: {loadedModule.DumpToTextRaw()}, module that was attempted to load: {module.DumpToTextRaw()}");
+                Log.Warn($"Module {loadedModule.DumpToTextRaw()} is already loaded");
             }
-            
-            moduleCatalog.AddModule(module);
-            manager.LoadModule(module.ModuleName);
+            else
+            {
+                moduleCatalog.AddModule(module);
+                manager.LoadModule(module.ModuleName);
+            }
         }
         
         private TypeDef[] GetPrismBootstrapperTypes(ModuleDefMD module)
@@ -183,7 +313,7 @@ namespace EyeAuras.UI.Prism.Modularity
             }
             catch (BadImageFormatException e)
             {
-                Log.Warn($"Invalid .NET DLL format, binary{(string.IsNullOrEmpty(fileName) ? "from memory" : "from file " + fileName)} size: {assemblyBytes.Length} - {e.Message}");
+                Log.Debug($"Could not load DLL as .NET assembly - native image ?, binary{(string.IsNullOrEmpty(fileName) ? "from memory" : "from file " + fileName)} size: {assemblyBytes.Length} - {e.Message}");
                 return null;
             }
             catch (Exception e)
@@ -216,7 +346,7 @@ namespace EyeAuras.UI.Prism.Modularity
             return assembly;
         }
         
-        public void LoadModulesFromBytes(byte[] assemblyBytes)
+        public void LoadModulesFromBytes(byte[] assemblyBytes, [CanBeNull] string modulePath)
         {
             Log.Debug($"Trying to load Prism module definition from byte array, size: {assemblyBytes.Length}");
             var moduleContext = new ModuleContext();
@@ -231,9 +361,19 @@ namespace EyeAuras.UI.Prism.Modularity
             foreach (var bootstrapperType in prismBootstrappers)
             {
                 Log.Debug($"Loading type {bootstrapperType}");
-                var moduleInfo = PrepareModuleInfo(bootstrapperType);
+                var moduleInfo = PrepareModuleInfo(bootstrapperType, modulePath);
                 LoadModule(moduleInfo);
             }
-        }    
+        }
+
+        public void LoadModules()
+        {
+            LoadModuleCatalog();
+        }
+
+        public void LoadModulesFromBytes(byte[] assemblyBytes, FileInfo moduleRef)
+        {
+            LoadModulesFromBytes(assemblyBytes, moduleRef.FullName);
+        }
     }
 }

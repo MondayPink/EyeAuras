@@ -30,6 +30,7 @@ namespace EyeAuras.UI.Prism
                 .RegisterSingleton<IUniqueIdGenerator, UniqueIdGenerator>()
                 .RegisterSingleton<IWindowMatcher, WindowMatcher>()
                 .RegisterSingleton<IPrismModuleStatusViewModel, PrismModuleStatusViewModel>()
+                .RegisterSingleton<IAppModulePathResolver, AppModulePathResolver>()
                 .RegisterSingleton<IMainWindowViewModel, MainWindowViewModel>();
 
             Container

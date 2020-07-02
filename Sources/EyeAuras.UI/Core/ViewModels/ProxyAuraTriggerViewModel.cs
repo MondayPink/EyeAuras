@@ -8,8 +8,8 @@ namespace EyeAuras.UI.Core.ViewModels
 {
     internal sealed class ProxyAuraTriggerViewModel : ProxyAuraViewModel, IAuraTrigger
     {
-        private string triggerDescription = "Technical Proxy Trigger";
-        public string TriggerName { get; } = "ProxyTrigger";
+        private string triggerDescription = "";
+        public string TriggerName { get; } = "Not Available";
         private bool isInverted;
 
         public ProxyAuraTriggerViewModel()
@@ -45,10 +45,9 @@ namespace EyeAuras.UI.Core.ViewModels
         {
             base.LoadProperties(source);
 
-            var typeDescription = (source is ProxyAuraProperties proxyProperties)
+            TriggerDescription = (source is ProxyAuraProperties proxyProperties)
                 ? $"{proxyProperties.ModuleName} is not loaded yet"
                 : $"{source.GetType().Name} is not initialized yet";
-            TriggerDescription = $"Technical Proxy Trigger: {typeDescription}";
         }
     }
 }

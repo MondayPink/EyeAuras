@@ -7,6 +7,7 @@
         <Configurations>Debug;Release</Configurations>
         <Platforms>AnyCPU</Platforms>
         <WarningsAsErrors />
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
         <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
         <GenerateDependencyFile>false</GenerateDependencyFile>
     </PropertyGroup>
@@ -43,8 +44,7 @@
     </ItemGroup>
 
     <ItemGroup>
-      <None Update="Resources\avalon-csharp-dark.xml">
-        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-      </None>
+      <None Remove="Resources\avalon-csharp-dark.xml" />
+      <EmbeddedResource Include="Resources\avalon-csharp-dark.xml" />
     </ItemGroup>
 </Project>

@@ -1,13 +1,17 @@
 using System;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Xml;
+using EyeAuras.CsScriptAuras.Resources;
 using ICSharpCode.AvalonEdit;
 using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
 using JetBrains.Annotations;
+using PoeShared.Native;
 
 namespace EyeAuras.CsScriptAuras.Controls
 {
@@ -33,10 +37,16 @@ namespace EyeAuras.CsScriptAuras.Controls
 
         public ExtendedTextEditor()
         {
-            var highlightingPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Resources", "avalon-csharp-dark.xml");
-            using (var reader = new XmlTextReader(highlightingPath))
+            var manager = new PreloadedHighlightingsManager();
+            var highlightings = manager.GetAvailableHighlightings().ToArray();
+
+            if (highlightings.Any())
             {
-                this.SyntaxHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
+                using (var textReader = new StringReader(highlightings.First()))
+                using (var reader = new XmlTextReader(textReader))
+                {
+                    this.SyntaxHighlighting = HighlightingLoader.Load(reader, HighlightingManager.Instance);
+                }
             }
             
             Options = new TextEditorOptions

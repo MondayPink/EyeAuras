@@ -38,6 +38,12 @@ namespace EyeAuras.UI.Prism
         protected override DependencyObject CreateShell()
         {
             Log.Info("Creating shell...");
+            Container.AddNewExtension<Diagnostic>();
+            Container.AddNewExtension<UiRegistrations>();
+            Container.AddNewExtension<WpfCommonRegistrations>();
+            Container.AddNewExtension<UpdaterRegistrations>();
+            Container.AddNewExtension<NativeRegistrations>();
+            Container.AddNewExtension<CommonRegistrations>();
             return Container.Resolve<MainWindow.Views.MainWindow>();
         }
 
@@ -86,6 +92,7 @@ namespace EyeAuras.UI.Prism
 
         protected override IModuleCatalog CreateModuleCatalog()
         {
+            Log.Info($"Loading application modules...");
             return new SharedModuleCatalog();
         }
 

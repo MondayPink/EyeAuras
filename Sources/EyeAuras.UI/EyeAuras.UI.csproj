@@ -21,12 +21,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <TrimmerRootAssembly Include="System.Runtime" />
-        <TrimmerRootAssembly Include="System.Runtime.Extensions" />
-        <TrimmerRootAssembly Include="System.Diagnostics.Debug" />
-    </ItemGroup>
-
-    <ItemGroup>
       <ProjectReference Include="..\EyeAuras.Controls\EyeAuras.Controls.csproj" />
       <ProjectReference Include="..\EyeAuras.CsScriptAuras\EyeAuras.CsScriptAuras.csproj" />
       <ProjectReference Include="..\EyeAuras.DefaultAuras\EyeAuras.DefaultAuras.csproj" />
@@ -41,13 +35,20 @@
     <Choose>
         <When Condition="'$(Configuration)' == 'Debug.Plus' Or '$(Configuration)' == 'Release.Plus'">
             <ItemGroup>
-                <ProjectReference Include="..\EyeAuras.Roxy\EyeAuras.Roxy.csproj" />
                 <ProjectReference Include="..\EyeAuras.Loader\EyeAuras.Loader.csproj" />
-                <ProjectReference Include="..\EyeAuras.OpenCVAuras\EyeAuras.OpenCVAuras.csproj" />
-                <ProjectReference Include="..\EyeAuras.AdvancedAuras\EyeAuras.AdvancedAuras.csproj" />
             </ItemGroup>
         </When>
     </Choose>
+    <Choose>
+        <When Condition="'$(Configuration)' == 'Debug.Plus'">
+            <ItemGroup>
+                <ProjectReference Include="..\EyeAuras.Roxy\EyeAuras.Roxy.csproj" ReferenceOutputAssembly="false"   />
+                <ProjectReference Include="..\EyeAuras.OpenCVAuras\EyeAuras.OpenCVAuras.csproj" ReferenceOutputAssembly="false"   />
+                <ProjectReference Include="..\EyeAuras.AdvancedAuras\EyeAuras.AdvancedAuras.csproj" ReferenceOutputAssembly="false"   />
+            </ItemGroup>
+        </When>
+    </Choose>
+
 
     <ItemGroup>
       <PackageReference Include="Blue.MVVM.Converter" Version="1.5.0" />
