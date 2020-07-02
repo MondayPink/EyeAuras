@@ -6,9 +6,9 @@
 # Prerequisites
 - Windows 7 or later
 - Windows Aero (aka Desktop Composition) enabled - application uses DWM to create clones
-- Microsoft .NET Core 3 Runtime + Desktop Runtime - [download](https://dotnet.microsoft.com/download/dotnet-core/3.0/runtime) *INSTALL BOTH BINARIES*
 
 # Installation
+- Microsoft .NET Core 5 Desktop Runtime Preview 6 - [download](https://dotnet.microsoft.com/download/dotnet/thank-you/runtime-desktop-5.0.0-preview.6-windows-x64-installer)
 - You can download the latest version of installer here - [download](https://github.com/iXab3r/EyeAuras/releases/latest).
 - After initial installation application will periodically check Github for updates
 
