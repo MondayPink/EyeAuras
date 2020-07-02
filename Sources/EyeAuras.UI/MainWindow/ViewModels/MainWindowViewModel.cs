@@ -1,0 +1,804 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Reactive;
+using System.Reactive.Concurrency;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
+using System.Reactive.Subjects;
+using System.Reflection;
+using System.Threading.Tasks;
+using System.Windows;
+using System.Windows.Forms;
+using DynamicData;
+using DynamicData.Binding;
+using EyeAuras.DefaultAuras.Triggers.HotkeyIsActive;
+using EyeAuras.Shared.Services;
+using EyeAuras.UI.Core.Models;
+using EyeAuras.UI.Core.Services;
+using EyeAuras.UI.Core.ViewModels;
+using EyeAuras.UI.MainWindow.Models;
+using EyeAuras.UI.MainWindow.Services;
+using EyeAuras.UI.Prism.Modularity;
+using Humanizer;
+using JetBrains.Annotations;
+using log4net;
+using PoeShared;
+using PoeShared.Modularity;
+using PoeShared.Native;
+using PoeShared.Prism;
+using PoeShared.Scaffolding;
+using PoeShared.Scaffolding.WPF;
+using PoeShared.Services;
+using PoeShared.Squirrel.Updater;
+using PoeShared.UI;
+using PoeShared.UI.Hotkeys;
+using PoeShared.Wpf.UI.Settings;
+using ReactiveUI;
+using Unity;
+using Application = System.Windows.Application;
+
+namespace EyeAuras.UI.MainWindow.ViewModels
+{
+    internal class MainWindowViewModel : DisposableReactiveObject, IMainWindowViewModel
+    {
+        private static readonly ILog Log = LogManager.GetLogger(typeof(MainWindowViewModel));
+        private static readonly int UndoStackDepth = 10;
+
+        private static readonly string ExplorerExecutablePath = Environment.ExpandEnvironmentVariables(@"%WINDIR%\explorer.exe");
+        private static readonly TimeSpan ConfigSaveSamplingTimeout = TimeSpan.FromSeconds(5);
+
+        private readonly IFactory<IOverlayAuraTabViewModel, OverlayAuraProperties> auraViewModelFactory;
+        private readonly IClipboardManager clipboardManager;
+        private readonly IConfigProvider<EyeAurasConfig> configProvider;
+        private readonly SharedContext sharedContext;
+        private readonly IConfigSerializer configSerializer;
+        private readonly ISubject<Unit> configUpdateSubject = new Subject<Unit>();
+
+        private readonly IHotkeyConverter hotkeyConverter;
+        private readonly IFactory<HotkeyIsActiveTrigger> hotkeyTriggerFactory;
+        private readonly CircularBuffer<OverlayAuraProperties> recentlyClosedQueries = new CircularBuffer<OverlayAuraProperties>(UndoStackDepth);
+        private readonly IRegionSelectorService regionSelectorService;
+        private readonly IWindowViewController viewController;
+        private readonly IUniqueIdGenerator idGenerator;
+        private readonly IAppArguments appArguments;
+
+        private double height;
+        private double left;
+        private GridLength listWidth;
+        private IAuraTabViewModel selectedTab;
+        private double top;
+        private double width;
+        private WindowState windowState;
+        private Visibility visibility;
+        private bool showInTaskbar;
+        private bool topmost;
+
+        public MainWindowViewModel(
+            [NotNull] IWindowViewController viewController,
+            [NotNull] IUniqueIdGenerator idGenerator,
+            [NotNull] IAppArguments appArguments,
+            [NotNull] IFactory<IOverlayAuraTabViewModel, OverlayAuraProperties> auraViewModelFactory,
+            [NotNull] IApplicationUpdaterViewModel appUpdater,
+            [NotNull] IClipboardManager clipboardManager,
+            [NotNull] IConfigSerializer configSerializer,
+            [NotNull] IGenericSettingsViewModel settingsViewModel,
+            [NotNull] IMessageBoxViewModel messageBox,
+            [NotNull] IHotkeyConverter hotkeyConverter,
+            [NotNull] IFactory<HotkeyIsActiveTrigger> hotkeyTriggerFactory,
+            [NotNull] IConfigProvider<EyeAurasConfig> configProvider,
+            [NotNull] IConfigProvider rootConfigProvider,
+            [NotNull] IPrismModuleStatusViewModel moduleStatus,
+            [NotNull] IMainWindowBlocksProvider mainWindowBlocksProvider,
+            [NotNull] IFactory<IRegionSelectorService> regionSelectorServiceFactory,
+            [NotNull] SharedContext sharedContext,
+            [NotNull] IComparisonService comparisonService,
+            [NotNull] EyeTreeViewAdapter treeViewAdapter,
+            [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
+        {
+            TreeViewAdapter = treeViewAdapter;
+            using var unused = new OperationTimer(elapsed => Log.Debug($"{nameof(MainWindowViewModel)} initialization took {elapsed.TotalMilliseconds:F0}ms"));
+            viewController
+                .WhenRendered
+                .Take(1)
+                .Select(() => configProvider.ListenTo(y => y.StartMinimized))
+                .Switch()
+                .Take(1)
+                .ObserveOn(uiScheduler)
+                .Subscribe(
+                    x =>
+                    {
+                        if (x)
+                        {
+                            Log.Debug($"StartMinimized option is active - minimizing window, current state: {WindowState}");
+                            viewController.Hide();
+                        }
+                        else
+                        {
+                            Log.Debug($"StartMinimized option is not active - showing window as Normal, current state: {WindowState}");
+                            viewController.Show();
+                        }
+                        
+                    }, Log.HandleUiException)
+                .AddTo(Anchors);
+            
+            Observable.Merge(
+                    this.WhenAnyValue(x => x.WindowState).ToUnit(),
+                    configProvider.ListenTo(x => x.MinimizeToTray).ToUnit())
+                .ObserveOn(uiScheduler)
+                .Subscribe(x => ShowInTaskbar = WindowState != WindowState.Minimized || !configProvider.ActualConfig.MinimizeToTray, Log.HandleUiException)
+                .AddTo(Anchors);
+            
+            TabsList = sharedContext.TabList;
+            treeViewAdapter.WhenAnyValue(x => x.SelectedValue)
+                .Subscribe(x => SelectedTab = x)
+                .AddTo(Anchors);
+            
+            ModuleStatus = moduleStatus.AddTo(Anchors);
+            var executingAssemblyName = Assembly.GetExecutingAssembly().GetName();
+            Title = $"{(appArguments.IsDebugMode ? "[D]" : "")} {executingAssemblyName.Name} v{executingAssemblyName.Version}";
+            Disposable.Create(() => Log.Info("Disposing Main view model")).AddTo(Anchors);
+
+            ApplicationUpdater = appUpdater.AddTo(Anchors);
+            MessageBox = messageBox.AddTo(Anchors);
+            Settings = settingsViewModel.AddTo(Anchors);
+            StatusBarItems = mainWindowBlocksProvider.StatusBarItems;
+
+            this.viewController = viewController;
+            this.idGenerator = idGenerator;
+            this.appArguments = appArguments;
+            this.auraViewModelFactory = auraViewModelFactory;
+            this.configProvider = configProvider;
+            this.sharedContext = sharedContext;
+            this.regionSelectorService = regionSelectorServiceFactory.Create();
+            this.clipboardManager = clipboardManager;
+            this.configSerializer = configSerializer;
+            this.hotkeyConverter = hotkeyConverter;
+            this.hotkeyTriggerFactory = hotkeyTriggerFactory;
+
+            ExitAppCommand = CommandWrapper.Create(
+                () =>
+                {
+                    Log.Debug("Closing application");
+                    configProvider.Save(configProvider.ActualConfig);
+                    System.Windows.Application.Current.Shutdown();
+                });
+            ShowAppCommand = CommandWrapper.Create(ToggleAppVisibilityCommandExecuted);
+            CreateNewTabCommand = CommandWrapper.Create(() => AddNewCommandExecuted(OverlayAuraProperties.Default));
+            CloseTabCommand = CommandWrapper
+                .Create<IOverlayAuraTabViewModel>(CloseTabCommandExecuted, CloseTabCommandCanExecute)
+                .RaiseCanExecuteChangedWhen(this.WhenAnyProperty(x => x.SelectedTab));
+
+            DuplicateTabCommand = CommandWrapper
+                .Create(DuplicateTabCommandExecuted, DuplicateTabCommandCanExecute)
+                .RaiseCanExecuteChangedWhen(this.WhenAnyProperty(x => x.SelectedTab));
+            CopyTabToClipboardCommand = CommandWrapper
+                .Create(CopyTabToClipboardExecuted, CopyTabToClipboardCommandCanExecute)
+                .RaiseCanExecuteChangedWhen(this.WhenAnyProperty(x => x.SelectedTab).Select(x => x));
+
+            PasteTabCommand = CommandWrapper.Create(PasteTabCommandExecuted);
+            UndoCloseTabCommand = CommandWrapper.Create(UndoCloseTabCommandExecuted, UndoCloseTabCommandCanExecute);
+            OpenAppDataDirectoryCommand = CommandWrapper.Create(OpenAppDataDirectory);
+            SelectRegionCommand = CommandWrapper.Create(SelectRegionCommandExecuted);
+            CreateDirectoryCommand = CommandWrapper.Create<string>(path =>
+            {
+                var result = treeViewAdapter.AddDirectory(path);
+                result.RenameCommand.Execute(null);
+            });
+            RemoveDirectoryCommand = CommandWrapper.Create<string>(path =>
+            {
+                var auras = treeViewAdapter.EnumerateAuras(path).ToArray();
+                if (!auras.Any() || System.Windows.MessageBox.Show(
+                    Application.Current.MainWindow,
+                    $"Are you sure you want to remove folder {path} and {"aura".ToQuantity(auras.Length)} ?", "Confirmation",
+                    MessageBoxButton.YesNo, MessageBoxImage.Question, MessageBoxResult.No) == MessageBoxResult.Yes)
+                {
+                    treeViewAdapter.RemoveDirectory(path);
+                }
+            });
+
+            Observable.Merge(
+                    this.WhenAnyProperty(x => x.Left, x => x.Top, x => x.Width, x => x.Height)
+                        .Sample(ConfigSaveSamplingTimeout)
+                        .Select(x => $"[{x.Sender}] Main window property change: {x.EventArgs.PropertyName}"),
+                    sharedContext.AuraList.ToObservableChangeSet()
+                        .Sample(ConfigSaveSamplingTimeout)
+                        .Select(x => "Tabs list change"),
+                    sharedContext.TabList.ToObservableChangeSet()
+                        .WhenPropertyChanged(x => x.Properties)
+                        .Sample(ConfigSaveSamplingTimeout)
+                        .WithPrevious((prev, curr) => new {prev, curr})
+                        .Select(x => new { x.curr.Sender, ComparisonResult = comparisonService.Compare(x.prev?.Value, x.curr.Value) })
+                        .Where(x => !x.ComparisonResult.AreEqual)
+                        .Select(x => $"[{x.Sender.TabName}] Tab properties change: {x.ComparisonResult.DifferencesString}"))
+                .Buffer(ConfigSaveSamplingTimeout)
+                .Where(x => x.Count > 0)
+                .Subscribe(
+                    reasons =>
+                    {
+                        const int maxReasonsToOutput = 50;
+                        Log.Debug(
+                            $"Config Save reasons{(reasons.Count <= maxReasonsToOutput ? string.Empty : $"first {maxReasonsToOutput} of {reasons.Count} items")}:\r\n\t{reasons.Take(maxReasonsToOutput).DumpToTable()}");
+                        configUpdateSubject.OnNext(Unit.Default);
+                    },
+                    Log.HandleUiException)
+                .AddTo(Anchors);
+
+            GlobalHotkeyTrigger = CreateFreezeAurasTrigger();
+            sharedContext.SystemTrigger.Add(GlobalHotkeyTrigger);
+
+            RegisterSelectRegionHotkey()
+                .Where(isActive => isActive)
+                .ObserveOn(uiScheduler)
+                .Subscribe(isActive => SelectRegionCommandExecuted(), Log.HandleUiException)
+                .AddTo(Anchors);
+
+            RegisterGlobalUnlockHotkey()
+                .ObserveOn(uiScheduler)
+                .Subscribe(
+                    unlock =>
+                    {
+                        var allOverlays = TabsList
+                            .OfType<IOverlayAuraTabViewModel>()
+                            .Select(x => x.Model)
+                            .OfType<IOverlayAuraModel>()
+                            .Where(x => x.Overlay != null)
+                            .Select(y => y.Overlay);
+                        if (unlock)
+                        {
+                            allOverlays
+                                .Where(overlay => overlay.UnlockWindowCommand.CanExecute(null))
+                                .ForEach(overlay => overlay.UnlockWindowCommand.Execute(null));
+                        }
+                        else
+                        {
+                            allOverlays
+                                .Where(overlay => overlay.LockWindowCommand.CanExecute(null))
+                                .ForEach(overlay => overlay.LockWindowCommand.Execute(null));
+                        }
+                    }, Log.HandleUiException)
+                .AddTo(Anchors);
+
+            LoadConfig();
+            Log.Info($"Updating configuration format");
+            rootConfigProvider.Save();
+
+            if (sharedContext.AuraList.Count == 0)
+            {
+                CreateNewTabCommand.Execute(null);
+            }
+
+            configUpdateSubject
+                .Sample(ConfigSaveSamplingTimeout)
+                .Subscribe(SaveConfig, Log.HandleException)
+                .AddTo(Anchors);
+
+            sharedContext
+                .TabList
+                .ToObservableChangeSet()
+                .ObserveOn(uiScheduler)
+                .OnItemAdded(x => SelectedTab = x)
+                .Subscribe()
+                .AddTo(Anchors);
+
+            this.WhenAnyValue(x => x.SelectedTab)
+                .Subscribe(x => Log.Debug($"Selected tab: {x}"))
+                .AddTo(Anchors);
+            
+            Log.Info($"Enabling Auras...");
+            GlobalHotkeyTrigger.TriggerValue = true;
+        }
+
+        public IPrismModuleStatusViewModel ModuleStatus { get; }
+
+        public ReadOnlyObservableCollection<object> StatusBarItems { [NotNull] get; }
+
+        public string Title { get; }
+
+        public bool IsElevated => appArguments.IsElevated;
+
+        public HotkeyIsActiveTrigger GlobalHotkeyTrigger { get; }
+
+        public IApplicationUpdaterViewModel ApplicationUpdater { get; }
+
+        public IMessageBoxViewModel MessageBox { get; }
+
+        public ObservableCollection<IAuraTabViewModel> TabsList { get; }
+
+        public CommandWrapper OpenAppDataDirectoryCommand { get; }
+        
+        public CommandWrapper ShowAppCommand { get; }
+        
+        public CommandWrapper ExitAppCommand { get; }
+        
+        public CommandWrapper CreateDirectoryCommand { get; }
+        
+        public CommandWrapper RemoveDirectoryCommand { get; }
+        
+        public IGenericSettingsViewModel Settings { get; }
+        
+        public EyeTreeViewAdapter TreeViewAdapter { get; }
+
+        public Size MinSize { get; } = new Size(1150, 750);
+
+        public IAuraTabViewModel SelectedTab
+        {
+            get => selectedTab;
+            set => RaiseAndSetIfChanged(ref selectedTab, value);
+        }
+
+        public GridLength ListWidth
+        {
+            get => listWidth;
+            set => RaiseAndSetIfChanged(ref listWidth, value);
+        }
+
+        public double Width
+        {
+            get => width;
+            set => RaiseAndSetIfChanged(ref width, value);
+        }
+
+        public double Height
+        {
+            get => height;
+            set => RaiseAndSetIfChanged(ref height, value);
+        }
+
+        public double Left
+        {
+            get => left;
+            set => RaiseAndSetIfChanged(ref left, value);
+        }
+
+        public double Top
+        {
+            get => top;
+            set => RaiseAndSetIfChanged(ref top, value);
+        }
+
+        public WindowState WindowState
+        {
+            get => windowState;
+            set => RaiseAndSetIfChanged(ref windowState, value);
+        }
+        
+        public bool ShowInTaskbar
+        {
+            get => showInTaskbar;
+            set => this.RaiseAndSetIfChanged(ref showInTaskbar, value);
+        }
+
+        public Visibility Visibility
+        {
+            get => visibility;
+            set => this.RaiseAndSetIfChanged(ref visibility, value);
+        }
+
+        public bool Topmost
+        {
+            get => topmost;
+            set => this.RaiseAndSetIfChanged(ref topmost, value);
+        }
+
+        public CommandWrapper CreateNewTabCommand { get; }
+
+        public CommandWrapper CloseTabCommand { get; }
+
+        public CommandWrapper CopyTabToClipboardCommand { get; }
+
+        public CommandWrapper DuplicateTabCommand { get; }
+
+        public CommandWrapper UndoCloseTabCommand { get; }
+
+        public CommandWrapper PasteTabCommand { get; }
+
+        public CommandWrapper SelectRegionCommand { get; }
+        
+        public override void Dispose()
+        {
+            Log.Debug("Disposing viewmodel...");
+            SaveConfig();
+
+            foreach (var mainWindowTabViewModel in TabsList)
+            {
+                mainWindowTabViewModel.Dispose();
+            }
+
+            base.Dispose();
+
+            Log.Debug("Viewmodel disposed");
+        }
+
+
+        private void ToggleAppVisibilityCommandExecuted()
+        {
+            if (Visibility != Visibility.Visible || WindowState == WindowState.Minimized)
+            {
+                SetAppVisibility(true);
+            }
+            else
+            {
+                SetAppVisibility(false);
+            }
+        }
+
+        private void SetAppVisibility(bool isVisible)
+        {
+            if (isVisible)
+            {
+                viewController.Show();
+            }
+            else if (configProvider.ActualConfig.MinimizeToTray)
+            {
+                viewController.Hide();
+            }
+            else
+            {
+                viewController.Minimize();
+            }
+        }
+
+        private HotkeyIsActiveTrigger CreateFreezeAurasTrigger()
+        {
+            var result = hotkeyTriggerFactory.Create();
+            result.SuppressKey = true;
+            result.TriggerValue = false;
+            Observable.Merge(
+                    configProvider.ListenTo(x => x.FreezeAurasHotkey).ToUnit(),
+                    configProvider.ListenTo(x => x.FreezeAurasHotkeyMode).ToUnit())
+                .Select(
+                    () => new
+                    {
+                        FreezeAurasHotkey = hotkeyConverter.ConvertFromString(configProvider.ActualConfig.FreezeAurasHotkey),
+                        configProvider.ActualConfig.FreezeAurasHotkeyMode
+                    })
+                .DistinctUntilChanged()
+                .WithPrevious((prev, curr) => new {prev, curr})
+                .Subscribe(
+                    cfg =>
+                    {
+                        Log.Debug($"Setting new FreezeAurasHotkey configuration, {cfg.prev.DumpToTextRaw()} => {cfg.curr.DumpToTextRaw()}");
+                        result.Hotkey = cfg.curr.FreezeAurasHotkey;
+                        result.HotkeyMode = cfg.curr.FreezeAurasHotkeyMode;
+                    },
+                    Log.HandleException)
+                .AddTo(Anchors);
+
+            return result;
+        }
+        
+        private IObservable<bool> RegisterGlobalUnlockHotkey()
+        {
+            var globalUnlockHotkeyTrigger = hotkeyTriggerFactory.Create().AddTo(Anchors);
+            globalUnlockHotkeyTrigger.SuppressKey = true;
+            globalUnlockHotkeyTrigger.HotkeyMode = HotkeyMode.Hold;
+
+            Observable.Merge(
+                    configProvider.ListenTo(x => x.UnlockAurasHotkey).ToUnit(),
+                    configProvider.ListenTo(x => x.UnlockAurasHotkeyMode).ToUnit())
+                .Select(
+                    () => new
+                    {
+                        UnlockAurasHotkey = hotkeyConverter.ConvertFromString(configProvider.ActualConfig.UnlockAurasHotkey),
+                        configProvider.ActualConfig.UnlockAurasHotkeyMode
+                    })
+                .DistinctUntilChanged()
+                .WithPrevious((prev, curr) => new {prev, curr})
+                .Subscribe(
+                    cfg =>
+                    {
+                        Log.Debug($"Setting new UnlockAurasHotkey configuration, {cfg.prev.DumpToTextRaw()} => {cfg.curr.DumpToTextRaw()}");
+                        globalUnlockHotkeyTrigger.Hotkey = cfg.curr.UnlockAurasHotkey;
+                        globalUnlockHotkeyTrigger.HotkeyMode = cfg.curr.UnlockAurasHotkeyMode;
+                    },
+                    Log.HandleUiException)
+                .AddTo(Anchors);
+
+            return globalUnlockHotkeyTrigger.WhenAnyValue(x => x.IsActive).DistinctUntilChanged();
+        }
+        
+        private IObservable<bool> RegisterSelectRegionHotkey()
+        {
+            var selectRegionHotkeyTrigger = hotkeyTriggerFactory.Create().AddTo(Anchors);
+            selectRegionHotkeyTrigger.SuppressKey = true;
+            selectRegionHotkeyTrigger.HotkeyMode = HotkeyMode.Hold;
+            Observable.Merge(configProvider.ListenTo(x => x.RegionSelectHotkey).ToUnit())
+                .Select(
+                    () => new
+                    {
+                        RegionSelectHotkey = hotkeyConverter.ConvertFromString(configProvider.ActualConfig.RegionSelectHotkey)
+                    })
+                .DistinctUntilChanged()
+                .WithPrevious((prev, curr) => new {prev, curr})
+                .Subscribe(
+                    cfg =>
+                    {
+                        Log.Debug($"Setting new {nameof(selectRegionHotkeyTrigger)} configuration, {cfg.prev.DumpToTextRaw()} => {cfg.curr.DumpToTextRaw()}");
+                        selectRegionHotkeyTrigger.Hotkey = cfg.curr.RegionSelectHotkey;
+                    },
+                    Log.HandleException)
+                .AddTo(Anchors);
+
+            return selectRegionHotkeyTrigger.WhenAnyValue(x => x.IsActive).DistinctUntilChanged();
+        }
+        
+        private async void SelectRegionCommandExecuted()
+        {
+            Log.Debug($"Requesting screen Region from {regionSelectorService}...");
+            SetAppVisibility(false);
+            var result = await regionSelectorService.SelectRegion();
+
+            if (result?.IsValid ?? false)
+            {
+                Log.Debug($"ScreenRegion selection result: {result}");
+                var newTabProperties = new OverlayAuraProperties
+                {
+                    Name = $"{result.Window.ProcessName} - {result.Window.Title}",
+                    WindowMatch = new WindowMatchParams
+                    {
+                        Title = result.Window.Handle.ToHexadecimal(),
+                    },
+                    IsEnabled = true,
+                    OverlayBounds = result.AbsoluteSelection,
+                    SourceRegionBounds = result.Selection,
+                    MaintainAspectRatio = true
+                };
+                Log.Info($"Quick-Creating new tab using {newTabProperties.DumpToTextRaw()} args...");
+                AddNewCommandExecuted(newTabProperties, false); 
+            }
+            else
+            {
+                Log.Debug("ScreenRegion selection cancelled/failed");
+            }
+        }
+
+        private async Task OpenAppDataDirectory()
+        {
+            await Task.Run(
+                () =>
+                {
+                    Log.Debug($"Opening App directory: {appArguments.AppDataDirectory}");
+                    if (!Directory.Exists(appArguments.AppDataDirectory))
+                    {
+                        Log.Debug($"App directory does not exist, creating dir: {appArguments.AppDataDirectory}");
+                        Directory.CreateDirectory(appArguments.AppDataDirectory);
+                    }
+
+                    Process.Start(ExplorerExecutablePath, appArguments.AppDataDirectory);
+                });
+        }
+
+        private bool CopyTabToClipboardCommandCanExecute()
+        {
+            return selectedTab != null;
+        }
+
+        private void CopyTabToClipboardExecuted()
+        {
+            Guard.ArgumentIsTrue(() => CopyTabToClipboardCommandCanExecute());
+
+            Log.Debug($"Copying tab {selectedTab}...");
+
+            var cfg = selectedTab.Properties;
+            var data = configSerializer.Compress(cfg);
+            clipboardManager.SetText(data);
+        }
+
+        private bool UndoCloseTabCommandCanExecute()
+        {
+            return !recentlyClosedQueries.IsEmpty;
+        }
+
+        private void UndoCloseTabCommandExecuted()
+        {
+            if (!UndoCloseTabCommandCanExecute())
+            {
+                return;
+            }
+
+            var closedAuraProperties = recentlyClosedQueries.PopBack();
+            CreateAndAddTab(closedAuraProperties);
+            UndoCloseTabCommand.RaiseCanExecuteChanged();
+        }
+
+        private void PasteTabCommandExecuted()
+        {
+            using var sw = new BenchmarkTimer("Paste tab", Log);
+
+            var content = "";
+            try
+            {
+                content = clipboardManager.GetText() ?? "";
+                content = content.Trim();
+                var cfg = configSerializer.Decompress<OverlayAuraProperties>(content);
+                CreateAndAddTab(cfg);
+            }
+            catch (Exception e)
+            {
+                MessageBox.Content = string.IsNullOrWhiteSpace(content)
+                    ? "<Clipboard is empty>"
+                    : content;
+                MessageBox.IsOpen = true;
+                MessageBox.ContentHint = "Item has invalid format";
+                MessageBox.Title = "Failed to insert new item";
+                throw new FormatException($"Failed to parse/get clipboard content:\n{content}", e);
+            }
+        }
+
+        private bool DuplicateTabCommandCanExecute()
+        {
+            return selectedTab != null;
+        }
+
+        private void DuplicateTabCommandExecuted()
+        {
+            Guard.ArgumentIsTrue(() => DuplicateTabCommandCanExecute());
+
+            var cfg = selectedTab.Properties;
+            CreateAndAddTab(cfg);
+        }
+
+        private bool CloseTabCommandCanExecute(IAuraTabViewModel tab)
+        {
+            return tab != null;
+        }
+
+        private void CloseTabCommandExecuted(IAuraTabViewModel tab)
+        {
+            using var sw = new BenchmarkTimer($"Close tab {tab.TabName}({tab.Id})", Log);
+            Guard.ArgumentNotNull(tab, nameof(tab));
+
+            Log.Debug($"Removing tab {tab}...");
+
+            var tabIdx = TabsList.IndexOf(tab);
+            if (tabIdx > 0)
+            {
+                var tabToSelect = TabsList[tabIdx - 1];
+                Log.Debug($"Selecting neighbour tab {tabToSelect}...");
+                SelectedTab = tabToSelect;
+            }
+
+            sharedContext.TabList.Remove(tab);
+            sw.Step($"Removed tab from AuraList (current count: {sharedContext.AuraList.Count})");
+
+            var cfg = tab.Properties;
+            recentlyClosedQueries.PushBack(cfg);
+            UndoCloseTabCommand.RaiseCanExecuteChanged();
+
+            tab.Dispose();
+            sw.Step($"Disposed tab {tab}");
+        }
+
+        private void SaveConfig()
+        {
+            using var unused = new OperationTimer(elapsed => Log.Debug($"{nameof(SaveConfig)} took {elapsed.TotalMilliseconds:F0}ms"));
+            Log.Debug($"Saving config (provider: {configProvider})...");
+
+            var config = PrepareConfig();
+            configProvider.Save(config);
+        }
+
+        private EyeAurasConfig PrepareConfig()
+        {
+            using var unused = new BenchmarkTimer("Prepare config", Log);
+
+            var positionedItems = TabsList;
+            Log.Debug($"Preparing config, tabs count: {positionedItems.Count}");
+            var config = configProvider.ActualConfig.CloneJson();
+
+            config.Auras = positionedItems.Select(x => x.Properties).ToArray();
+            config.MainWindowBounds = new Rect(Left, Top, Width, Height);
+            config.ListWidth = ListWidth.Value;
+            config.Directories = TreeViewAdapter.EnumerateDirectories().EmptyIfNull().ToArray();
+            return config;
+        }
+
+        private void LoadConfig()
+        {
+            using var unused = new BenchmarkTimer("Load config operation", Log);
+
+            Log.Debug($"Loading config (provider: {configProvider})...");
+
+            var config = configProvider.ActualConfig;
+
+            Log.Debug($"Received configuration DTO:\r\n{config.DumpToText()}");
+
+            var desktopHandle = UnsafeNative.GetDesktopWindow();
+            var systemInformation = new
+            {
+                SystemInformation.MonitorCount,
+                SystemInformation.VirtualScreen,
+                MonitorBounds = UnsafeNative.GetMonitorBounds(desktopHandle),
+                MonitorInfo = UnsafeNative.GetMonitorInfo(desktopHandle)
+            };
+            Log.Debug($"Current SystemInformation: {systemInformation.DumpToTextRaw()}");
+
+            if (!config.MainWindowBounds.Size.IsNotEmpty() || UnsafeNative.IsOutOfBounds(config.MainWindowBounds, systemInformation.MonitorBounds))
+            {
+                var size = config.MainWindowBounds.Size.IsNotEmpty()
+                    ? config.MainWindowBounds.Size
+                    : MinSize;
+                var screenCenter = UnsafeNative.GetPositionAtTheCenter(systemInformation.MonitorBounds, size);
+                Log.Warn(
+                    $"Main window is out of screen bounds(screen: {systemInformation.MonitorBounds}, main window bounds: {config.MainWindowBounds}, using size {size}), resetting Location to {screenCenter}");
+                config.MainWindowBounds = new Rect(screenCenter, size);
+            }
+
+            foreach (var auraProperties in config.Auras.EmptyIfNull())
+            {
+                CreateAndAddTab(auraProperties);
+            }
+
+            Left = config.MainWindowBounds.Left;
+            Top = config.MainWindowBounds.Top;
+            Width = config.MainWindowBounds.Width;
+            Height = config.MainWindowBounds.Height;
+            viewController.Topmost = false;
+
+            ListWidth = config.ListWidth <= 0 || double.IsNaN(config.ListWidth)
+                ? GridLength.Auto
+                : new GridLength(config.ListWidth, GridUnitType.Pixel);
+
+            Log.Debug($"Successfully loaded config, tabs count: {TabsList.Count}");
+            TreeViewAdapter.SyncWith(sharedContext.TabList, config.Directories.EmptyIfNull().ToArray());
+        }
+
+        private IAuraTabViewModel CreateAndAddTab(OverlayAuraProperties tabProperties)
+        {
+            using var sw = new BenchmarkTimer("Create new tab", Log);
+
+            Log.Debug($"Adding new tab using config {tabProperties.DumpToTextRaw()}...");
+
+            var existingTab = TabsList.FirstOrDefault(x => x.Id == tabProperties.Id);
+            if (existingTab != null)
+            {
+                var newId = idGenerator.Next();
+                Log.Warn($"Tab with the same Id({tabProperties.Id}) already exists: {existingTab}, changing Id of a new tab to {newId}");
+                tabProperties.Id = newId;
+            }
+
+            var auraViewModel = (IAuraTabViewModel)auraViewModelFactory.Create(tabProperties);
+            sw.Step($"Created view model of type {auraViewModel.GetType()}: {auraViewModel}");
+            var auraCloseController = new CloseController<IAuraTabViewModel>(auraViewModel, () => CloseTabCommandExecuted(auraViewModel));
+            auraViewModel.SetCloseController(auraCloseController);
+            sw.Step($"Initialized CloseController");
+
+            sharedContext.TabList.Add(auraViewModel);
+            sw.Step($"Added to AuraList(current count: {sharedContext.AuraList.Count})");
+
+            return auraViewModel;
+        }
+
+        private void AddNewCommandExecuted(OverlayAuraProperties tabProperties, bool rename = true)
+        {
+            try
+            {
+                var newTab = CreateAndAddTab(tabProperties);
+                
+                if (newTab is IOverlayAuraTabViewModel newOverlayTab)
+                {
+                    if (newOverlayTab.Model is IOverlayAuraModel newOverlayModel && newOverlayModel.Overlay.UnlockWindowCommand.CanExecute(null))
+                    {
+                        newOverlayModel.Overlay.UnlockWindowCommand.Execute(null);
+                    }
+
+                    if (rename)
+                    {
+                        var treeItem = TreeViewAdapter.FindItemByTab(newOverlayTab);
+                        if (treeItem != null && treeItem.RenameCommand.CanExecute(null))
+                        {
+                            treeItem.RenameCommand.Execute(null);
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                Log.HandleUiException(e);
+            }
+        }
+    }
+}

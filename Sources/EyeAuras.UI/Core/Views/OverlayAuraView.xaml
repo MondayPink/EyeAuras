@@ -1,0 +1,33 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:shared="clr-namespace:EyeAuras.Shared;assembly=EyeAuras.Shared"
+                    xmlns:viewModels="clr-namespace:EyeAuras.UI.Core.ViewModels"
+                    xmlns:eye="http://coderush.net/poeeye/">
+
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/materialdesigntheme.button.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <DataTemplate DataType="{x:Type viewModels:OverlayAuraTabViewModel}">
+        
+        
+        <Grid>
+            <ContentControl x:Name="GeneralPropertiesBody" 
+                            Visibility="{Binding GeneralEditor.Value, Converter={StaticResource NullToCollapsedConverter}}"
+                            Content="{Binding GeneralEditor}" />
+            <DockPanel Visibility="{Binding GeneralEditor.Value, Converter={StaticResource NotNullToCollapsedConverter}}"
+                       VerticalAlignment="Center">
+                <TextBlock DockPanel.Dock="Top" Style="{StaticResource IconTextBlock}" 
+                           HorizontalAlignment="Center" FontSize="100"
+                           Text="&#xf070;" Foreground="{StaticResource NegativeBrush}" />
+                <TextBlock DockPanel.Dock="Top" FontSize="24" HorizontalAlignment="Center"
+                           Text="Aura is not loaded"/>
+                <ContentControl DockPanel.Dock="Top" Width="300" HorizontalAlignment="Center" x:Name="LoadAuraButton"
+                                eye:CommandWrapperHelper.Text="LOAD" eye:CommandWrapperHelper.Icon="&#xF0E2;"
+                                Content="{Binding EnableCommand}" />
+            </DockPanel>
+        </Grid>
+    </DataTemplate>
+</ResourceDictionary>

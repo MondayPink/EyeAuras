@@ -1,0 +1,26 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>netcoreapp5.0</TargetFramework>
+
+        <IsPackable>false</IsPackable>
+
+        <Configurations>Debug;Release</Configurations>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <PackageReference Include="InputSimulatorPlus" Version="1.0.7"><NoWarn>NU1701</NoWarn></PackageReference>
+        <PackageReference Include="Moq" Version="4.13.1" />
+        <PackageReference Include="nunit" Version="3.12.0" />
+        <PackageReference Include="NUnit3TestAdapter" Version="3.13.0" />
+        <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.2.0" />
+        <PackageReference Include="Shouldly" Version="4.0.0-beta0002" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\EyeAuras.DefaultAuras\EyeAuras.DefaultAuras.csproj" />
+      <ProjectReference Include="..\PoeShared\PoeShared.csproj" />
+      <ProjectReference Include="..\PoeShared.Native\PoeShared.Native.csproj" />
+    </ItemGroup>
+
+</Project>

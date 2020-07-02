@@ -1,0 +1,122 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:mainWindow="clr-namespace:EyeAuras.UI.MainWindow"
+                    xmlns:eyeAuras="clr-namespace:EyeAuras;assembly=EyeAuras"
+                    xmlns:viewModels="clr-namespace:EyeAuras.UI.Core.ViewModels"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:lib="clr-namespace:EyeAuras.OnTopReplica;assembly=EyeAuras.OnTopReplica"
+                    xmlns:fa="http://schemas.fontawesome.io/icons/"
+                    xmlns:system="clr-namespace:System;assembly=System.Runtime">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <DataTemplate DataType="{x:Type viewModels:WindowSelectorService}">
+        <DockPanel MinHeight="45" x:Name="WindowTitleSelector" LastChildFill="True">
+            <materialDesign:PopupBox DockPanel.Dock="Left" StaysOpen="False" Margin="5,10,2.5,0"
+                                     Padding="0"
+                                     x:Name="WindowList">
+                <materialDesign:PopupBox.ToggleContent>
+                    <materialDesign:PackIcon Kind="CrosshairsGps" />
+                </materialDesign:PopupBox.ToggleContent>
+                <Grid Background="{StaticResource MaterialDesignPaper}">
+                    <ItemsControl ItemsSource="{Binding WindowList}" Padding="0" Margin="0"
+
+                                  MaxWidth="{Binding ElementName=WindowTitleSelector, Path=ActualWidth, Mode=OneWay}">
+                        <ItemsControl.ItemContainerStyle>
+                            <Style>
+                                <Setter Property="Control.Height" Value="30" />
+                                <Setter Property="Control.Padding" Value="0" />
+                                <Setter Property="Control.Margin" Value="0" />
+                            </Style>
+                        </ItemsControl.ItemContainerStyle>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate DataType="{x:Type lib:WindowHandle}">
+                                <Button Content="{Binding}" Padding="0"
+                                        CommandParameter="{Binding}"
+                                        Style="{StaticResource MaterialDesignOutlinedButton}"
+                                        BorderThickness="0"
+                                        HorizontalAlignment="Stretch"
+                                        HorizontalContentAlignment="Left"
+                                        Command="{Binding RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type ItemsControl}}, Path=DataContext.SetWindowTitleCommand}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </materialDesign:PopupBox>
+
+            <TextBox
+                Width="350"
+                Padding="0,2,0,0"
+                Height="43"
+                materialDesign:HintAssist.FloatingOffset="-25,-16"
+                HorizontalAlignment="Stretch"
+                VerticalAlignment="Center"
+                Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                HorizontalContentAlignment="Stretch"
+                materialDesign:HintAssist.Hint="Window title - first matching window will be picked as Overlay source"
+                Text="{Binding WindowTitle, UpdateSourceTrigger=PropertyChanged}" />
+            
+            <fa:FontAwesome Icon="ArrowRight" Margin="10,0,0,0" FontSize="14" VerticalAlignment="Center" />
+
+            <Border DockPanel.Dock="Right" Margin="10,0,-5,0" Width="32" Height="32"
+                    BorderThickness="1" BorderBrush="{StaticResource SecondaryAccentBrush}">
+                <Image Margin="1" Width="32" Height="32" VerticalAlignment="Center"
+                       HorizontalAlignment="Center"
+                       Source="{Binding ActiveWindow.IconBitmap}" />
+            </Border>
+            
+            <ComboBox DockPanel.Dock="Left" Margin="10,0,0,0" ItemsSource="{Binding MatchingWindowList}"
+                      IsEnabled="{Binding EnableOverlaySelector}"
+                      ToolTipService.ShowOnDisabled="True"
+                      ToolTipService.ShowDuration="{x:Static system:Int32.MaxValue}"
+                      x:Name="OverlayWindowSelector"
+                      HorizontalAlignment="Stretch"
+                      HorizontalContentAlignment="Stretch"
+                      VerticalContentAlignment="Center"
+                      VerticalAlignment="Center"
+                      materialDesign:HintAssist.Hint="Overlay source - narrow down the list to a single item to enable automatic selection"
+                      IsEditable="False"
+                      SelectedItem="{Binding ActiveWindow, Mode=TwoWay}"
+                      Style="{StaticResource MaterialDesignFloatingHintComboBox}">
+                <ComboBox.ToolTip>
+                    <StackPanel Orientation="Vertical">
+                        <DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Window Id" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.Handle, Converter={StaticResource IntPtrToHexadecimalConverter}}"/>
+                        </DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Process Name" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.ProcessName}"/>
+                        </DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Process Id" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.ProcessId}"/>
+                        </DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Title" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.Title}"/>
+                        </DockPanel>
+                        <DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Process Path" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.ProcessPath}"/>
+                        </DockPanel><DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Window Bounds" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.WindowBounds}"/>
+                        </DockPanel><DockPanel DockPanel.Dock="Top">
+                            <TextBlock MinWidth="140" Text="Client Bounds" HorizontalAlignment="Right"/>
+                            <TextBlock Margin="10,0,0,0" Text="{Binding ActiveWindow.ClientBounds}"/>
+                        </DockPanel>
+                    </StackPanel>                    
+                </ComboBox.ToolTip>
+                <ComboBox.ItemTemplate>
+                    <DataTemplate DataType="{x:Type lib:WindowHandle}">
+                        <ContentControl
+                            MaxWidth="{Binding ElementName=OverlayWindowSelector, Path=ActualWidth, Mode=OneWay}"
+                            Content="{Binding}" Background="Transparent" />
+                    </DataTemplate>
+                </ComboBox.ItemTemplate>
+            </ComboBox>
+        </DockPanel>
+    </DataTemplate>
+</ResourceDictionary>
