@@ -164,24 +164,6 @@ namespace EyeAuras.UI.Prism.Modularity
             Log.Info($"Module {moduleName} unpacked");
         }
 
-        private void BackupCompressedModule(FileInfo compressedModule)
-        {
-            var oldCompressedModulePath = compressedModule.FullName;
-            var bakCompressedModulePath = Path.ChangeExtension(compressedModule.FullName, compressedModule.Extension + ".bak");
-            Log.Debug($"Renaming compressed module {oldCompressedModulePath} to {bakCompressedModulePath} (exists: {File.Exists(bakCompressedModulePath)})");
-            if (File.Exists(bakCompressedModulePath))
-            {
-                Log.Debug($"Removing old backup of compressed module {bakCompressedModulePath}");
-                File.Delete(bakCompressedModulePath);
-            }
-            compressedModule.MoveTo(bakCompressedModulePath);
-            if (File.Exists(oldCompressedModulePath) || !File.Exists(bakCompressedModulePath))
-            {
-                throw new ApplicationException($"Failed to rename compressed module {oldCompressedModulePath} (exists: {File.Exists(oldCompressedModulePath)}) to {bakCompressedModulePath} (exists: {File.Exists(bakCompressedModulePath)})");
-            }
-            compressedModule.Refresh();
-        }
-
         private void LoadModuleCatalog()
         {
             var loadedAssemblies = GetLoadedAssemblies();
