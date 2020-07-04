@@ -20,18 +20,20 @@
                 <Grid Visibility="{Binding Value.IsEnabled, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
                     <materialDesign:PackIcon
                         Foreground="{StaticResource NegativeBrush}"
+                        Background="Transparent"
                         ToolTip="Aura is NOT active"
                         Visibility="{Binding Value.IsActive, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"
                         Kind="CheckboxBlankCircleOutline" />
                     <materialDesign:PackIcon
                         Foreground="{StaticResource PositiveBrush}"
+                        Background="Transparent"
                         ToolTip="Aura is active"
                         Visibility="{Binding Value.IsActive, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
                         Kind="CheckboxMarkedCircleOutline" />
                 </Grid>
 
                 <Grid Visibility="{Binding Value.IsEnabled, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}">
-                    <TextBlock Text="&#xf070;" Foreground="{StaticResource NegativeBrush}" ToolTip="Aura is disabled" Style="{StaticResource IconTextBlock}" HorizontalAlignment="Center" />
+                    <TextBlock Text="&#xf070;" Foreground="{StaticResource NegativeBrush}" IsHitTestVisible="True" ToolTip="Aura is disabled" Style="{StaticResource IconTextBlock}" HorizontalAlignment="Center" />
                 </Grid>
             </Grid>
 
@@ -43,10 +45,10 @@
                           IsChecked="{Binding Value.IsEnabled}"
                           Background="{StaticResource PrimaryHueMidBrush}" >
                 <ToggleButton.Content>
-                    <TextBlock x:Name="EyeOn" Text="&#xf06e;" ToolTip="Enable Aura" Style="{StaticResource IconTextBlock}" Foreground="{StaticResource PositiveBrush}"/>
+                    <TextBlock x:Name="EyeOn" Text="&#xf06e;" IsHitTestVisible="True" ToolTip="Enable Aura" Style="{StaticResource IconTextBlock}" Foreground="{StaticResource PositiveBrush}"/>
                 </ToggleButton.Content>
                 <materialDesign:ToggleButtonAssist.OnContent>
-                    <TextBlock x:Name="EyeOff" Text="&#xf070;" ToolTip="Disable Aura" Style="{StaticResource IconTextBlock}" Foreground="{StaticResource NegativeBrush}"/>
+                    <TextBlock x:Name="EyeOff" Text="&#xf070;" IsHitTestVisible="True" ToolTip="Disable Aura" Style="{StaticResource IconTextBlock}" Foreground="{StaticResource NegativeBrush}"/>
                 </materialDesign:ToggleButtonAssist.OnContent>
             </ToggleButton>
 

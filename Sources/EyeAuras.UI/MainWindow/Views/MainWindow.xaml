@@ -152,7 +152,7 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="{Binding ListWidth, Mode=TwoWay}"
-                                          MinWidth="250"
+                                          MinWidth="280"
                                           MaxWidth="{Binding ElementName=MainWindowRoot, Path=ActualWidth, Converter={StaticResource MultiplyDoubleDivideByThreeConverter}}" />
                         <ColumnDefinition Width="5" />
                         <ColumnDefinition Width="*" />

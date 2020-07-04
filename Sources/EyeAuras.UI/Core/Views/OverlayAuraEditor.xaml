@@ -149,24 +149,26 @@
 
     <DataTemplate x:Key="AuraTriggerSelectorTemplateKey" DataType="{x:Type shared:IAuraTrigger}">
         <DockPanel>
-            <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="{Binding TriggerName}" />
-            <TextBlock Margin="5,0" FontSize="10" VerticalAlignment="Center" Text="{Binding TriggerDescription}" />
+            <TextBlock Margin="5,0,0,0" DockPanel.Dock="Right"
+                       Style="{StaticResource InformationIconTextBlock}"
+                       ToolTip="{Binding TriggerDescription}" />
+            <TextBlock DockPanel.Dock="Left" FontWeight="Bold" FontSize="14" Text="{Binding TriggerName}" />
         </DockPanel>
     </DataTemplate>
     
     <DataTemplate x:Key="AuraActionSelectorTemplateKey" DataType="{x:Type shared:IAuraAction}">
         <DockPanel>
-            <TextBlock FontWeight="Bold" FontSize="14" Text="{Binding ActionName}" />
-            <TextBlock Margin="5,0,0,0"
-                       DockPanel.Dock="Left"
+            <TextBlock Margin="5,0,0,0" DockPanel.Dock="Right"
                        Style="{StaticResource InformationIconTextBlock}"
                        ToolTip="{Binding ActionDescription}" />
-            <materialDesign:PackIcon Margin="5,0,0,0" VerticalAlignment="Center" Kind="ShieldWarning"
+            <materialDesign:PackIcon Margin="5,0,0,0"  DockPanel.Dock="Right" VerticalAlignment="Center"
+                                     Kind="ShieldWarning"
                                      Foreground="{StaticResource NegativeBrush}"
-                                     Visibility="{Binding Error, Converter={StaticResource NullToHiddenConverter}}"
+                                     Visibility="{Binding Error, Converter={StaticResource NullToCollapsedConverter}}"
                                      ToolTipService.ShowOnDisabled="True"
                                      ToolTipService.ShowDuration="{x:Static system:Int32.MaxValue}"
                                      ToolTip="{Binding Error}"/>
+            <TextBlock DockPanel.Dock="Left" FontWeight="Bold" FontSize="14" Text="{Binding ActionName}" />
         </DockPanel>
     </DataTemplate>
     
@@ -340,24 +342,23 @@
                 </GroupBox.Content>
                 <GroupBox.Header>
                     <DockPanel x:Name="GeneralPropertiesHeader" Margin="4">
-                        <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="General" />
-                        <TextBlock Margin="5,0" FontSize="10" VerticalAlignment="Center" Text="{Binding Source.Name}"
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="5,0,0,0" Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf013;" />
+                            <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="General" />
+                        </StackPanel>
+                        <TextBlock Margin="5,0,0,0" FontSize="10" VerticalAlignment="Center" Text="{Binding Source.Name}"
                                    MaxWidth="150" TextTrimming="CharacterEllipsis" />
-                        <fa:FontAwesome Icon="InfoCircle"
-                                        Margin="5,0"
-                                        Foreground="{StaticResource PositiveBrush}"
-                                        VerticalAlignment="Center"
-                                        FontSize="16">
-                            <fa:FontAwesome.ToolTip>
+                        <TextBlock Margin="5,0,0,0" Style="{StaticResource InformationIconTextBlock}" >
+                            <TextBlock.ToolTip>
                                 <TextBlock Text="{Binding Source.Id, StringFormat='AuraId {0}, click to Copy'}"/>
-                            </fa:FontAwesome.ToolTip>
+                            </TextBlock.ToolTip>
                             
                             <i:Interaction.Triggers>
                                 <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
                                     <i:InvokeCommandAction Command="{Binding CopyIdToClipboard}"></i:InvokeCommandAction>
                                 </i:EventTrigger>
                             </i:Interaction.Triggers>
-                        </fa:FontAwesome>
+                        </TextBlock>
                         <Grid Margin="5,0,0,0" Width="140" HorizontalAlignment="Right"
                               IsEnabled="{Binding Source.Overlay.AttachedWindow, Converter={StaticResource NullToFalseConverter}}">
                             <ContentControl Grid.Column="0" Content="{Binding Source.Overlay.LockWindowCommand}"
@@ -376,15 +377,16 @@
                     <Grid Margin="4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Margin="5,0" FontWeight="Bold" FontSize="14" Text="Triggers" />
-                        <TextBlock Grid.Column="1" Margin="5,0" FontSize="10" VerticalAlignment="Center"
-                                   Text="aura is Active only when ALL triggers are Active" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="5,0,0,0" Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf0e7;" />
+                            <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="Triggers" />
+                            <TextBlock Style="{StaticResource InformationIconTextBlock}" ToolTip="Aura is Active only when ALL triggers are Active"/>
+                        </StackPanel>
 
-                        <materialDesign:PopupBox Grid.Column="3"
+                        <materialDesign:PopupBox Grid.Column="2"
                                                  StaysOpen="False" Height="22" Margin="0,-2,0,1"
                                                  x:Name="TriggerList">
                             <Grid>
@@ -394,6 +396,7 @@
                                         <DataTemplate DataType="{x:Type shared:IAuraTrigger}">
                                             <Button Content="{Binding}"
                                                     ContentTemplate="{StaticResource AuraTriggerSelectorTemplateKey}"
+                                                    HorizontalContentAlignment="Stretch"
                                                     CommandParameter="{Binding}"
                                                     Command="{Binding ElementName=TriggerList, Path=DataContext.AddTriggerCommand}" />
                                         </DataTemplate>
@@ -412,6 +415,32 @@
                                                        ItemsSource="{Binding TriggerEditors}"
                                                        PositionMonitor="{Binding TriggersPositionMonitor}"
                                                        ItemTemplate="{StaticResource AuraTriggerItemTemplateKey}"/>
+                        <Border BorderThickness="1" Background="{StaticResource OverlayTitleBackgroundBrushKey}" Opacity="0.7" Margin="0,5,0,0" BorderBrush="{StaticResource DashedAccentBorderBrush}">
+                            <materialDesign:PopupBox StaysOpen="False" Height="22" Margin="0,-2,0,1" HorizontalAlignment="Center" PlacementMode="BottomAndAlignCentres">
+                                <materialDesign:PopupBox.ToggleContent>
+                                    <DockPanel>
+                                        <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Background="Transparent">
+                                            <TextBlock Style="{StaticResource IconTextBlock}" Text="&#xF055;"/>
+                                            <TextBlock Margin="5,0,0,0" Text="Add Trigger"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </materialDesign:PopupBox.ToggleContent>
+                                <Grid>
+                                    <ItemsControl ItemsSource="{Binding KnownTriggers}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type shared:IAuraTrigger}">
+                                                <Button Content="{Binding}"
+                                                        ContentTemplate="{StaticResource AuraTriggerSelectorTemplateKey}"
+                                                        HorizontalContentAlignment="Stretch"
+                                                        CommandParameter="{Binding}"
+                                                        Command="{Binding ElementName=TriggerList, Path=DataContext.AddTriggerCommand}" />
+                                            </DataTemplate>
+
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </materialDesign:PopupBox>
+                    </Border>
                 </DockPanel>
             </GroupBox>
 
@@ -420,15 +449,16 @@
                     <Grid Margin="4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Margin="5,0" FontWeight="Bold" FontSize="14" Text="On Enter actions" />
-                        <TextBlock Grid.Column="1" Margin="5,0" FontSize="10" VerticalAlignment="Center"
-                                   Text="these actions will be executed when aura Activates" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="5,0,0,0" Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf090;" />
+                            <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="On Enter actions" />
+                            <TextBlock Style="{StaticResource InformationIconTextBlock}" ToolTip="these actions will be executed when aura Activates"/>
+                        </StackPanel>
 
-                        <materialDesign:PopupBox Grid.Column="3"
+                        <materialDesign:PopupBox Grid.Column="2"
                                                  StaysOpen="False" Height="22" Margin="0,-2,0,1"
                                                  x:Name="OnEnterActionList">
                             <Grid>
@@ -437,6 +467,7 @@
                                         <DataTemplate DataType="{x:Type shared:IAuraAction}">
                                             <Button Content="{Binding}"
                                                     ContentTemplate="{StaticResource AuraActionSelectorTemplateKey}"
+                                                    HorizontalContentAlignment="Stretch"
                                                     CommandParameter="{Binding}"
                                                     Command="{Binding ElementName=OnEnterActionList, Path=DataContext.AddOnEnterActionCommand}" />
                                         </DataTemplate>
@@ -455,6 +486,31 @@
                                                    ItemsSource="{Binding OnEnterActionEditors}"
                                                    PositionMonitor="{Binding OnEnterActionsPositionMonitor}"
                                                    ItemTemplate="{StaticResource AuraActionItemTemplateKey}"/>
+                    <Border BorderThickness="1" Background="{StaticResource OverlayTitleBackgroundBrushKey}" Opacity="0.7" Margin="0,5,0,0" BorderBrush="{StaticResource DashedAccentBorderBrush}">
+                            <materialDesign:PopupBox StaysOpen="False" Height="22" Margin="0,-2,0,1" HorizontalAlignment="Center" PlacementMode="BottomAndAlignCentres">
+                                <materialDesign:PopupBox.ToggleContent>
+                                    <DockPanel>
+                                        <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Background="Transparent">
+                                            <TextBlock Style="{StaticResource IconTextBlock}" Text="&#xF055;"/>
+                                            <TextBlock Margin="5,0,0,0" Text="Add On Enter action"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </materialDesign:PopupBox.ToggleContent>
+                                <Grid>
+                                    <ItemsControl ItemsSource="{Binding KnownActions}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type shared:IAuraAction}">
+                                                <Button Content="{Binding}"
+                                                        ContentTemplate="{StaticResource AuraActionSelectorTemplateKey}"
+                                                        HorizontalContentAlignment="Stretch"
+                                                        CommandParameter="{Binding}"
+                                                        Command="{Binding ElementName=OnEnterActionList, Path=DataContext.AddOnEnterActionCommand}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </materialDesign:PopupBox>
+                    </Border>
                 </DockPanel>
             </GroupBox>
             
@@ -463,14 +519,15 @@
                     <Grid Margin="4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Margin="5,0" FontWeight="Bold" FontSize="14" Text="While Active actions" />
-                        <TextBlock Grid.Column="1" Margin="5,0" FontSize="10" VerticalAlignment="Center"
-                                   Text="these actions will be executed while Aura is Active" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="5,0,0,0" Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf021;" />
+                            <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="While Active actions" />
+                            <TextBlock Style="{StaticResource InformationIconTextBlock}" ToolTip="these actions will be executed while Aura is Active"/>
+                        </StackPanel>
                         
                         <StackPanel Grid.Column="3" Margin="5,0" Orientation="Horizontal">
                             <TextBlock Margin="5,0" Text="Delay, ms" />
@@ -485,7 +542,7 @@
                                                 Value="{Binding WhileActiveActionsTimeoutInMilliseconds, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
                         </StackPanel>
 
-                        <materialDesign:PopupBox Grid.Column="4"
+                        <materialDesign:PopupBox Grid.Column="3"
                                                  StaysOpen="False" Height="22" Margin="0,-2,0,1"
                                                  x:Name="WhileActiveActionList">
                             <Grid>
@@ -494,6 +551,7 @@
                                         <DataTemplate DataType="{x:Type shared:IAuraAction}">
                                             <Button Content="{Binding}"
                                                     ContentTemplate="{StaticResource AuraActionSelectorTemplateKey}"
+                                                    HorizontalContentAlignment="Stretch"
                                                     CommandParameter="{Binding}"
                                                     Command="{Binding ElementName=WhileActiveActionList, Path=DataContext.AddWhileActiveActionCommand}" />
                                         </DataTemplate>
@@ -510,6 +568,31 @@
                                                    ItemsSource="{Binding WhileActiveActionEditors}"
                                                    PositionMonitor="{Binding WhileActiveActionsPositionMonitor}"
                                                    ItemTemplate="{StaticResource AuraActionItemTemplateKey}"/>
+                    <Border BorderThickness="1" Background="{StaticResource OverlayTitleBackgroundBrushKey}" Opacity="0.7" Margin="0,5,0,0" BorderBrush="{StaticResource DashedAccentBorderBrush}">
+                            <materialDesign:PopupBox StaysOpen="False" Height="22" Margin="0,-2,0,1" HorizontalAlignment="Center" PlacementMode="BottomAndAlignCentres">
+                                <materialDesign:PopupBox.ToggleContent>
+                                    <DockPanel>
+                                        <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Background="Transparent">
+                                            <TextBlock Style="{StaticResource IconTextBlock}" Text="&#xF055;"/>
+                                            <TextBlock Margin="5,0,0,0" Text="Add While Active action"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </materialDesign:PopupBox.ToggleContent>
+                                <Grid>
+                                    <ItemsControl ItemsSource="{Binding KnownActions}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type shared:IAuraAction}">
+                                                <Button Content="{Binding}"
+                                                        ContentTemplate="{StaticResource AuraActionSelectorTemplateKey}"
+                                                        HorizontalContentAlignment="Stretch"
+                                                        CommandParameter="{Binding}"
+                                                        Command="{Binding ElementName=WhileActiveActionList, Path=DataContext.AddWhileActiveActionCommand}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </materialDesign:PopupBox>
+                    </Border>
                 </DockPanel>
             </GroupBox>
             
@@ -518,15 +601,16 @@
                     <Grid Margin="4">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Margin="5,0" FontWeight="Bold" FontSize="14" Text="On Exit actions" />
-                        <TextBlock Grid.Column="1" Margin="5,0" FontSize="10" VerticalAlignment="Center"
-                                   Text="these actions will be executed when aura Deactivates" />
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Margin="5,0,0,0" Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf08b;" />
+                            <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="On Exit actions" />
+                            <TextBlock Style="{StaticResource InformationIconTextBlock}" ToolTip="these actions will be executed when aura Deactivates"/>
+                        </StackPanel>
 
-                        <materialDesign:PopupBox Grid.Column="3"
+                        <materialDesign:PopupBox Grid.Column="2"
                                                  StaysOpen="False" Height="22" Margin="0,-2,0,1"
                                                  x:Name="OnExitActionList">
                             <Grid>
@@ -535,6 +619,7 @@
                                         <DataTemplate DataType="{x:Type shared:IAuraAction}">
                                             <Button Content="{Binding}"
                                                     ContentTemplate="{StaticResource AuraActionSelectorTemplateKey}"
+                                                    HorizontalContentAlignment="Stretch"
                                                     CommandParameter="{Binding}"
                                                     Command="{Binding ElementName=OnExitActionList, Path=DataContext.AddOnExitActionCommand}" />
                                         </DataTemplate>
@@ -552,6 +637,31 @@
                                                    ItemsSource="{Binding OnExitActionEditors}"
                                                    PositionMonitor="{Binding OnExitActionsPositionMonitor}"
                                                    ItemTemplate="{StaticResource AuraActionItemTemplateKey}"/>
+                    <Border BorderThickness="1" Background="{StaticResource OverlayTitleBackgroundBrushKey}" Opacity="0.7" Margin="0,5,0,0" BorderBrush="{StaticResource DashedAccentBorderBrush}">
+                            <materialDesign:PopupBox StaysOpen="False" Height="22" Margin="0,-2,0,1" HorizontalAlignment="Center" PlacementMode="BottomAndAlignCentres">
+                                <materialDesign:PopupBox.ToggleContent>
+                                    <DockPanel>
+                                        <StackPanel HorizontalAlignment="Center" Orientation="Horizontal" Background="Transparent">
+                                            <TextBlock Style="{StaticResource IconTextBlock}" Text="&#xF055;"/>
+                                            <TextBlock Margin="5,0,0,0" Text="Add On Exit action"/>
+                                        </StackPanel>
+                                    </DockPanel>
+                                </materialDesign:PopupBox.ToggleContent>
+                                <Grid>
+                                    <ItemsControl ItemsSource="{Binding KnownActions}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate DataType="{x:Type shared:IAuraAction}">
+                                                <Button Content="{Binding}"
+                                                        ContentTemplate="{StaticResource AuraActionSelectorTemplateKey}"
+                                                        HorizontalContentAlignment="Stretch"
+                                                        CommandParameter="{Binding}"
+                                                        Command="{Binding ElementName=OnExitActionList, Path=DataContext.AddOnExitActionCommand}" />
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Grid>
+                            </materialDesign:PopupBox>
+                    </Border>
                 </DockPanel>
             </GroupBox>
         </StackPanel>
