@@ -17,18 +17,30 @@ namespace EyeAuras.Shared
         private TimeSpan activationTimeout;
         private DateTime? nextActivationTimestamp;
         private bool nextIsActiveValue;
-        
+        private bool enableAdvancedSettings;
+
         protected AuraTriggerBase()
         {
+            //FIXME This class really starts to stink
             this.WhenAnyValue(x => x.IsInverted)
                 .Subscribe(x => RaisePropertyChanged(nameof(IsActive)))
                 .AddTo(Anchors);
 
-            var isActiveSource = this.WhenAnyValue(x => x.TriggerValue, x => x.IsInverted).Select(x => TriggerValue ^ IsInverted);
-            this.WhenAnyValue(x => x.ActivationTimeout)
+            var isActiveSource = this.WhenAnyValue(x => x.TriggerValue, x => x.IsInverted, x => x.EnableAdvancedSettings)
+                .Select(x =>
+                {
+                    if (EnableAdvancedSettings)
+                    {
+                        return TriggerValue ^ IsInverted;
+                    }
+
+                    return TriggerValue;
+                });
+            
+            this.WhenAnyValue(x => x.ActivationTimeout, x => x.EnableAdvancedSettings)
                 .Select(() =>
                 {
-                    if (ActivationTimeout == default)
+                    if (ActivationTimeout == default || !EnableAdvancedSettings)
                     {
                         NextActivationTimestamp = null;
                         return isActiveSource;
@@ -57,11 +69,23 @@ namespace EyeAuras.Shared
                         RaisePropertyChanged(nameof(TimeLeftTillNextActivation));
                     })
                 .AddTo(Anchors);
+
+            this.WhenAnyProperty(x => x.IsInverted, x => x.ActivationTimeout)
+                .Select(x => IsInverted || ActivationTimeout > TimeSpan.Zero)
+                .Where(x => x)
+                .Subscribe(x => EnableAdvancedSettings = x)
+                .AddTo(Anchors);
         }
 
         public abstract string TriggerName { get; }
 
         public abstract string TriggerDescription { get; }
+
+        public bool EnableAdvancedSettings
+        {
+            get => enableAdvancedSettings;
+            set => RaiseAndSetIfChanged(ref enableAdvancedSettings, value);
+        }
         
         public bool IsInverted    
         {

@@ -67,61 +67,81 @@
                     ToolTip="Aura is active"
                     Visibility="{Binding IsActive, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
                     Kind="CheckboxMarkedCircleOutline" />
-                <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="{Binding TriggerName}" />
-                <TextBlock Margin="5,0" FontSize="10" VerticalAlignment="Center" Text="{Binding TriggerDescription}" />
-                <CheckBox DockPanel.Dock="Right" Margin="5,0" IsChecked="{Binding IsInverted}">Use inverted value</CheckBox>
-
-                <DockPanel HorizontalAlignment="Left" Margin="5,0,0,0" Width="500">
-                    <Grid  Margin="5,0,0,0">
-                        <StackPanel Orientation="Horizontal"
-                                    Visibility="{Binding IsInverted, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}">
-                            <TextBlock Text="must" />
-                            <TextBlock Text=" BE ACTIVE " Foreground="{StaticResource PositiveBrush}" />
-                            <materialDesign:PackIcon VerticalAlignment="Center"
-                                                     Foreground="{StaticResource PositiveBrush}"
-                                                     Kind="CheckboxMarkedCircleOutline" />
-                        </StackPanel>
-                        <StackPanel Orientation="Horizontal" 
-                                    Visibility="{Binding IsInverted, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
-                            <TextBlock Text="must" />
-                            <TextBlock Text=" NOT BE ACTIVE " Foreground="{StaticResource NegativeBrush}" />
-                            <materialDesign:PackIcon VerticalAlignment="Center"
-                                                     Foreground="{StaticResource NegativeBrush}"
-                                                     Kind="CheckboxBlankCircleOutline" />
-                        </StackPanel>
-                    </Grid>
-                    <TextBlock Margin="5,0,0,0" Text="for at least"/>
-                    <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="40" MaxWidth="140"
-                                        Margin="5,0,0,0"
-                                        DefaultValue="0"
-                                        Increment="100"
-                                        Minimum="0"
-                                        Maximum="86400000"
-                                        Style="{StaticResource MaterialNumericUpDownStyleKey}"
-                                        Value="{Binding ActivationTimeout, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource TimeSpanToMillisecondsConverter}}" />
-                    <TextBlock Margin="5,0,0,0" Text="ms"/>
+                <TextBlock Margin="5,0,0,0" FontWeight="Bold" FontSize="14" Text="{Binding TriggerName}" />
+                <TextBlock Margin="5,0,0,0"
+                    DockPanel.Dock="Left"
+                    Style="{StaticResource InformationIconTextBlock}"
+                    ToolTip="{Binding TriggerDescription}" />
+                <ToggleButton Margin="5,0,0,0"
+                              DockPanel.Dock="Left"
+                              Style="{StaticResource MaterialDesignFlatPrimaryToggleButton}"
+                              Width="24"
+                              Height="24"
+                              x:Name="TriggerHeaderShowAdvancedSettings"
+                              IsChecked="{Binding EnableAdvancedSettings}">
+                    <ToggleButton.Content>
+                        <TextBlock x:Name="TriggerAdvancedShow" Text="&#xf013;" Foreground="{StaticResource PositiveBrush}" ToolTip="Enable advanced settings" Style="{StaticResource IconTextBlock}"/>
+                    </ToggleButton.Content>
+                    <materialDesign:ToggleButtonAssist.OnContent>
+                        <TextBlock x:Name="TriggerAdvancedHide" Text="&#xf013;" Foreground="{StaticResource NegativeBrush}" ToolTip="Disable advanced settings" Style="{StaticResource IconTextBlock}"/>
+                    </materialDesign:ToggleButtonAssist.OnContent>
+                </ToggleButton>
+                <DockPanel Margin="5,0,0,0"
+                           DockPanel.Dock="Left"
+                           Visibility="{Binding ElementName=TriggerHeaderShowAdvancedSettings, Path=IsChecked, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                    <CheckBox DockPanel.Dock="Right" Margin="5,0" IsChecked="{Binding IsInverted}">Use inverted value</CheckBox>
+                    <DockPanel HorizontalAlignment="Left" Margin="5,0,0,0" Width="500">
+                        <Grid  Margin="5,0,0,0">
+                            <StackPanel Orientation="Horizontal"
+                                        Visibility="{Binding IsInverted, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}">
+                                <TextBlock Text="must" />
+                                <TextBlock Text=" BE ACTIVE " Foreground="{StaticResource PositiveBrush}" />
+                                <materialDesign:PackIcon VerticalAlignment="Center"
+                                                         Foreground="{StaticResource PositiveBrush}"
+                                                         Kind="CheckboxMarkedCircleOutline" />
+                            </StackPanel>
+                            <StackPanel Orientation="Horizontal" 
+                                        Visibility="{Binding IsInverted, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                                <TextBlock Text="must" />
+                                <TextBlock Text=" NOT BE ACTIVE " Foreground="{StaticResource NegativeBrush}" />
+                                <materialDesign:PackIcon VerticalAlignment="Center"
+                                                         Foreground="{StaticResource NegativeBrush}"
+                                                         Kind="CheckboxBlankCircleOutline" />
+                            </StackPanel>
+                        </Grid>
+                        <TextBlock Margin="5,0,0,0" Text="for at least"/>
+                        <xctk:IntegerUpDown DisplayDefaultValueOnEmptyText="True" MinWidth="40" MaxWidth="140"
+                                            Margin="5,0,0,0"
+                                            DefaultValue="0"
+                                            Increment="100"
+                                            Minimum="0"
+                                            Maximum="86400000"
+                                            Style="{StaticResource MaterialNumericUpDownStyleKey}"
+                                            Value="{Binding ActivationTimeout, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged, Converter={StaticResource TimeSpanToMillisecondsConverter}}" />
+                        <TextBlock Margin="5,0,0,0" Text="ms"/>
+                        
+                        <DockPanel Visibility="{Binding TimeLeftTillNextActivation, Converter={StaticResource NullToCollapsedConverter}}" Margin="5,0,0,0">
+                            <DockPanel Visibility="{Binding NextIsActiveValue, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                                <materialDesign:PackIcon Margin="2.5,0"  VerticalAlignment="Center"
+                                                         Foreground="{StaticResource PositiveBrush}"
+                                                         Kind="CheckboxMarkedCircleOutline" />
+                                <TextBlock Text="Activation in" Foreground="{StaticResource PositiveBrush}" />
+                                <TextBlock Margin="5,0,0,0" MinWidth="30"
+                                           Text="{Binding TimeLeftTillNextActivation, Converter={StaticResource TimeSpanToHumanReadableStringConverter}}"/>
+                            </DockPanel>
                     
-                    <DockPanel Visibility="{Binding TimeLeftTillNextActivation, Converter={StaticResource NullToCollapsedConverter}}" Margin="5,0,0,0">
-                        <DockPanel Visibility="{Binding NextIsActiveValue, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
-                            <materialDesign:PackIcon Margin="2.5,0"  VerticalAlignment="Center"
-                                                     Foreground="{StaticResource PositiveBrush}"
-                                                     Kind="CheckboxMarkedCircleOutline" />
-                            <TextBlock Text="Activation in" Foreground="{StaticResource PositiveBrush}" />
-                            <TextBlock Margin="5,0,0,0" MinWidth="30"
-                                       Text="{Binding TimeLeftTillNextActivation, Converter={StaticResource TimeSpanToHumanReadableStringConverter}}"/>
-                        </DockPanel>
-                
-                        <DockPanel Visibility="{Binding NextIsActiveValue, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}">
-                            <materialDesign:PackIcon Margin="2.5,0"  VerticalAlignment="Center"
-                                                     Foreground="{StaticResource NegativeBrush}"
-                                                     Kind="CheckboxBlankCircleOutline" />
-                            <TextBlock Text="Deactivation in" Foreground="{StaticResource NegativeBrush}" />
-                            <TextBlock Margin="5,0,0,0" MinWidth="30"
-                                       Text="{Binding TimeLeftTillNextActivation, Converter={StaticResource TimeSpanToHumanReadableStringConverter}}"/>
-                        </DockPanel>
+                            <DockPanel Visibility="{Binding NextIsActiveValue, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}">
+                                <materialDesign:PackIcon Margin="2.5,0"  VerticalAlignment="Center"
+                                                         Foreground="{StaticResource NegativeBrush}"
+                                                         Kind="CheckboxBlankCircleOutline" />
+                                <TextBlock Text="Deactivation in" Foreground="{StaticResource NegativeBrush}" />
+                                <TextBlock Margin="5,0,0,0" MinWidth="30"
+                                           Text="{Binding TimeLeftTillNextActivation, Converter={StaticResource TimeSpanToHumanReadableStringConverter}}"/>
+                            </DockPanel>
 
-                        <ProgressBar Margin="5,0" 
-                                     Value="{Binding ActivationProgress, Mode=OneWay}" Minimum="0" Maximum="100"/>
+                            <ProgressBar Margin="5,0" 
+                                         Value="{Binding ActivationProgress, Mode=OneWay}" Minimum="0" Maximum="100"/>
+                        </DockPanel>
                     </DockPanel>
                 </DockPanel>
             </DockPanel>
@@ -137,13 +157,16 @@
     <DataTemplate x:Key="AuraActionSelectorTemplateKey" DataType="{x:Type shared:IAuraAction}">
         <DockPanel>
             <TextBlock FontWeight="Bold" FontSize="14" Text="{Binding ActionName}" />
+            <TextBlock Margin="5,0,0,0"
+                       DockPanel.Dock="Left"
+                       Style="{StaticResource InformationIconTextBlock}"
+                       ToolTip="{Binding ActionDescription}" />
             <materialDesign:PackIcon Margin="5,0,0,0" VerticalAlignment="Center" Kind="ShieldWarning"
                                      Foreground="{StaticResource NegativeBrush}"
                                      Visibility="{Binding Error, Converter={StaticResource NullToHiddenConverter}}"
                                      ToolTipService.ShowOnDisabled="True"
                                      ToolTipService.ShowDuration="{x:Static system:Int32.MaxValue}"
                                      ToolTip="{Binding Error}"/>
-            <TextBlock Margin="5,0,0,0"  DockPanel.Dock="Right" HorizontalAlignment="Right"  FontSize="10" VerticalAlignment="Center" Text="{Binding ActionDescription}" />
         </DockPanel>
     </DataTemplate>
     
@@ -225,7 +248,8 @@
                                     IsEnabled="{Binding Source.Overlay.AttachedWindow, Converter={StaticResource NullToFalseConverter}}">
                                     <ContentControl Content="{Binding Source.Overlay}"
                                                     ContentTemplate="{StaticResource EyeOverlayViewModelPositionEditor}" />
-
+                                    <ContentControl Content="{Binding Source.Overlay}" Margin="10,0,0,0"
+                                                    ContentTemplate="{StaticResource EyeOverlayViewModelRegionEditor}" />
                                     <DockPanel Margin="10,0,0,0">
                                         <DockPanel DockPanel.Dock="Top" VerticalAlignment="Top" Height="36"
                                                    IsEnabled="{Binding Source.Overlay.IsLocked}"
@@ -282,21 +306,20 @@
                                     </DockPanel>
 
                                     <DockPanel Margin="10,0,0,0">
-                                        <DockPanel DockPanel.Dock="Top" VerticalAlignment="Top">
-                                            <xctk:DoubleUpDown DockPanel.Dock="Left" Margin="5,0,0,0"
+                                        <DockPanel DockPanel.Dock="Top" VerticalAlignment="Top" Width="150">
+                                            <xctk:DoubleUpDown DockPanel.Dock="Top"
                                                                materialDesign:HintAssist.Hint="Border Thickness"
                                                                materialDesign:HintAssist.IsFloating="True"
                                                                Style="{StaticResource MaterialNumericUpDownStyleKey}"
                                                                DisplayDefaultValueOnEmptyText="True"
                                                                DefaultValue="0"
-                                                               Width="100"
                                                                Minimum="0"
                                                                Maximum="255"
                                                                FormatString="0"
                                                                Value="{Binding Source.Overlay.BorderThickness, Mode=TwoWay, FallbackValue=0, UpdateSourceTrigger=PropertyChanged}" />
 
-                                            <materialDesign:ColorPicker DockPanel.Dock="Left"
-                                                                        Margin="5,0,-2.5,0"
+                                            <materialDesign:ColorPicker DockPanel.Dock="Top"
+                                                                        Margin="0,5,0,0"
                                                                         HueSliderPosition="Top"
                                                                         MinWidth="150"
                                                                         materialDesign:HintAssist.Hint="Border Color"

@@ -23,5 +23,7 @@ namespace EyeAuras.Shared
         double ActivationProgress { get; }
 
         bool NextIsActiveValue { get; }
+        
+        bool EnableAdvancedSettings { get; set; }
     }
 }

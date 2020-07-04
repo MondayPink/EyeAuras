@@ -23,7 +23,7 @@
     <Style x:Key="DragablzTabItemVerticalStyle" TargetType="{x:Type dragablz:DragablzItem}">
         <Setter Property="OverridesDefaultStyle" Value="True" />
         <Setter Property="Margin" Value="0" />
-        <Setter Property="Padding" Value="3,0,3,0" />
+        <Setter Property="Padding" Value="0" />
         <Setter Property="HorizontalContentAlignment" Value="Stretch" />
         <Setter Property="VerticalContentAlignment" Value="Stretch" />
         <Setter Property="HorizontalAlignment" Value="Stretch" />
