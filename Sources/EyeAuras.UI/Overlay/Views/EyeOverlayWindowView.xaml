@@ -18,7 +18,7 @@
         <Setter Property="FontFamily" Value="{StaticResource FontPlayRegular}" />
     </Style>
 
-    <DataTemplate DataType="{x:Type viewModels:EyeOverlayViewModel}">
+    <DataTemplate DataType="{x:Type viewModels:ReplicaOverlayViewModel}">
         <Grid RenderOptions.BitmapScalingMode="HighQuality" x:Name="OverlayMainPanel"
               Background="Transparent" 
               ContextMenuService.IsEnabled="{Binding IsInSelectMode, Converter={StaticResource NotConverter}}"
@@ -176,6 +176,30 @@
                 <TextBlock Text="{Binding OverlayWindow.ActualWidth, StringFormat='Actual width: {0}'}" />
 
             </StackPanel>
+        </Grid>
+    </DataTemplate>
+    
+     <DataTemplate DataType="{x:Type viewModels:ImageOverlayViewModel}">
+        <Grid RenderOptions.BitmapScalingMode="HighQuality" x:Name="OverlayMainPanel"
+              Background="Transparent" 
+              eye:EnableDragHelper.EnableDrag="{Binding IsInSelectMode, Converter={StaticResource NotConverter}}">
+            <Grid.InputBindings>
+                <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding ToggleLockStateCommand}"/> 
+            </Grid.InputBindings>
+
+            <Border BorderThickness="{Binding BorderThickness, Converter={StaticResource ThicknessConverter}, ConverterParameter=''}"
+                    Background="{StaticResource MaxTransparencyBrush}">
+                <Image Source="{Binding Content}" Stretch="Fill" 
+                       Opacity="{Binding ThumbnailOpacity}"/>
+            </Border>
+            
+            <Border BorderThickness="{Binding BorderThickness, Converter={StaticResource ThicknessConverter}, ConverterParameter=''}"
+                    IsHitTestVisible="False"
+                    Opacity="{Binding ActiveThumbnailOpacity}">
+                <Border.BorderBrush>
+                    <SolidColorBrush Color="{Binding BorderColor}"  />
+                </Border.BorderBrush>
+            </Border>
         </Grid>
     </DataTemplate>
 </ResourceDictionary>

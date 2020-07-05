@@ -12,5 +12,7 @@ namespace EyeAuras.UI.Core.Models
         string Name { [CanBeNull] get; [CanBeNull] set; }
         
         string Path { [CanBeNull] get; [CanBeNull] set; }
+        
+        void SetCloseController([NotNull] ICloseController closeController);
     }
 }

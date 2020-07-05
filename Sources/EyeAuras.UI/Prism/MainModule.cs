@@ -40,10 +40,17 @@ namespace EyeAuras.UI.Prism
 
             var auraManager = container.Resolve<IAuraRegistrator>();
 
-            auraManager.Register<OverlayAuraPropertiesEditorViewModel, OverlayAuraModelBase>();
+            auraManager.Register<OverlayAuraEditorViewModel, OverlayAuraModel>();
+            auraManager.Register<OverlayReplicaCoreEditorViewModel, OverlayReplicaAuraCore>();
+            auraManager.Register<OverlayImageCoreEditorViewModel, OverlayImageAuraCore>();
+            auraManager.Register<EmptyCoreEditorViewModel, EmptyAuraCore>();
             
             auraManager.Register<AuraIsActiveTrigger>();
             auraManager.Register<AuraIsActiveTriggerEditor, AuraIsActiveTrigger>();
+            
+            auraManager.Register<EmptyAuraCore>();
+            auraManager.Register<OverlayReplicaAuraCore>();
+            auraManager.Register<OverlayImageAuraCore>();
         }
     }
 }

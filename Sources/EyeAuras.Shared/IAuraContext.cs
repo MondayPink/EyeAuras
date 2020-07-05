@@ -1,14 +1,17 @@
 using System.Collections.Generic;
+using System.ComponentModel;
 using DynamicData;
 using JetBrains.Annotations;
 
 namespace EyeAuras.Shared
 {
-    public interface IAuraContext
+    public interface IAuraContext : INotifyPropertyChanged
     {
         string Id { [NotNull] get; }
         
         string Name { [NotNull] get; }
+        
+        bool IsActive { get; }
         
         IComplexAuraTrigger Triggers { [NotNull] get; }
 

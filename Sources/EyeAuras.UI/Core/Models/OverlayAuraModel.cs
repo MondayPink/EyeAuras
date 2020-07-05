@@ -1,27 +1,17 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.Immutable;
-using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.Diagnostics;
 using System.Linq;
 using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading;
-using System.Threading.Tasks;
-using System.Windows.Threading;
-using Dragablz;
 using DynamicData;
 using DynamicData.Binding;
 using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
 using EyeAuras.UI.Core.Services;
-using EyeAuras.UI.Core.Utilities;
-using EyeAuras.UI.MainWindow.Models;
-using EyeAuras.UI.Overlay.ViewModels;
-using EyeAuras.UI.Prism.Modularity;
 using JetBrains.Annotations;
 using log4net;
 using PoeShared;
@@ -34,17 +24,15 @@ using Unity;
 
 namespace EyeAuras.UI.Core.Models
 {
-    internal sealed class OverlayAuraModelBase : AuraModelBase<OverlayAuraProperties>, IOverlayAuraModel, IAuraContext
+    internal sealed class OverlayAuraModel : AuraModelBase<OverlayAuraProperties>, IOverlayAuraModel, IAuraContext
     {
-        private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraModelBase));
+        private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraModel));
         private static readonly TimeSpan ModelsReloadTimeout = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan TriggerDefaultThrottle = TimeSpan.FromMilliseconds(10);
         private static int GlobalAuraIdx;
 
         private readonly IAuraRepository repository;
         private readonly IConfigSerializer configSerializer;
-        private readonly IClock clock;
-        private readonly string defaultAuraName;
 
         private readonly ComplexAuraAction onEnterActionsHolder = new ComplexAuraAction();
         private readonly ComplexAuraAction whileActiveActionsHolder = new ComplexAuraAction();
@@ -56,27 +44,23 @@ namespace EyeAuras.UI.Core.Models
         private bool isActive;
         private bool isEnabled = true;
         private string name;
-        private WindowMatchParams targetWindow;
         private string uniqueId;
         private TimeSpan whileActiveActionsTimeout;
         private string path;
+        private IAuraCore core;
 
-        public OverlayAuraModelBase(
+        public OverlayAuraModel(
             [NotNull] IEyeAuraSharedContext sharedContext,
             [NotNull] IAuraRepository repository,
             [NotNull] IConfigSerializer configSerializer,
             [NotNull] IUniqueIdGenerator idGenerator,
-            [NotNull] IClock clock,
-            [NotNull] IFactory<IEyeOverlayViewModel, IOverlayWindowController, IAuraModelController> overlayViewModelFactory,
-            [NotNull] IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory,
-            [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory,
             [NotNull] ISchedulerProvider schedulerProvider,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
-            defaultAuraName = $"Aura #{Interlocked.Increment(ref GlobalAuraIdx)}";
+            var defaultAuraName = $"Aura #{Interlocked.Increment(ref GlobalAuraIdx)}";
             Name = defaultAuraName;
             Id = idGenerator.Next();
-            using var sw = new BenchmarkTimer($"[{this}] OverlayAuraModel initialization", Log, nameof(OverlayAuraModelBase));
+            using var sw = new BenchmarkTimer($"[{this}] OverlayAuraModel initialization", Log, nameof(OverlayAuraModel));
             var bgScheduler = schedulerProvider.GetOrCreate($"{defaultAuraName}");
             Triggers = triggersHolder;
             OnEnterActions = onEnterActionsHolder;
@@ -92,37 +76,6 @@ namespace EyeAuras.UI.Core.Models
             
             this.repository = repository;
             this.configSerializer = configSerializer;
-            this.clock = clock;
-            var matcher = new RegexStringMatcher().AddToWhitelist(".*");
-            var windowTracker = windowTrackerFactory
-                .Create(matcher)
-                .AddTo(Anchors);
-
-            var overlayController = overlayWindowControllerFactory
-                .Create(windowTracker)
-                .AddTo(Anchors);
-            sw.Step($"Overlay controller created: {overlayController}");
-
-            var overlayViewModel = overlayViewModelFactory
-                .Create(overlayController, this)
-                .AddTo(Anchors);
-            sw.Step($"Overlay view model created: {overlayViewModel}");
-            
-            Overlay = overlayViewModel;
-            Observable.Merge(
-                    overlayViewModel.WhenValueChanged(x => x.AttachedWindow, false).ToUnit(),
-                    overlayViewModel.WhenValueChanged(x => x.IsLocked, false).ToUnit(),
-                    this.WhenValueChanged(x => x.IsActive, false).ToUnit())
-                .StartWithDefault()
-                .Select(
-                    () => new
-                    {
-                        OverlayShouldBeShown = IsActive || !overlayViewModel.IsLocked,
-                        WindowIsAttached = overlayViewModel.AttachedWindow != null
-                    })
-                .Subscribe(x => overlayController.IsEnabled = x.OverlayShouldBeShown && x.WindowIsAttached, Log.HandleUiException)
-                .AddTo(Anchors);
-            sw.Step($"Overlay view model initialized: {overlayViewModel}");
 
             var triggerIsActive = Observable.CombineLatest(
                     triggersHolder.WhenAnyValue(x => x.IsActive),
@@ -203,8 +156,8 @@ namespace EyeAuras.UI.Core.Models
 
             //FIXME Properties mechanism should have inverted logic - only important parameters must matter
             Observable.Merge(
-                    this.WhenAnyProperty(x => x.Name, x => x.TargetWindow, x => x.IsEnabled, x => x.Path).Select(x => $"[{Name}].{x.EventArgs.PropertyName} property changed"),
-                    Overlay.WhenAnyProperty().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{nameof(Overlay)}.{x.EventArgs.PropertyName} property changed"),
+                    this.WhenAnyProperty(x => x.Name, x => x.IsEnabled, x => x.Path).Select(x => $"[{Name}].{x.EventArgs.PropertyName} property changed"),
+                    this.WhenAnyValue(x => x.Core).Select(x => x == null ? Observable.Empty<Unit>() : x.WhenAnyValue(y => y.Properties).ToUnit()).Switch().Select(x => $"[{Name}].{Core} properties changed"),
                     Triggers.Connect().Select(x => $"[{Name}({Id})] Trigger list changed, item count: {Triggers.Count}"),
                     Triggers.Connect().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName} Trigger property changed"),
                     OnEnterActions.Connect().Select(x => $"[{Name}({Id})] [OnEnter]  Action list changed, item count: {OnEnterActions.Count}"),
@@ -217,9 +170,6 @@ namespace EyeAuras.UI.Core.Models
                 .AddTo(Anchors);
             sw.Step($"Overlay model properties initialized");
 
-            overlayController.RegisterChild(overlayViewModel).AddTo(Anchors);
-            sw.Step($"Overlay registration completed");
-            
             triggersHolder.AddTo(Anchors);
             whileActiveActionsHolder.AddTo(Anchors);
             onEnterActionsHolder.AddTo(Anchors);
@@ -265,11 +215,11 @@ namespace EyeAuras.UI.Core.Models
             get => isActive;
             private set => RaiseAndSetIfChanged(ref isActive, value);
         }
-        
-        public WindowMatchParams TargetWindow
+
+        public IAuraCore Core
         {
-            get => targetWindow;
-            set => RaiseAndSetIfChanged(ref targetWindow, value);
+            get => core;
+            private set => RaiseAndSetIfChanged(ref core, value);
         }
 
         public bool IsEnabled
@@ -289,7 +239,7 @@ namespace EyeAuras.UI.Core.Models
         public IComplexAuraAction OnEnterActions { get; }
         
         public IComplexAuraAction WhileActiveActions { get; }
-
+        
         public IComplexAuraAction OnExitActions { get; }
         
         public SourceCache<KeyValuePair<string, object>, string> Variables { get; }
@@ -309,8 +259,6 @@ namespace EyeAuras.UI.Core.Models
             get => whileActiveActionsTimeout;
             set => this.RaiseAndSetIfChanged(ref whileActiveActionsTimeout, value);
         }
-
-        public IEyeOverlayViewModel Overlay { get; }
 
         public void SetCloseController(ICloseController closeController)
         {
@@ -388,22 +336,17 @@ namespace EyeAuras.UI.Core.Models
             Path = source.Path;
 
             WhileActiveActionsTimeout = source.WhileActiveActionsTimeout;
-            TargetWindow = source.WindowMatch;
             IsEnabled = source.IsEnabled;
-            Overlay.ThumbnailOpacity = source.ThumbnailOpacity;
-            Overlay.Region.SetValue(source.SourceRegionBounds);
-            Overlay.IsClickThrough = source.IsClickThrough;
-            Overlay.MaintainAspectRatio = source.MaintainAspectRatio;
-            Overlay.BorderColor = source.BorderColor;
-            Overlay.BorderThickness = source.BorderThickness;
-
-            var bounds = source.OverlayBounds.ScaleToWpf();
-            Overlay.Left = bounds.Left;
-            Overlay.Top = bounds.Top;
-            Overlay.Height = bounds.Height;
-            Overlay.Width = bounds.Width;
-            
             ReloadCollections(source);
+            
+            Core?.Dispose();
+            if (source.CoreProperties != null)
+            {
+                Core = CreateModel<IAuraCore>(source.CoreProperties);
+                Core.ModelController = this;
+                Core.Context = this;
+                Core.Properties = source.CoreProperties;
+            }
         }
 
         protected override void VisitSave(OverlayAuraProperties properties)
@@ -414,17 +357,11 @@ namespace EyeAuras.UI.Core.Models
             properties.WhileActiveActionProperties = WhileActiveActions.Items.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
             properties.OnExitActionProperties = OnExitActions.Items.Select(x => x.Properties).Where(ValidateProperty).Select(ToMetadata).ToList();
             properties.WhileActiveActionsTimeout = WhileActiveActionsTimeout;
-            properties.SourceRegionBounds = Overlay.Region.Bounds;
-            properties.OverlayBounds = Overlay.NativeBounds;
-            properties.WindowMatch = TargetWindow;
-            properties.IsClickThrough = Overlay.IsClickThrough;
-            properties.ThumbnailOpacity = Overlay.ThumbnailOpacity;
-            properties.MaintainAspectRatio = Overlay.MaintainAspectRatio;
-            properties.BorderColor = Overlay.BorderColor;
-            properties.BorderThickness = Overlay.BorderThickness;
+
             properties.IsEnabled = IsEnabled;
             properties.Id = Id;
             properties.Path = Path;
+            properties.CoreProperties = Core?.Properties;
         }
 
         private IAuraProperties ToAuraProperties(PoeConfigMetadata<IAuraProperties> metadata)

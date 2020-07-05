@@ -37,11 +37,12 @@ namespace EyeAuras.UI.Prism
                 .RegisterType<ISelectionAdornerViewModel, SelectionAdornerViewModel>()
                 .RegisterType<IWindowSelectorService, WindowSelectorService>()
                 .RegisterType<IMessageBoxViewModel, MessageBoxViewModel>()
-                .RegisterType<IOverlayAuraModel, OverlayAuraModelBase>()
+                .RegisterType<IOverlayAuraModel, OverlayAuraModel>()
                 .RegisterType<IRegionSelectorViewModel, RegionSelectorViewModel>()
                 .RegisterType<IPropertyEditorViewModel, PropertyEditorViewModel>()
                 .RegisterType<IOverlayAuraTabViewModel, OverlayAuraTabViewModel>()
-                .RegisterType<IEyeOverlayViewModel, EyeOverlayViewModel>();
+                .RegisterType<IImageOverlayViewModel, ImageOverlayViewModel>()
+                .RegisterType<IReplicaOverlayViewModel, ReplicaOverlayViewModel>();
 
             Container.RegisterSingleton<IConfigProvider, ConfigProviderFromFile>();
         }

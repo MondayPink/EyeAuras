@@ -52,7 +52,7 @@ namespace EyeAuras.Shared
             return result;
         }
 
-        protected abstract void VisitSave(T source);
+        protected abstract void VisitSave(T properties);
 
         protected abstract void VisitLoad(T source);
         

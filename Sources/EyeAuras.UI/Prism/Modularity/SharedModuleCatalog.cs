@@ -176,12 +176,18 @@ namespace EyeAuras.UI.Prism.Modularity
             if (!ModulesDirectory.Exists)
             {
                 Log.Warn($"Directory {ModulesDirectory} could not be found.");
-                return;
             }
-            UnpackModules();
+            else
+            {
+                UnpackModules();
+            }
             
             var potentialModules = (
-                from dllFile in new[] { AppDomainDirectory.GetFiles("*.dll", SearchOption.TopDirectoryOnly), ModulesDirectory.GetFiles("*.dll", SearchOption.AllDirectories) }.SelectMany(x => x)
+                from dllFile in new[]
+                {
+                    AppDomainDirectory.GetFiles("*.dll", SearchOption.TopDirectoryOnly), 
+                    ModulesDirectory.Exists ? ModulesDirectory.GetFiles("*.dll", SearchOption.AllDirectories) : Enumerable.Empty<FileInfo>()
+                }.SelectMany(x => x)
                 let loadedModules = loadedAssemblies.Where(x => !string.IsNullOrEmpty(x.Location))
                     .Select(x => new FileInfo(x.Location))
                     .Where(x => x.Exists)

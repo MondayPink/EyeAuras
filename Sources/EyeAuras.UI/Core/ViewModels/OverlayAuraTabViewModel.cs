@@ -43,7 +43,7 @@ namespace EyeAuras.UI.Core.ViewModels
 
             GeneralEditor = propertiesEditorFactory.Create();
 
-            Properties = initialProperties;
+            Properties = initialProperties.CloneJson();
             IsEnabled = properties.IsEnabled;
             Id = properties.Id;
             Path = properties.Path;
