@@ -14,6 +14,7 @@ using log4net;
 using PoeShared;
 using PoeShared.Scaffolding;
 using PoeShared.UI.TreeView;
+using ReactiveUI;
 
 namespace EyeAuras.UI.MainWindow.Services
 {
@@ -156,6 +157,17 @@ namespace EyeAuras.UI.MainWindow.Services
                 {
                     SelectedValue = x.Sender;
                 }, Log.HandleUiException)
+                .AddTo(Anchors);
+
+            this.WhenAnyValue(x => x.SelectedValue)
+                .Subscribe(x =>
+                {
+                    SelectedItem = x == null ? null : FindItemByTab(x);
+                    if (SelectedItem != null)
+                    {
+                        SelectedItem.IsSelected = true;
+                    }
+                })
                 .AddTo(Anchors);
             
             source

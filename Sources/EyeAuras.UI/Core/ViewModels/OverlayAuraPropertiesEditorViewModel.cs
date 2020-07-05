@@ -13,6 +13,7 @@ using EyeAuras.Shared.Services;
 using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.Utilities;
 using JetBrains.Annotations;
+using log4net;
 using PoeShared;
 using PoeShared.Native;
 using PoeShared.Prism;
@@ -27,6 +28,8 @@ namespace EyeAuras.UI.Core.ViewModels
 {
     internal sealed class OverlayAuraPropertiesEditorViewModel : AuraPropertiesEditorBase<OverlayAuraModelBase>
     {
+        private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraPropertiesEditorViewModel));
+
         private readonly IAuraRepository repository;
         private readonly IFactory<IPropertyEditorViewModel> propertiesEditorFactory;
         private readonly IFactory<LinkedPositionMonitor<IPropertyEditorViewModel>> positionMonitorFactory;
@@ -44,11 +47,12 @@ namespace EyeAuras.UI.Core.ViewModels
         private PositionMonitor onEnterActionsPositionMonitor;
         private PositionMonitor whileActiveActionsPositionMonitor;
         private PositionMonitor onExitActionsPositionMonitor;
-        
+        private IPropertyEditorViewModel coreEditor;
+        private IAuraCore selectedCore;
+
         public OverlayAuraPropertiesEditorViewModel(
             [NotNull] IAuraRepository repository,
             [NotNull] IFactory<IPropertyEditorViewModel> propertiesEditorFactory,
-            [NotNull] IWindowSelectorService windowSelector,
             [NotNull] IClipboardManager clipboardManager,
             [NotNull] IFactory<LinkedPositionMonitor<IPropertyEditorViewModel>> positionMonitorFactory,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
@@ -57,7 +61,6 @@ namespace EyeAuras.UI.Core.ViewModels
             this.propertiesEditorFactory = propertiesEditorFactory;
             this.positionMonitorFactory = positionMonitorFactory;
             this.uiScheduler = uiScheduler;
-            WindowSelector = windowSelector.AddTo(Anchors);
             activeSourceAnchors.AddTo(Anchors);
             
             addTriggerCommand = new DelegateCommand<object>(AddTriggerCommandExecuted);
@@ -85,6 +88,15 @@ namespace EyeAuras.UI.Core.ViewModels
                 .Subscribe()
                 .AddTo(Anchors);
             KnownActions = knownActions;
+            
+            repository.KnownEntities
+                .ToObservableChangeSet()
+                .Filter(x => x is IAuraCore)
+                .Transform(x => x as IAuraCore)
+                .Bind(out var knownCores)
+                .Subscribe()
+                .AddTo(Anchors);
+            KnownCores = knownCores;
              
             this.WhenAnyValue(x => x.Source)
                 .Subscribe(HandleSourceChange)
@@ -97,11 +109,23 @@ namespace EyeAuras.UI.Core.ViewModels
             set => Source.WhileActiveActionsTimeout = TimeSpan.FromMilliseconds(value);
         }
 
-        public IWindowSelectorService WindowSelector { get; }
-        
+        public IPropertyEditorViewModel CoreEditor
+        {
+            get => coreEditor;
+            set => RaiseAndSetIfChanged(ref coreEditor, value);
+        }
+
+        public IAuraCore SelectedCore
+        {
+            get => selectedCore;
+            set => RaiseAndSetIfChanged(ref selectedCore, value);
+        }
+
         public ReadOnlyObservableCollection<IAuraTrigger> KnownTriggers { get; }
         
         public ReadOnlyObservableCollection<IAuraAction> KnownActions { get; }
+        
+        public ReadOnlyObservableCollection<IAuraCore> KnownCores { get; }
 
         public ReadOnlyObservableCollection<IPropertyEditorViewModel> TriggerEditors
         {
@@ -192,13 +216,12 @@ namespace EyeAuras.UI.Core.ViewModels
                 OnEnterActionEditors = null;
                 TriggerEditors = null;
             }).AddTo(sourceAnchors);
-            
-            Source.WhenAnyValue(x => x.TargetWindow).Subscribe(x => WindowSelector.TargetWindow = x).AddTo(sourceAnchors);
-            WindowSelector.WhenAnyValue(x => x.TargetWindow).Subscribe(x => Source.TargetWindow = x).AddTo(sourceAnchors);
-            
-            Source.Overlay.WhenAnyValue(x => x.AttachedWindow).Subscribe(x => WindowSelector.ActiveWindow = x).AddTo(sourceAnchors);
-            WindowSelector.WhenAnyValue(x => x.ActiveWindow).Subscribe(x => Source.Overlay.AttachedWindow = x).AddTo(sourceAnchors);
 
+            CoreEditor = propertiesEditorFactory.Create();
+            Source.WhenAnyValue(x => x.Core)
+                .Subscribe(x => CoreEditor.Value = x)
+                .AddTo(sourceAnchors);
+            
             SubscribeAndCreate(Source.Triggers, out var triggersSource).AddTo(sourceAnchors);
             TriggerEditors = triggersSource;
 
@@ -215,6 +238,20 @@ namespace EyeAuras.UI.Core.ViewModels
             OnEnterActionsPositionMonitor = positionMonitorFactory.Create().AddTo(sourceAnchors).SyncWith(Source.OnEnterActions, (x, y) => ReferenceEquals(x.Value, y));
             WhileActiveActionsPositionMonitor = positionMonitorFactory.Create().AddTo(sourceAnchors).SyncWith(Source.WhileActiveActions, (x, y) => ReferenceEquals(x.Value, y));
             OnExitActionsPositionMonitor = positionMonitorFactory.Create().AddTo(sourceAnchors).SyncWith(Source.OnExitActions, (x, y) => ReferenceEquals(x.Value, y));
+
+            Source.WhenAnyValue(x => x.Core)
+                .Select(auraCore => KnownCores.FirstOrDefault(y => y.GetType() == auraCore?.GetType()))
+                .Subscribe(auraCore => SelectedCore = auraCore, Log.HandleUiException)
+                .AddTo(Anchors);
+            this.WhenAnyValue(x => x.SelectedCore)
+                .Where(x => x != null)
+                .Subscribe(x =>
+                {
+                    var properties = Source.Properties.CloneJson();
+                    properties.CoreProperties = x.Properties.CloneJson();
+                    Source.Properties = properties;
+                }, Log.HandleUiException)
+                .AddTo(sourceAnchors);
         }
 
         private IDisposable SubscribeAndCreate<TAuraModel>(

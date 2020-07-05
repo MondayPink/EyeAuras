@@ -12,9 +12,9 @@ namespace EyeAuras.UI.Core.Models
         string Id { [NotNull] get; }
 
         bool IsActive { get; }
-
-        WindowMatchParams TargetWindow { [CanBeNull] get; [CanBeNull] set; }
         
+        IAuraCore Core { get; }
+
         IComplexAuraTrigger Triggers { [NotNull] get; }
         
         IComplexAuraAction OnEnterActions { get; }
@@ -22,9 +22,5 @@ namespace EyeAuras.UI.Core.Models
         IComplexAuraAction OnExitActions { get; }
         
         IComplexAuraAction WhileActiveActions { get; }
-        
-        IEyeOverlayViewModel Overlay { [NotNull] get; }
-        
-        void SetCloseController([NotNull] ICloseController closeController);
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Reactive;
@@ -16,6 +17,7 @@ using System.Windows.Forms;
 using DynamicData;
 using DynamicData.Binding;
 using EyeAuras.DefaultAuras.Triggers.HotkeyIsActive;
+using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
 using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.Services;
@@ -41,6 +43,8 @@ using PoeShared.Wpf.UI.Settings;
 using ReactiveUI;
 using Unity;
 using Application = System.Windows.Application;
+using Color = System.Windows.Media.Color;
+using Size = System.Windows.Size;
 
 namespace EyeAuras.UI.MainWindow.ViewModels
 {
@@ -136,6 +140,9 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             TabsList = sharedContext.TabList;
             treeViewAdapter.WhenAnyValue(x => x.SelectedValue)
                 .Subscribe(x => SelectedTab = x)
+                .AddTo(Anchors);
+            this.WhenAnyValue(x => x.SelectedTab)
+                .Subscribe(x => treeViewAdapter.SelectedValue = x)
                 .AddTo(Anchors);
             
             ModuleStatus = moduleStatus.AddTo(Anchors);
@@ -246,6 +253,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                             .OfType<IOverlayAuraTabViewModel>()
                             .Select(x => x.Model)
                             .OfType<IOverlayAuraModel>()
+                            .Select(x => x.Core)
+                            .OfType<OverlayAuraCore>()
                             .Where(x => x.Overlay != null)
                             .Select(y => y.Overlay);
                         if (unlock)
@@ -541,14 +550,17 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 var newTabProperties = new OverlayAuraProperties
                 {
                     Name = $"{result.Window.ProcessName} - {result.Window.Title}",
-                    WindowMatch = new WindowMatchParams
-                    {
-                        Title = result.Window.Handle.ToHexadecimal(),
-                    },
                     IsEnabled = true,
-                    OverlayBounds = result.AbsoluteSelection,
-                    SourceRegionBounds = result.Selection,
-                    MaintainAspectRatio = true
+                    CoreProperties = new OverlayCoreProperties()
+                    {
+                        WindowMatch = new WindowMatchParams
+                        {
+                            Title = result.Window.Handle.ToHexadecimal(),
+                        },
+                        OverlayBounds = result.AbsoluteSelection,
+                        SourceRegionBounds = result.Selection,
+                        MaintainAspectRatio = true
+                    }
                 };
                 Log.Info($"Quick-Creating new tab using {newTabProperties.DumpToTextRaw()} args...");
                 AddNewCommandExecuted(newTabProperties, false); 
@@ -760,7 +772,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             var config = configProvider.ActualConfig;
 
             Log.Debug($"Received configuration DTO:\r\n{config.DumpToText()}");
-
+            
             var desktopHandle = UnsafeNative.GetDesktopWindow();
             var systemInformation = new
             {
@@ -784,6 +796,40 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
             foreach (var auraProperties in config.Auras.EmptyIfNull())
             {
+                //FIXME Remove OverlayConfig v2 backward compatibility layer
+                if (auraProperties.Version == 2 && auraProperties.CoreProperties == null)
+                {
+                    Log.Info($"[{auraProperties.Name}] Converting old config format to a new one");
+
+                    if (auraProperties.WindowMatch.IsEmpty)
+                    {
+                        auraProperties.CoreProperties = new EmptyCoreProperties();
+                    }
+                    else
+                    {
+                        auraProperties.CoreProperties = new OverlayCoreProperties
+                        {
+                            BorderColor = auraProperties.BorderColor,
+                            BorderThickness = auraProperties.BorderThickness,
+                            OverlayBounds = auraProperties.OverlayBounds,
+                            ThumbnailOpacity = auraProperties.ThumbnailOpacity,
+                            WindowMatch = auraProperties.WindowMatch,
+                            IsClickThrough = auraProperties.IsClickThrough,
+                            MaintainAspectRatio = auraProperties.MaintainAspectRatio,
+                            SourceRegionBounds = auraProperties.SourceRegionBounds,
+                        };
+                    }
+
+                    auraProperties.WindowMatch = new WindowMatchParams();
+                    auraProperties.BorderThickness = 0;
+                    auraProperties.BorderColor = new Color();
+                    auraProperties.ThumbnailOpacity = 0;
+                    auraProperties.IsClickThrough = false;
+                    auraProperties.MaintainAspectRatio = false;
+                    auraProperties.SourceRegionBounds = Rectangle.Empty;
+                    auraProperties.OverlayBounds = Rectangle.Empty;
+                }
+                
                 CreateAndAddTab(auraProperties);
             }
 
@@ -835,9 +881,9 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 
                 if (newTab is IOverlayAuraTabViewModel newOverlayTab)
                 {
-                    if (newOverlayTab.Model is IOverlayAuraModel newOverlayModel && newOverlayModel.Overlay.UnlockWindowCommand.CanExecute(null))
+                    if (newOverlayTab.Model is IOverlayAuraModel newOverlayModel && newOverlayModel.Core is OverlayAuraCore overlayCore && overlayCore.Overlay.UnlockWindowCommand.CanExecute(null))
                     {
-                        newOverlayModel.Overlay.UnlockWindowCommand.Execute(null);
+                        overlayCore.Overlay.UnlockWindowCommand.Execute(null);
                     }
 
                     if (rename)
