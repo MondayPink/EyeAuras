@@ -41,6 +41,7 @@ namespace EyeAuras.UI.Prism
                 .RegisterType<IRegionSelectorViewModel, RegionSelectorViewModel>()
                 .RegisterType<IPropertyEditorViewModel, PropertyEditorViewModel>()
                 .RegisterType<IOverlayAuraTabViewModel, OverlayAuraTabViewModel>()
+                .RegisterType<IImageOverlayViewModel, ImageOverlayViewModel>()
                 .RegisterType<IReplicaOverlayViewModel, ReplicaOverlayViewModel>();
 
             Container.RegisterSingleton<IConfigProvider, ConfigProviderFromFile>();

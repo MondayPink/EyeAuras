@@ -14,7 +14,8 @@
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Styles.xaml" />
-        <ResourceDictionary Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/materialdesigntheme.textblock.xaml" />
+        <ResourceDictionary
+            Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/materialdesigntheme.textblock.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras.Controls;component/Themes/Styles.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
@@ -38,6 +39,7 @@
                     Padding="5">
                 <Grid>
                     <DockPanel
+                        LastChildFill="False"
                         IsEnabled="{Binding Source.Overlay.AttachedWindow, Converter={StaticResource NullToFalseConverter}}">
                         <ContentControl Content="{Binding Source.Overlay}"
                                         ContentTemplate="{StaticResource EyeOverlayViewModelPositionEditor}" />
@@ -129,6 +131,110 @@
                            Visibility="{Binding Source.Overlay.AttachedWindow, Converter={StaticResource NotNullToCollapsedConverter}}" />
                 </Grid>
             </Border>
+        </DockPanel>
+    </DataTemplate>
+
+    <DataTemplate DataType="{x:Type viewModels:OverlayImageCoreEditorViewModel}">
+        <DockPanel>
+            <DockPanel DockPanel.Dock="Top" Margin="0,15,0,0">
+                <Border DockPanel.Dock="Right" Width="36" Height="36" Margin="5,0,0,0"
+                        BorderThickness="1" BorderBrush="{StaticResource SecondaryAccentBrush}">
+                    <Image Margin="1"
+                           Source="{Binding ImageFilePreview}" MaxWidth="32" MaxHeight="32" />
+                </Border>
+                <ContentControl DockPanel.Dock="Right"
+                                HorizontalAlignment="Right"
+                                ContentTemplate="{StaticResource CommandWrapperIcon}"
+                                Content="{Binding OpenImageFileSelectorCommand}"
+                                ToolTip="Load from file"
+                                eye:CommandWrapperHelper.Icon="&#xf115;" />
+                <TextBox DockPanel.Dock="Left"
+                         VerticalContentAlignment="Center"
+                         Style="{StaticResource MaterialDesignFloatingHintTextBox}"
+                         materialDesign:HintAssist.Hint="File path"
+                         Text="{Binding Source.ImageFilePath, UpdateSourceTrigger=PropertyChanged}" />
+            </DockPanel>
+
+            <DockPanel DockPanel.Dock="Top" Margin="0,15,0,0" LastChildFill="False">
+                <ContentControl Content="{Binding Source.Overlay}"
+                                ContentTemplate="{StaticResource EyeOverlayViewModelPositionEditor}" />
+                <DockPanel Margin="10,0,0,0">
+                    <DockPanel DockPanel.Dock="Top" VerticalAlignment="Top" Height="36"
+                               IsEnabled="{Binding Source.Overlay.IsLocked}"
+                               ToolTipService.ShowOnDisabled="True"
+                               Background="Transparent">
+                        <DockPanel.ToolTip>
+                            <Binding Path="Source.Overlay.IsLocked">
+                                <Binding.Converter>
+                                    <converters:MapConverter FallbackBehavior="ReturnFallbackValue"
+                                                             FallbackValue="Overlay opacity">
+                                        <converters:Mapping From="{StaticResource FalseValue}"
+                                                            To="Overlay opacity - Lock overlay to change the value" />
+                                    </converters:MapConverter>
+                                </Binding.Converter>
+                            </Binding>
+                        </DockPanel.ToolTip>
+                        <TextBlock DockPanel.Dock="Left" Text="Opacity" />
+                        <TextBlock DockPanel.Dock="Right" Margin="5,0,0,0" MinWidth="20"
+                                   Text="{Binding Source.Overlay.ThumbnailOpacity, StringFormat='{}{0:F2}'}" />
+
+                        <Slider DockPanel.Dock="Left"
+                                Value="{Binding Source.Overlay.ThumbnailOpacity}"
+                                Minimum="0.1"
+                                Margin="5,0,0,0"
+                                TickFrequency="0.05"
+                                IsSnapToTickEnabled="True"
+                                VerticalAlignment="Center"
+                                Maximum="1" />
+                    </DockPanel>
+
+                    <CheckBox DockPanel.Dock="Top" VerticalAlignment="Top" Margin="0,5,0,0"
+                              IsChecked="{Binding Source.Overlay.IsClickThrough}"
+                              ToolTipService.ShowOnDisabled="True"
+                              IsEnabled="{Binding Source.Overlay.IsLocked}"
+                              Content="Is Click-through">
+                        <CheckBox.ToolTip>
+                            <Binding Path="Source.Overlay.IsLocked">
+                                <Binding.Converter>
+                                    <converters:MapConverter FallbackBehavior="ReturnFallbackValue"
+                                                             FallbackValue="Click-Through Mode - Make Overlay pass mouse clicks to underlying window">
+                                        <converters:Mapping From="{StaticResource FalseValue}"
+                                                            To="Click-Through Mode - Lock overlay to change the value" />
+                                    </converters:MapConverter>
+                                </Binding.Converter>
+                            </Binding>
+                        </CheckBox.ToolTip>
+                    </CheckBox>
+
+                    <CheckBox DockPanel.Dock="Top" VerticalAlignment="Top" Margin="0,5,0,0"
+                              IsChecked="{Binding Source.Overlay.MaintainAspectRatio}"
+                              ToolTip="Resize Overlay accordingly to Source window aspect ratio"
+                              Content="Maintain Aspect Ratio" />
+                </DockPanel>
+
+                <DockPanel Margin="10,0,0,0">
+                    <DockPanel DockPanel.Dock="Top" VerticalAlignment="Top" Width="150">
+                        <xctk:DoubleUpDown DockPanel.Dock="Top"
+                                           materialDesign:HintAssist.Hint="Border Thickness"
+                                           materialDesign:HintAssist.IsFloating="True"
+                                           Style="{StaticResource MaterialNumericUpDownStyleKey}"
+                                           DisplayDefaultValueOnEmptyText="True"
+                                           DefaultValue="0"
+                                           Minimum="0"
+                                           Maximum="255"
+                                           FormatString="0"
+                                           Value="{Binding Source.Overlay.BorderThickness, Mode=TwoWay, FallbackValue=0, UpdateSourceTrigger=PropertyChanged}" />
+
+                        <materialDesign:ColorPicker DockPanel.Dock="Top"
+                                                    Margin="0,5,0,0"
+                                                    HueSliderPosition="Top"
+                                                    MinWidth="150"
+                                                    materialDesign:HintAssist.Hint="Border Color"
+                                                    Color="{Binding Source.Overlay.BorderColor}"
+                                                    Style="{StaticResource ColorPickerWithPopupStyle}" />
+                    </DockPanel>
+                </DockPanel>
+            </DockPanel>
         </DockPanel>
     </DataTemplate>
 </ResourceDictionary>

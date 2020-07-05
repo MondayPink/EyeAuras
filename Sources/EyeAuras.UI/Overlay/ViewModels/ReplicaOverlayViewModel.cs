@@ -127,7 +127,6 @@ namespace EyeAuras.UI.Overlay.ViewModels
             AttachedWindow = obj;
         }
         
-        
         private CompositeDisposable OpenConfigEditor()
         {
             var anchors = new CompositeDisposable();

@@ -42,6 +42,7 @@ namespace EyeAuras.UI.Prism
 
             auraManager.Register<OverlayAuraEditorViewModel, OverlayAuraModel>();
             auraManager.Register<OverlayReplicaCoreEditorViewModel, OverlayReplicaAuraCore>();
+            auraManager.Register<OverlayImageCoreEditorViewModel, OverlayImageAuraCore>();
             auraManager.Register<EmptyCoreEditorViewModel, EmptyAuraCore>();
             
             auraManager.Register<AuraIsActiveTrigger>();
@@ -49,6 +50,7 @@ namespace EyeAuras.UI.Prism
             
             auraManager.Register<EmptyAuraCore>();
             auraManager.Register<OverlayReplicaAuraCore>();
+            auraManager.Register<OverlayImageAuraCore>();
         }
     }
 }

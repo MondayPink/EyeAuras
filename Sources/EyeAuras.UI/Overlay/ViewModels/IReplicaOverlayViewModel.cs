@@ -9,7 +9,5 @@ namespace EyeAuras.UI.Overlay.ViewModels
         WindowHandle AttachedWindow { get; set; }
 
         ThumbnailRegion Region { [NotNull] get; }
-
-        ICommand ResetRegionCommand { [NotNull] get; }
     }
 }

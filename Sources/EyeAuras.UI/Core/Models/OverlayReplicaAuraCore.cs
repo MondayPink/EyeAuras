@@ -23,18 +23,18 @@ namespace EyeAuras.UI.Core.Models
             [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory) : base(overlayWindowControllerFactory, windowTrackerFactory)
         {
             this.overlayViewModelFactory = overlayViewModelFactory;
-            
-            Observable.CombineLatest(this.WhenAnyValue(x => x.ModelController), this.WhenAnyValue(x => x.Context), (controller, auraContext) => new { controller, auraContext })
-                .Where(x => x.controller != null && x.auraContext != null)
-                .Take(1)
-                .Subscribe(HandleInitialization)
-                .AddTo(Anchors);
         }
 
         public WindowMatchParams TargetWindow
         {
             get => targetWindow;
             set => RaiseAndSetIfChanged(ref targetWindow, value);
+        }
+        
+        public new IReplicaOverlayViewModel Overlay
+        {
+            get => base.Overlay as IReplicaOverlayViewModel;
+            private set => base.Overlay = value;
         }
         
         public override string Name { get; } = "Replica";
@@ -65,9 +65,10 @@ namespace EyeAuras.UI.Core.Models
         {
             return overlayViewModelFactory.Create(windowController, modelController);
         }
-        
-        private void HandleInitialization()
+
+        protected override void HandleInitialization()
         {
+            base.HandleInitialization();
             Observable.Merge(
                     this.WhenAnyProperty(x => x.TargetWindow).Select(x => $"[{Context?.Name}].{x.EventArgs.PropertyName} property changed"))
                 .Subscribe(reason => RaisePropertyChanged(nameof(Properties)))

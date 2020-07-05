@@ -28,7 +28,7 @@
                 <ResourceDictionary Source="Core/Views/WindowSelectorView.xaml" />
                 <ResourceDictionary Source="Core/Views/PropertyEditorView.xaml" />
                 <ResourceDictionary Source="Core/Views/OverlayAuraEditor.xaml" />
-                <ResourceDictionary Source="Core/Views/OverlayAuraCoreEditor.xaml" />
+                <ResourceDictionary Source="Core/Views/OverlayReplicaCoreEditor.xaml" />
                 <ResourceDictionary Source="Core/Views/EmptyAuraCoreEditor.xaml" />
                 
                 <ResourceDictionary Source="Triggers/AuraIsActive/AuraIsActiveEditorView.xaml" />

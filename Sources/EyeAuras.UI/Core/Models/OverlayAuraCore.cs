@@ -16,7 +16,6 @@ namespace EyeAuras.UI.Core.Models
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraCore<>));
 
-        private readonly IFactory<IReplicaOverlayViewModel, IOverlayWindowController, IAuraModelController> overlayViewModelFactory;
         private readonly IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory;
         private readonly IFactory<WindowTracker, IStringMatcher> windowTrackerFactory;
         
@@ -26,7 +25,6 @@ namespace EyeAuras.UI.Core.Models
             [NotNull] IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory,
             [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory)
         {
-            this.overlayViewModelFactory = overlayViewModelFactory;
             this.overlayWindowControllerFactory = overlayWindowControllerFactory;
             this.windowTrackerFactory = windowTrackerFactory;
 
@@ -40,7 +38,7 @@ namespace EyeAuras.UI.Core.Models
         public IEyeOverlayViewModel Overlay
         {
             get => overlay;
-            private set => RaiseAndSetIfChanged(ref overlay, value);
+            protected set => RaiseAndSetIfChanged(ref overlay, value);
         }
 
         protected abstract IEyeOverlayViewModel CreateOverlay(IOverlayWindowController windowController, IAuraModelController modelController);
@@ -76,7 +74,7 @@ namespace EyeAuras.UI.Core.Models
             }
         }
 
-        private void HandleInitialization()
+        protected virtual void HandleInitialization()
         {
             using var sw = new BenchmarkTimer($"[{this}] {Name} initialization", Log, nameof(OverlayAuraModel));
 
