@@ -24,9 +24,9 @@ using Unity;
 
 namespace EyeAuras.UI.Core.Models
 {
-    internal sealed class OverlayAuraModelBase : AuraModelBase<OverlayAuraProperties>, IOverlayAuraModel, IAuraContext
+    internal sealed class OverlayAuraModel : AuraModelBase<OverlayAuraProperties>, IOverlayAuraModel, IAuraContext
     {
-        private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraModelBase));
+        private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraModel));
         private static readonly TimeSpan ModelsReloadTimeout = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan TriggerDefaultThrottle = TimeSpan.FromMilliseconds(10);
         private static int GlobalAuraIdx;
@@ -49,19 +49,18 @@ namespace EyeAuras.UI.Core.Models
         private string path;
         private IAuraCore core;
 
-        public OverlayAuraModelBase(
+        public OverlayAuraModel(
             [NotNull] IEyeAuraSharedContext sharedContext,
             [NotNull] IAuraRepository repository,
             [NotNull] IConfigSerializer configSerializer,
             [NotNull] IUniqueIdGenerator idGenerator,
-            [NotNull] IFactory<OverlayAuraCore, IAuraModelController, IAuraContext> overlayCoreFactory,
             [NotNull] ISchedulerProvider schedulerProvider,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
             var defaultAuraName = $"Aura #{Interlocked.Increment(ref GlobalAuraIdx)}";
             Name = defaultAuraName;
             Id = idGenerator.Next();
-            using var sw = new BenchmarkTimer($"[{this}] OverlayAuraModel initialization", Log, nameof(OverlayAuraModelBase));
+            using var sw = new BenchmarkTimer($"[{this}] OverlayAuraModel initialization", Log, nameof(OverlayAuraModel));
             var bgScheduler = schedulerProvider.GetOrCreate($"{defaultAuraName}");
             Triggers = triggersHolder;
             OnEnterActions = onEnterActionsHolder;

@@ -23,7 +23,7 @@
         <Setter Property="CloseOnClickAway" Value="True" />
     </Style>
 
-    <DataTemplate x:Key="EyeOverlayViewModelRegionEditor" DataType="{x:Type viewModels:EyeOverlayViewModel}">
+    <DataTemplate x:Key="EyeOverlayViewModelRegionEditor" DataType="{x:Type viewModels:ReplicaOverlayViewModel}">
         <StackPanel DockPanel.Dock="Bottom">
             <Grid>
                 <Grid.RowDefinitions>
@@ -76,7 +76,7 @@
         </StackPanel>
     </DataTemplate>
 
-    <DataTemplate x:Key="EyeOverlayViewModelPositionEditor" DataType="{x:Type viewModels:EyeOverlayViewModel}">
+    <DataTemplate x:Key="EyeOverlayViewModelPositionEditor" DataType="{x:Type viewModels:ReplicaOverlayViewModel}">
         <StackPanel DockPanel.Dock="Bottom">
             <Grid>
                 <Grid.RowDefinitions>

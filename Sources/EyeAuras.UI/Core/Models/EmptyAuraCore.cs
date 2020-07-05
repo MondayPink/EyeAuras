@@ -6,11 +6,11 @@ namespace EyeAuras.UI.Core.Models
 {
     internal sealed class EmptyAuraCore : AuraCore<EmptyCoreProperties>
     {
-        private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraCore));
+        private static readonly ILog Log = LogManager.GetLogger(typeof(EmptyAuraCore));
 
         public EmptyAuraCore()
         {
-            using var sw = new BenchmarkTimer($"[{this}] {nameof(EmptyAuraCore)} initialization", Log, nameof(OverlayAuraModelBase));
+            using var sw = new BenchmarkTimer($"[{this}] {nameof(EmptyAuraCore)} initialization", Log, nameof(OverlayAuraModel));
             sw.Step($"Empty core registration completed");
         }
 

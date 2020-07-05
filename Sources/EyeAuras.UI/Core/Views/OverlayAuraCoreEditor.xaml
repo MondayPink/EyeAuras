@@ -18,7 +18,7 @@
         <ResourceDictionary Source="pack://application:,,,/EyeAuras.Controls;component/Themes/Styles.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <DataTemplate DataType="{x:Type viewModels:OverlayCoreEditorViewModel}">
+    <DataTemplate DataType="{x:Type viewModels:OverlayReplicaCoreEditorViewModel}">
         <DockPanel>
             <Grid DockPanel.Dock="Top">
                 <Border Grid.Column="0"

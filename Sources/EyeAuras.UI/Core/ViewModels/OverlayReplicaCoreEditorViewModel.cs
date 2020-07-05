@@ -13,6 +13,7 @@ using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
 using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.Utilities;
+using EyeAuras.UI.Overlay.ViewModels;
 using JetBrains.Annotations;
 using PoeShared;
 using PoeShared.Native;
@@ -26,11 +27,11 @@ using Unity;
 
 namespace EyeAuras.UI.Core.ViewModels
 {
-    internal sealed class OverlayCoreEditorViewModel : AuraPropertiesEditorBase<OverlayAuraCore>
+    internal sealed class OverlayReplicaCoreEditorViewModel : AuraPropertiesEditorBase<OverlayReplicaAuraCore>
     {
         private readonly SerialDisposable activeSourceAnchors;
 
-        public OverlayCoreEditorViewModel(
+        public OverlayReplicaCoreEditorViewModel(
             [NotNull] IWindowSelectorService windowSelector
             )
         {
@@ -62,15 +63,21 @@ namespace EyeAuras.UI.Core.ViewModels
              WindowSelector.WhenAnyValue(x => x.TargetWindow).Subscribe(x => Source.TargetWindow = x).AddTo(sourceAnchors);
 
              Source.WhenAnyValue(x => x.Overlay)
+                 .OfType<IReplicaOverlayViewModel>()
                  .Select(x => x == null ? Observable.Empty<Unit>() : x.WhenAnyValue(y => y.AttachedWindow).ToUnit())
                  .Switch()
-                 .Subscribe(() => WindowSelector.ActiveWindow = Source.Overlay.AttachedWindow)
+                 .Select(x => Source.Overlay)
+                 .OfType<IReplicaOverlayViewModel>()
+                 .Subscribe(x => WindowSelector.ActiveWindow = x.AttachedWindow)
                  .AddTo(Anchors);
              
              Source.WhenAnyValue(x => x.Overlay)
+                 .OfType<IReplicaOverlayViewModel>()
                  .Select(x => x == null ? Observable.Empty<Unit>() : WindowSelector.WhenAnyValue(y => y.ActiveWindow).ToUnit())
                  .Switch()
-                 .Subscribe(() => Source.Overlay.AttachedWindow = WindowSelector.ActiveWindow)
+                 .Select(x => Source.Overlay)
+                 .OfType<IReplicaOverlayViewModel>()
+                 .Subscribe(x => x.AttachedWindow = WindowSelector.ActiveWindow)
                  .AddTo(Anchors);
          }
     }

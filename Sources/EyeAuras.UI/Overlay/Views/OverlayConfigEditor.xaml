@@ -17,7 +17,7 @@
                           WindowStartupLocation="CenterOwner"
                           Topmost="True"
                           FontFamily="{StaticResource FontPlayRegular}"
-                          d:DataContext="{d:DesignInstance viewModels:EyeOverlayViewModel}">
+                          d:DataContext="{d:DesignInstance viewModels:ReplicaOverlayViewModel}">
     <Window.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

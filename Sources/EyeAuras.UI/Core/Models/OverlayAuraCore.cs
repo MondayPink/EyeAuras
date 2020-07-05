@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Reactive.Linq;
 using DynamicData.Binding;
-using EyeAuras.Shared.Services;
 using EyeAuras.UI.Overlay.ViewModels;
 using JetBrains.Annotations;
 using log4net;
@@ -13,18 +12,17 @@ using ReactiveUI;
 
 namespace EyeAuras.UI.Core.Models
 {
-    internal sealed class OverlayAuraCore : AuraCore<OverlayCoreProperties>
+    internal abstract class OverlayAuraCore<T> : AuraCore<T>,IOverlayAuraCore where T : class, IOverlayCoreProperties, new()
     {
-        [NotNull] private readonly IFactory<IEyeOverlayViewModel, IOverlayWindowController, IAuraModelController> overlayViewModelFactory;
-        [NotNull] private readonly IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory;
-        [NotNull] private readonly IFactory<WindowTracker, IStringMatcher> windowTrackerFactory;
-        private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraCore));
+        private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraCore<>));
+
+        private readonly IFactory<IReplicaOverlayViewModel, IOverlayWindowController, IAuraModelController> overlayViewModelFactory;
+        private readonly IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory;
+        private readonly IFactory<WindowTracker, IStringMatcher> windowTrackerFactory;
         
-        private WindowMatchParams targetWindow;
         private IEyeOverlayViewModel overlay;
 
         public OverlayAuraCore(
-            [NotNull] IFactory<IEyeOverlayViewModel, IOverlayWindowController, IAuraModelController> overlayViewModelFactory,
             [NotNull] IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory,
             [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory)
         {
@@ -39,27 +37,18 @@ namespace EyeAuras.UI.Core.Models
                 .AddTo(Anchors);
         }
         
-        public override string Name { get; } = "Replica";
-        
-        public override string Description { get; } = "Show selected window Replica";
-        
-        public WindowMatchParams TargetWindow
-        {
-            get => targetWindow;
-            set => RaiseAndSetIfChanged(ref targetWindow, value);
-        }
-        
         public IEyeOverlayViewModel Overlay
         {
             get => overlay;
             private set => RaiseAndSetIfChanged(ref overlay, value);
         }
 
-        protected override void VisitSave(OverlayCoreProperties properties)
+        protected abstract IEyeOverlayViewModel CreateOverlay(IOverlayWindowController windowController, IAuraModelController modelController);
+
+        protected void VisitSave(IOverlayCoreProperties properties)
         {
             if (Overlay != null)
             {
-                properties.SourceRegionBounds = Overlay.Region.Bounds;
                 properties.OverlayBounds = Overlay.NativeBounds;
                 properties.IsClickThrough = Overlay.IsClickThrough;
                 properties.ThumbnailOpacity = Overlay.ThumbnailOpacity;
@@ -67,15 +56,13 @@ namespace EyeAuras.UI.Core.Models
                 properties.BorderColor = Overlay.BorderColor;
                 properties.BorderThickness = Overlay.BorderThickness;
             }
-            properties.WindowMatch = TargetWindow;
         }
 
-        protected override void VisitLoad(OverlayCoreProperties source)
+        protected void VisitLoad(IOverlayCoreProperties source)
         {
             if (Overlay != null)
             {
                 Overlay.ThumbnailOpacity = source.ThumbnailOpacity;
-                Overlay.Region.SetValue(source.SourceRegionBounds);
                 Overlay.IsClickThrough = source.IsClickThrough;
                 Overlay.MaintainAspectRatio = source.MaintainAspectRatio;
                 Overlay.BorderColor = source.BorderColor;
@@ -87,12 +74,11 @@ namespace EyeAuras.UI.Core.Models
                 Overlay.Height = bounds.Height;
                 Overlay.Width = bounds.Width;
             }
-            TargetWindow = source.WindowMatch;
         }
 
         private void HandleInitialization()
         {
-            using var sw = new BenchmarkTimer($"[{this}] {nameof(OverlayAuraCore)} initialization", Log, nameof(OverlayAuraModelBase));
+            using var sw = new BenchmarkTimer($"[{this}] {Name} initialization", Log, nameof(OverlayAuraModel));
 
             var matcher = new RegexStringMatcher().AddToWhitelist(".*");
             var windowTracker = windowTrackerFactory
@@ -103,31 +89,27 @@ namespace EyeAuras.UI.Core.Models
                 .AddTo(Anchors);
             sw.Step($"Overlay controller created: {overlayController}");
 
-            var overlayViewModel = overlayViewModelFactory
-                .Create(overlayController, ModelController)
-                .AddTo(Anchors);
-            Overlay = overlayViewModel;
-            sw.Step($"Overlay view model created: {overlayViewModel}");
+            Overlay = CreateOverlay(overlayController, ModelController).AddTo(Anchors);
+            sw.Step($"Overlay view model created: {Overlay}");
             
             Observable.Merge(
-                    overlayViewModel.WhenValueChanged(x => x.AttachedWindow, false).ToUnit(),
-                    overlayViewModel.WhenValueChanged(x => x.IsLocked, false).ToUnit(),
+                    this.WhenAnyValue(x => x.Overlay).OfType<IReplicaOverlayViewModel>().Select(x => x.WhenAnyValue(y => y.AttachedWindow)).Switch().ToUnit(),
+                    Overlay.WhenValueChanged(x => x.IsLocked, false).ToUnit(),
                     Context.WhenValueChanged(x => x.IsActive, false).ToUnit())
                 .StartWithDefault()
                 .Select(
                     () => new
                     {
-                        OverlayShouldBeShown = Context.IsActive || !overlayViewModel.IsLocked,
-                        WindowIsAttached = overlayViewModel.AttachedWindow != null
+                        OverlayShouldBeShown = Context.IsActive || !Overlay.IsLocked,
+                        WindowIsAttached = !(Overlay is IReplicaOverlayViewModel replicaOverlayViewModel) || replicaOverlayViewModel.AttachedWindow != null
                     })
                 .Subscribe(x => overlayController.IsEnabled = x.OverlayShouldBeShown && x.WindowIsAttached, Log.HandleUiException)
                 .AddTo(Anchors);
-            sw.Step($"Overlay view model initialized: {overlayViewModel}");
+            sw.Step($"Overlay view model initialized: {Overlay}");
             
-            overlayController.RegisterChild(overlayViewModel).AddTo(Anchors);
+            overlayController.RegisterChild(Overlay).AddTo(Anchors);
             
             Observable.Merge(
-                    this.WhenAnyProperty(x => x.TargetWindow).Select(x => $"[{Context.Name}].{x.EventArgs.PropertyName} property changed"),
                     Overlay.WhenAnyProperty().Select(x => $"[{Context.Name}].{nameof(Overlay)}.{x.EventArgs.PropertyName} property changed"))
                 .Subscribe(reason => RaisePropertyChanged(nameof(Properties)))
                 .AddTo(Anchors);

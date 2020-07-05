@@ -254,7 +254,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                             .Select(x => x.Model)
                             .OfType<IOverlayAuraModel>()
                             .Select(x => x.Core)
-                            .OfType<OverlayAuraCore>()
+                            .OfType<IOverlayAuraCore>()
                             .Where(x => x.Overlay != null)
                             .Select(y => y.Overlay);
                         if (unlock)
@@ -551,7 +551,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 {
                     Name = $"{result.Window.ProcessName} - {result.Window.Title}",
                     IsEnabled = true,
-                    CoreProperties = new OverlayCoreProperties()
+                    CoreProperties = new OverlayReplicaCoreProperties()
                     {
                         WindowMatch = new WindowMatchParams
                         {
@@ -807,7 +807,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     }
                     else
                     {
-                        auraProperties.CoreProperties = new OverlayCoreProperties
+                        auraProperties.CoreProperties = new OverlayReplicaCoreProperties
                         {
                             BorderColor = auraProperties.BorderColor,
                             BorderThickness = auraProperties.BorderThickness,
@@ -881,7 +881,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 
                 if (newTab is IOverlayAuraTabViewModel newOverlayTab)
                 {
-                    if (newOverlayTab.Model is IOverlayAuraModel newOverlayModel && newOverlayModel.Core is OverlayAuraCore overlayCore && overlayCore.Overlay.UnlockWindowCommand.CanExecute(null))
+                    if (newOverlayTab.Model is IOverlayAuraModel newOverlayModel && newOverlayModel.Core is IOverlayAuraCore overlayCore && overlayCore.Overlay.UnlockWindowCommand.CanExecute(null))
                     {
                         overlayCore.Overlay.UnlockWindowCommand.Execute(null);
                     }

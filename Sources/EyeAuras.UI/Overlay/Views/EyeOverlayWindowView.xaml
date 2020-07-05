@@ -18,7 +18,7 @@
         <Setter Property="FontFamily" Value="{StaticResource FontPlayRegular}" />
     </Style>
 
-    <DataTemplate DataType="{x:Type viewModels:EyeOverlayViewModel}">
+    <DataTemplate DataType="{x:Type viewModels:ReplicaOverlayViewModel}">
         <Grid RenderOptions.BitmapScalingMode="HighQuality" x:Name="OverlayMainPanel"
               Background="Transparent" 
               ContextMenuService.IsEnabled="{Binding IsInSelectMode, Converter={StaticResource NotConverter}}"

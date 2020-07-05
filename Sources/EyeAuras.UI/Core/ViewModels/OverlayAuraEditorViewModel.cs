@@ -26,9 +26,9 @@ using Unity;
 
 namespace EyeAuras.UI.Core.ViewModels
 {
-    internal sealed class OverlayAuraPropertiesEditorViewModel : AuraPropertiesEditorBase<OverlayAuraModelBase>
+    internal sealed class OverlayAuraEditorViewModel : AuraPropertiesEditorBase<OverlayAuraModel>
     {
-        private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraPropertiesEditorViewModel));
+        private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraEditorViewModel));
 
         private readonly IAuraRepository repository;
         private readonly IFactory<IPropertyEditorViewModel> propertiesEditorFactory;
@@ -50,7 +50,7 @@ namespace EyeAuras.UI.Core.ViewModels
         private IPropertyEditorViewModel coreEditor;
         private IAuraCore selectedCore;
 
-        public OverlayAuraPropertiesEditorViewModel(
+        public OverlayAuraEditorViewModel(
             [NotNull] IAuraRepository repository,
             [NotNull] IFactory<IPropertyEditorViewModel> propertiesEditorFactory,
             [NotNull] IClipboardManager clipboardManager,

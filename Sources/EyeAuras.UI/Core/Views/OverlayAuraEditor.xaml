@@ -226,7 +226,7 @@
         </Border>
     </DataTemplate>
     
-    <DataTemplate DataType="{x:Type viewModels:OverlayAuraPropertiesEditorViewModel}">
+    <DataTemplate DataType="{x:Type viewModels:OverlayAuraEditorViewModel}">
         <StackPanel Orientation="Vertical">
             <GroupBox DockPanel.Dock="Top" BorderThickness="0" Margin="0" Padding="0">
                 <GroupBox.Header>

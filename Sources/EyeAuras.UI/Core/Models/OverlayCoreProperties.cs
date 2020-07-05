@@ -1,18 +1,12 @@
-﻿using System;
-using System.Drawing;
+﻿using System.Drawing;
 using System.Windows.Media;
-using EyeAuras.Shared.Services;
 using Color = System.Windows.Media.Color;
 
 namespace EyeAuras.UI.Core.Models
 {
-    internal sealed class OverlayCoreProperties : IOverlayCoreProperties
+    internal abstract class OverlayCoreProperties : IOverlayCoreProperties
     {
-        public WindowMatchParams WindowMatch { get; set; }
-
-        public Rectangle OverlayBounds { get; set; }
-
-        public Rectangle SourceRegionBounds { get; set; }
+        public Rectangle OverlayBounds { get; set; } = new Rectangle(100,100,200,200);
 
         public double BorderThickness { get; set; }
 
@@ -24,6 +18,6 @@ namespace EyeAuras.UI.Core.Models
 
         public bool MaintainAspectRatio { get; set; } = true;
         
-        public int Version { get; set; } = 1;
+        public abstract int Version { get; set; }
     }
 }

@@ -6,11 +6,7 @@ namespace EyeAuras.UI.Core.Models
 {
     internal interface IOverlayCoreProperties : IAuraCoreProperties
     {
-        WindowMatchParams WindowMatch { get; set; }
-
         Rectangle OverlayBounds { get; set; }
-
-        Rectangle SourceRegionBounds { get; set; }
 
         double BorderThickness { get; set; }
 
