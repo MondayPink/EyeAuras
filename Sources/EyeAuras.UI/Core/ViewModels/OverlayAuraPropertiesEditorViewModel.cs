@@ -247,8 +247,8 @@ namespace EyeAuras.UI.Core.ViewModels
                 .Where(x => x != null)
                 .Subscribe(x =>
                 {
-                    var properties = Source.Properties.CloneJson();
-                    properties.CoreProperties = x.Properties.CloneJson();
+                    var properties = Source.Properties;
+                    properties.CoreProperties = x.Properties;
                     Source.Properties = properties;
                 }, Log.HandleUiException)
                 .AddTo(sourceAnchors);
