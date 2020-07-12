@@ -238,6 +238,11 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             GlobalHotkeyTrigger = CreateFreezeAurasTrigger();
             sharedContext.SystemTrigger.Add(GlobalHotkeyTrigger);
 
+            configProvider
+                .WhenChanged
+                .Subscribe(x => this.RaisePropertyChanged(nameof(ActualConfig)))
+                .AddTo(Anchors);
+
             RegisterSelectRegionHotkey()
                 .Where(isActive => isActive)
                 .ObserveOn(uiScheduler)
@@ -301,6 +306,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             Log.Info($"Enabling Auras...");
             GlobalHotkeyTrigger.TriggerValue = true;
         }
+
+        public EyeAurasConfig ActualConfig => configProvider.ActualConfig;
 
         public IPrismModuleStatusViewModel ModuleStatus { get; }
 

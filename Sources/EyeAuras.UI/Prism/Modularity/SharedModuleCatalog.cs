@@ -202,7 +202,8 @@ namespace EyeAuras.UI.Prism.Modularity
             var discoveredModules = (
                 from item in potentialModules
                 from prismBootstrapper in GetPrismBootstrapperTypes(item.module)
-                select new {item.dllFile, item.module, prismBootstrapper}).ToArray();
+                select new {item.dllFile, item.module, prismBootstrapper})
+                .ToArray();
 
             Log.Debug(
                 $"Discovered {discoveredModules.Length} modules:\n\t{discoveredModules.Select(x => new {x.dllFile.FullName, x.module.Metadata.VersionString, x.prismBootstrapper.AssemblyQualifiedName}).DumpToTable()}");
@@ -210,6 +211,13 @@ namespace EyeAuras.UI.Prism.Modularity
             foreach (var module in discoveredModules)
             {
                 Log.Debug($"Loading modules from file {module.dllFile}");
+                var loadedModule = moduleCatalog.Modules.FirstOrDefault(x => x.ModuleType == module.prismBootstrapper.AssemblyQualifiedName);
+                if (loadedModule != null)
+                {
+                    Log.Debug($"Module {loadedModule.ModuleName} is already loaded from {loadedModule.Ref}, ignoring duplicate {module}");
+                    continue;
+                }
+
                 if (AppArguments.Instance.IsLazyMode)
                 {
                     var moduleInfo = PrepareLocalModuleInfo(module.prismBootstrapper, module.dllFile);

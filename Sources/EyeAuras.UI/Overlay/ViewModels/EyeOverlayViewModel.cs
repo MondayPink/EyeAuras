@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Drawing;
 using System.Reactive.Concurrency;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Windows;
 using System.Windows.Input;
@@ -70,6 +71,8 @@ namespace EyeAuras.UI.Overlay.ViewModels
             thumbnailOpacity.SetDefaultValue(DefaultThumbnailOpacity);
 
             sw.Step("Basic properties initialized");
+
+            Disposable.Create(() => Log.Debug($"Overlay {OverlayName} is disposed")).AddTo(Anchors);
             
             WhenLoaded
                 .Take(1)

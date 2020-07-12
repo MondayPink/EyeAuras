@@ -245,6 +245,7 @@ namespace EyeAuras.UI.Core.ViewModels
                 .AddTo(Anchors);
             this.WhenAnyValue(x => x.SelectedCore)
                 .Where(x => x != null)
+                .Where(x => Source?.Properties?.CoreProperties.GetType() != x.Properties?.GetType())
                 .Subscribe(x =>
                 {
                     var properties = Source.Properties;

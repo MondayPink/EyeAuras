@@ -47,7 +47,7 @@
 
             </ResourceDictionary.MergedDictionaries>
 
-            <blue:MultiplyDoubleConverter x:Key="MultiplyDoubleDivideByThreeConverter" Factor="0.33" />
+            <blue:MultiplyDoubleConverter x:Key="MultiplyDoubleDivideByTwoConverter" Factor="0.5" />
             <blue:MultiplyDoubleConverter x:Key="MultiplyDoubleAuraListConverter" Factor="0.95" />
 
             <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource SlimScrollBarStyleKey}" />
@@ -152,8 +152,8 @@
                 <Grid>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="{Binding ListWidth, Mode=TwoWay}"
-                                          MinWidth="280"
-                                          MaxWidth="{Binding ElementName=MainWindowRoot, Path=ActualWidth, Converter={StaticResource MultiplyDoubleDivideByThreeConverter}}" />
+                                          MinWidth="360"
+                                          MaxWidth="{Binding ElementName=MainWindowRoot, Path=ActualWidth, Converter={StaticResource MultiplyDoubleDivideByTwoConverter}}" />
                         <ColumnDefinition Width="5" />
                         <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
@@ -206,8 +206,16 @@
                             <DockPanel DockPanel.Dock="Top">
                                 <ContentControl DockPanel.Dock="Right" Content="{Binding SelectRegionCommand}"
                                                 eye:CommandWrapperHelper.Icon="&#xf140;"
-                                                ContentTemplate="{StaticResource CommandWrapperIcon}"
-                                                ToolTip="Select Window" />
+                                                eye:CommandWrapperHelper.Text="New Replica">
+                                    <ContentControl.ToolTip>
+                                        <TextBlock>
+                                            <TextBlock.Inlines>
+                                                <Run Text="{Binding ActualConfig.RegionSelectHotkey}"/>
+                                                <Run Text=" Create Window Replica"/>
+                                            </TextBlock.Inlines>
+                                        </TextBlock>
+                                    </ContentControl.ToolTip>
+                                </ContentControl>
                                 <ContentControl DockPanel.Dock="Right"  Content="{Binding CreateDirectoryCommand}"
                                                 eye:CommandWrapperHelper.Icon="&#xf07b;"
                                                 eye:CommandWrapperHelper.Text="New folder"

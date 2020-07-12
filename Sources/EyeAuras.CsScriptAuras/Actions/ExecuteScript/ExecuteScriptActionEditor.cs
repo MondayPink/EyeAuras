@@ -43,15 +43,14 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
                 }, 
                 this.WhenAnyValue(x => x.Source.State).Select(x => x == ScriptState.ReadyToRun).ObserveOn(uiScheduler));
             this.WhenAnyValue(x => x.Source.SourceCode)
-                .Subscribe(x => LiveSourceCode = x)
+                .Subscribe(x => LiveSourceCode = x, Log.HandleUiException)
                 .AddTo(Anchors);
             
             this.WhenAnyValue(x => x.LiveSourceCode)
                 .Skip(1)
                 .Where(x => Source != null)
                 .DistinctUntilChanged(x => x?.Trim())
-                .Throttle(TimeSpan.FromSeconds(0), bgScheduler)
-                .Subscribe(x => Source.SourceCode = LiveSourceCode)
+                .Subscribe(x => Source.SourceCode = LiveSourceCode, Log.HandleUiException)
                 .AddTo(Anchors);
 
             this.WhenAnyValue(x => x.Source.Context.Variables)

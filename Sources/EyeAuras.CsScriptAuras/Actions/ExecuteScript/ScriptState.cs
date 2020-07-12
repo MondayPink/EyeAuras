@@ -5,6 +5,5 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
         NotReady,
         Compiling,
         ReadyToRun,
-        Running,
     }
 }

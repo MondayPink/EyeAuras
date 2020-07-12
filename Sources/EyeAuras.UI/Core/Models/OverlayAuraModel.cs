@@ -34,6 +34,7 @@ namespace EyeAuras.UI.Core.Models
         private readonly IAuraRepository repository;
         private readonly IConfigSerializer configSerializer;
 
+        private readonly SerialDisposable activeCoreAnchors;
         private readonly ComplexAuraAction onEnterActionsHolder = new ComplexAuraAction();
         private readonly ComplexAuraAction whileActiveActionsHolder = new ComplexAuraAction();
         private readonly ComplexAuraAction onExitActionsHolder = new ComplexAuraAction();
@@ -57,6 +58,7 @@ namespace EyeAuras.UI.Core.Models
             [NotNull] ISchedulerProvider schedulerProvider,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
+            activeCoreAnchors = new SerialDisposable().AddTo(Anchors);
             var defaultAuraName = $"Aura #{Interlocked.Increment(ref GlobalAuraIdx)}";
             Name = defaultAuraName;
             Id = idGenerator.Next();
@@ -338,11 +340,12 @@ namespace EyeAuras.UI.Core.Models
             WhileActiveActionsTimeout = source.WhileActiveActionsTimeout;
             IsEnabled = source.IsEnabled;
             ReloadCollections(source);
-            
-            Core?.Dispose();
+
             if (source.CoreProperties != null)
             {
+                //FIXME If same type of core is recreated twice, it disappears
                 Core = CreateModel<IAuraCore>(source.CoreProperties);
+                activeCoreAnchors.Disposable = Core;
                 Core.ModelController = this;
                 Core.Context = this;
                 Core.Properties = source.CoreProperties;
