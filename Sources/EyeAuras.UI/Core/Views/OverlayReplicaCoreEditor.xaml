@@ -27,7 +27,7 @@
                         BorderBrush="{StaticResource SecondaryAccentBrush}"
                         BorderThickness="0,1,0,1"
                         Padding="5">
-                    <ContentControl Content="{Binding WindowSelector}" />
+                    <ContentControl Content="{Binding Source.WindowSelector}" />
                 </Border>
             </Grid>
 

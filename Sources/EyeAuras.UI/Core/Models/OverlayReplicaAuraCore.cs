@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reactive;
 using System.Reactive.Linq;
 using EyeAuras.Shared.Services;
 using EyeAuras.UI.Overlay.ViewModels;
@@ -18,12 +19,36 @@ namespace EyeAuras.UI.Core.Models
             overlayViewModelFactory;
 
         public OverlayReplicaAuraCore(
+            [NotNull] IWindowSelectorService windowSelector,
             [NotNull] IFactory<IReplicaOverlayViewModel, IOverlayWindowController, IAuraModelController> overlayViewModelFactory,
             [NotNull] IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory, 
             [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory) : base(overlayWindowControllerFactory, windowTrackerFactory)
         {
+            WindowSelector = windowSelector.AddTo(Anchors);
             this.overlayViewModelFactory = overlayViewModelFactory;
+            
+            this.WhenAnyValue(x => x.TargetWindow).Subscribe(x => WindowSelector.TargetWindow = x).AddTo(Anchors);
+            WindowSelector.WhenAnyValue(x => x.TargetWindow).Subscribe(x => this.TargetWindow = x).AddTo(Anchors);
+            
+            this.WhenAnyValue(x => x.Overlay)
+                .OfType<IReplicaOverlayViewModel>()
+                .Select(x => x == null ? Observable.Empty<Unit>() : x.WhenAnyValue(y => y.AttachedWindow).Skip(1).ToUnit())
+                .Switch()
+                .Select(x => this.Overlay)
+                .OfType<IReplicaOverlayViewModel>()
+                .Subscribe(x => WindowSelector.ActiveWindow = x.AttachedWindow)
+                .AddTo(Anchors);
+
+            Observable.Merge(
+                    this.WhenAnyValue(x => x.Overlay).ToUnit(),
+                    WindowSelector.WhenAnyValue(x => x.ActiveWindow).ToUnit())
+                .Select(x => this.Overlay)
+                .OfType<IReplicaOverlayViewModel>()
+                .Subscribe(x => x.AttachedWindow = WindowSelector.ActiveWindow)
+                .AddTo(Anchors);
         }
+        
+        public IWindowSelectorService WindowSelector { get; }
 
         public WindowMatchParams TargetWindow
         {
@@ -44,7 +69,8 @@ namespace EyeAuras.UI.Core.Models
         protected override void VisitSave(OverlayReplicaCoreProperties properties)
         {
             base.VisitSave(properties);
-            if (Overlay is IReplicaOverlayViewModel replicaOverlay)
+            var replicaOverlay = Overlay;
+            if (replicaOverlay != null)
             {
                 properties.SourceRegionBounds = replicaOverlay.Region.Bounds;
             }
@@ -54,7 +80,8 @@ namespace EyeAuras.UI.Core.Models
         protected override void VisitLoad(OverlayReplicaCoreProperties source)
         {
             base.VisitLoad(source);
-            if (Overlay is IReplicaOverlayViewModel replicaOverlay)
+            var replicaOverlay = Overlay;
+            if (replicaOverlay != null)
             {
                 replicaOverlay.Region.SetValue(source.SourceRegionBounds);
             }
