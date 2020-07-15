@@ -229,6 +229,7 @@ Sources/PoeShared.Tests
 Sources/PoeShared.OpenCV
 Sources/PoeShared.Squirrel
 Sources/PoeShared.Native
+Sources/ControlzEx
 
 Sources/EyeAuras.Plus.Tests
 Sources/EyeAuras.OpenCVAuras

@@ -1,12 +1,13 @@
 using System;
 using System.Windows;
+using MahApps.Metro.Controls;
 
 namespace EyeAuras.UI.MainWindow.Views
 {
     /// <summary>
     ///     Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow
+    public partial class MainWindow : MetroWindow
     {
         public MainWindow()
         {

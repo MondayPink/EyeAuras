@@ -34,6 +34,7 @@
     Visibility="{Binding Visibility, Mode=TwoWay}"
     ShowInTaskbar="{Binding ShowInTaskbar, Mode=TwoWay}"
     Topmost="{Binding Topmost, Mode=TwoWay}"
+    KeepBorderOnMaximize="True"
     x:Name="MainWindowRoot"
     Background="{StaticResource MaterialDesignPaper}"
     Title="{Binding Title}"

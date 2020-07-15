@@ -114,8 +114,7 @@ namespace EyeAuras.UI.Prism.Modularity
                 throw new InvalidOperationException($"Directory {ModulesDirectory} could not be found.");
             }
 
-            Log.Info($"Enumerating modules in {ModulesDirectory.Name}");
-            Log.Debug($"Enumerating compressed modules in directory {ModulesDirectory}");
+            Log.Info($"Enumerating modules in directory '{ModulesDirectory.Name}'");
             var compressedModules = ModulesDirectory.GetFiles("*", SearchOption.TopDirectoryOnly).Where(x => SupportedArchives.Contains(x.Extension)).ToArray();
             Log.Debug($"Found {compressedModules.Length} compressed modules in directory {ModulesDirectory}: {compressedModules.Select(x => x.Name).DumpToTextRaw()}");
             foreach (var compressedModule in compressedModules)
