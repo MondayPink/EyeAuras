@@ -12,6 +12,10 @@
 
     <DataTemplate DataType="{x:Type viewModels:MessageBoxViewModel}">
         <Grid x:Name="MessageBoxRoot" Margin="10">
+            <Grid.InputBindings>
+                <KeyBinding Gesture="Escape" Command="{Binding CloseMessageBoxCommand}" />
+            </Grid.InputBindings>
+            
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="1*" />
                 <ColumnDefinition Width="5*" />
@@ -34,6 +38,7 @@
 
                 <TextBox DockPanel.Dock="Top"
                          Margin="5"
+                         eye:FocusHelper.IsFocused="True"
                          Style="{StaticResource MaterialDesignOutlinedTextFieldTextBox}"
                          MinHeight="60"
                          VerticalContentAlignment="Stretch" HorizontalContentAlignment="Stretch"

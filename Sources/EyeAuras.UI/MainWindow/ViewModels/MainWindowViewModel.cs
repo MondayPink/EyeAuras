@@ -617,7 +617,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         
         private bool CopyTabToClipboardCommandCanExecute(object parameter)
         {
-            Log.Info($"Recalculating for {parameter}");
             return parameter is IAuraTabViewModel || parameter is ITreeViewItemViewModel;
         }
 
@@ -687,6 +686,11 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     var cfg = configSerializer.Deserialize<List<OverlayAuraProperties>>(content);
                     tabsToPaste.Add(cfg);
                 } catch { }
+
+                if (tabsToPaste.Count == 0)
+                {
+                    throw new FormatException($"Failed to paste clipboard content");
+                }
 
                 tabsToPaste.ForEach(x => CreateAndAddTab(x));
             }
