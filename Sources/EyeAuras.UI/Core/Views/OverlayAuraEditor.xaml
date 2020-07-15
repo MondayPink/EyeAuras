@@ -78,6 +78,7 @@
                               Style="{StaticResource MaterialDesignFlatPrimaryToggleButton}"
                               Width="24"
                               Height="24"
+                              ToolTip="Show advanced settings"
                               x:Name="TriggerHeaderShowAdvancedSettings"
                               IsChecked="{Binding EnableAdvancedSettings}">
                     <ToggleButton.Content>
