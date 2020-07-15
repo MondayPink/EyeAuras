@@ -1,6 +1,7 @@
 <ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                    xmlns:default="clr-namespace:EyeAuras.DefaultAuras.Actions.PlaySound">
+                    xmlns:default="clr-namespace:EyeAuras.DefaultAuras.Actions.PlaySound"
+                    xmlns:eye="http://coderush.net/poeeye/">
     
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Converters.xaml" />
@@ -13,6 +14,12 @@
         <DockPanel DockPanel.Dock="Left" Margin="10,0,0,0" >
             <TextBlock DockPanel.Dock="Left" Text="Audio notification" />
             
+            <ContentControl DockPanel.Dock="Right" Margin="5,0,0,0"
+                            HorizontalAlignment="Right"
+                            ContentTemplate="{StaticResource CommandWrapperIcon}"
+                            Content="{Binding AddSoundCommand}"
+                            ToolTip="Load from file"
+                            eye:CommandWrapperHelper.Icon="&#xf115;" />
             
             <ContentControl DockPanel.Dock="Left" Margin="5,0,0,0"  >
                 <ComboBox ItemsSource="{Binding AudioNotificationSelector.Items}" SelectedValue="{Binding AudioNotificationSelector.SelectedValue}" SelectedValuePath="Value">
