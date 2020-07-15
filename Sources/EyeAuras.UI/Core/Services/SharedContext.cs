@@ -15,7 +15,7 @@ using PoeShared;
 
 namespace EyeAuras.UI.Core.Services
 {
-    internal sealed class SharedContext : DisposableReactiveObject, IEyeAuraSharedContext
+    internal sealed class SharedContext : DisposableReactiveObject, IGlobalContext
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(SharedContext));
 

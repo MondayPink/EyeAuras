@@ -28,11 +28,11 @@ namespace EyeAuras.UI.RegionSelector.Services
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(RegionSelectorService));
 
-        private readonly IEyeAuraSharedContext sharedContext;
+        private readonly IGlobalContext sharedContext;
         private readonly IFactory<RegionSelectorWindow> regionSelectorWindowFactory;
 
         public RegionSelectorService(
-            IEyeAuraSharedContext sharedContext,
+            IGlobalContext sharedContext,
             IFactory<RegionSelectorWindow> regionSelectorWindowFactory)
         {
             this.sharedContext = sharedContext;

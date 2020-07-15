@@ -25,7 +25,7 @@ namespace EyeAuras.UI.Prism
                 .RegisterSingleton<AuraRepository>(typeof(IAuraRepository), typeof(IAuraRegistrator))
                 .RegisterSingleton<MainWindowBlocksService>(typeof(IMainWindowBlocksProvider), typeof(IMainWindowBlocksRepository))
                 .RegisterSingleton<IWindowListProvider, WindowListProvider>()
-                .RegisterSingleton<SharedContext>(typeof(IEyeAuraSharedContext), typeof(ISharedContext))
+                .RegisterSingleton<SharedContext>(typeof(IGlobalContext), typeof(ISharedContext))
                 .RegisterSingleton<IRegionSelectorService, RegionSelectorService>()
                 .RegisterSingleton<IUniqueIdGenerator, UniqueIdGenerator>()
                 .RegisterSingleton<IWindowMatcher, WindowMatcher>()

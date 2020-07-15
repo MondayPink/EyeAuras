@@ -51,7 +51,7 @@ namespace EyeAuras.UI.Core.Models
         private IAuraCore core;
 
         public OverlayAuraModel(
-            [NotNull] IEyeAuraSharedContext sharedContext,
+            [NotNull] IGlobalContext sharedContext,
             [NotNull] IAuraRepository repository,
             [NotNull] IConfigSerializer configSerializer,
             [NotNull] IUniqueIdGenerator idGenerator,
@@ -84,7 +84,13 @@ namespace EyeAuras.UI.Core.Models
                     sharedContext.SystemTrigger.WhenAnyValue(x => x.IsActive))
                 .Select(x => (Triggers.Count > 0 && Triggers.IsActive || Triggers.Count == 0) && sharedContext.SystemTrigger.IsActive)
                 .DistinctUntilChanged()
-                .WithPrevious((prev, curr) => new {prev, curr, triggers = $"{Triggers.Items.Select(x => x.ToString()).DumpToTextRaw()}", systemTriggers = $"{sharedContext.SystemTrigger.Items.Select(x => x.ToString()).DumpToTextRaw()}"})
+                .WithPrevious((prev, curr) => new
+                {
+                    prev, 
+                    curr, 
+                    triggers = $"{Triggers.Items.Select(x => x.ToString()).DumpToTextRaw()}", 
+                    systemTriggers = $"{sharedContext.SystemTrigger.Items.Select(x => x.ToString()).DumpToTextRaw()}"
+                })
                 .Throttle(TriggerDefaultThrottle);
             
             //FIXME Move Trigger processing to BG scheduler

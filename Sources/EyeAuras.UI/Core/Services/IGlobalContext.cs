@@ -4,7 +4,7 @@ using EyeAuras.UI.Core.ViewModels;
 
 namespace EyeAuras.UI.Core.Services
 {
-    internal interface IEyeAuraSharedContext : ISharedContext
+    internal interface IGlobalContext : ISharedContext
     {
         IComplexAuraTrigger SystemTrigger { get; }
         
