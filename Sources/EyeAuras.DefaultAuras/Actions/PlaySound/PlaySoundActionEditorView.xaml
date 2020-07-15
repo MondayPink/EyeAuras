@@ -22,7 +22,11 @@
                             eye:CommandWrapperHelper.Icon="&#xf115;" />
             
             <ContentControl DockPanel.Dock="Left" Margin="5,0,0,0"  >
-                <ComboBox ItemsSource="{Binding AudioNotificationSelector.Items}" SelectedValue="{Binding AudioNotificationSelector.SelectedValue}" SelectedValuePath="Value">
+                <ComboBox ItemsSource="{Binding AudioNotificationSelector.Items}" 
+                          SelectedValue="{Binding AudioNotificationSelector.SelectedValue}" 
+                          SelectedValuePath="Value"
+                          DisplayMemberPath="Name"
+                          IsTextSearchCaseSensitive="False">
                     <ComboBox.ItemTemplate>
                         <DataTemplate>
                             <StackPanel Orientation="Horizontal">
@@ -30,7 +34,6 @@
                                         Width="24" Height="24"
                                         BorderThickness="1"
                                         Style="{StaticResource MaterialDesignFloatingActionButton}"
-
                                         BorderBrush="{StaticResource MouseOverAccentBrushKey}">
                                     <Button.Content>
                                         <TextBlock Style="{StaticResource IconTextBlock}" Text="&#xf144;"/>

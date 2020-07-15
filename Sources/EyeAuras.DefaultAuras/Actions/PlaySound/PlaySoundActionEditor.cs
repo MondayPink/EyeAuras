@@ -80,7 +80,8 @@ namespace EyeAuras.DefaultAuras.Actions.PlaySound
 
             Log.Debug($"Adding notification {op.FileName}");
             LastOpenedDirectory = Path.GetDirectoryName(op.FileName);
-            notificationsManager.AddFromFile(new FileInfo(op.FileName));
+            var notification = notificationsManager.AddFromFile(new FileInfo(op.FileName));
+            Source.Notification = notification;
         }
     }
 }
