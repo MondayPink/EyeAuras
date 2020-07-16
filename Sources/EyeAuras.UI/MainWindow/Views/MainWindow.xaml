@@ -200,6 +200,7 @@
                                                 eye:CommandWrapperHelper.Icon="&#xf1e0;"
                                                 eye:CommandWrapperHelper.CommandParameter="{Binding TreeViewAdapter.SelectedItem}"
                                                 ToolTip="CTRL+S Share selected tab on Web"
+                                                Visibility="{Binding ShareMessageBox.IsAvailable, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
                                                 Content="{Binding ShareMessageBox.ShowCommand}" />
 
                                 <TextBlock DockPanel.Dock="Left"
@@ -327,6 +328,7 @@
 
                                                         <MenuItem Header="Share..."
                                                                   InputGestureText="CTRL+S"
+                                                                  Visibility="{Binding ShareMessageBox.IsAvailable, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
                                                                   Command="{Binding Data.ShareMessageBox.ShowCommand, Source={StaticResource MainViewModelProxy}}"
                                                                   CommandParameter="{Binding Value}">
                                                             <MenuItem.Icon>
@@ -421,6 +423,7 @@
                                                         </MenuItem>
                                                         <MenuItem Header="Share..."
                                                                   InputGestureText="CTRL+S"
+                                                                  Visibility="{Binding ShareMessageBox.IsAvailable, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
                                                                   Command="{Binding Data.ShareMessageBox.ShowCommand, Source={StaticResource MainViewModelProxy}}"
                                                                   CommandParameter="{Binding}">
                                                             <MenuItem.Icon>
@@ -536,6 +539,7 @@
                 </Grid>
 
                 <materialDesign:DrawerHost
+                    x:Name="ApplicationUpdaterDrawer"
                     IsBottomDrawerOpen="{Binding ApplicationUpdater.IsOpen}">
                     <materialDesign:DrawerHost.BottomDrawerContent>
                         <Grid Height="60">
@@ -545,6 +549,7 @@
                 </materialDesign:DrawerHost>
 
                 <materialDesign:DialogHost
+                    x:Name="MessageBoxHost"
                     IsOpen="{Binding MessageBox.IsOpen}"
                     Style="{StaticResource MaterialMessageBoxStyleKey}"
                     materialDesign:TransitionAssist.DisableTransitions="True"
@@ -552,8 +557,9 @@
                     DialogContent="{Binding MessageBox}" />
                 
                 <materialDesign:DialogHost
-                    IsOpen="{Binding ShareMessageBox.IsOpen}"
+                    x:Name="ShareMessageBoxHost"
                     Style="{StaticResource MaterialDesignEmbeddedDialogHost}"
+                    IsOpen="{Binding ShareMessageBox.IsOpen}"
                     materialDesign:TransitionAssist.DisableTransitions="True"
                     CloseOnClickAway="True"
                     Visibility="{Binding ShareMessageBox.IsOpen, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">

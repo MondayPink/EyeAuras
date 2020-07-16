@@ -1,6 +1,7 @@
 ﻿using EyeAuras.Controls.ViewModels;
 using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
+using EyeAuras.Shared.Sharing.Services;
 using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.Services;
 using EyeAuras.UI.Core.ViewModels;
@@ -10,7 +11,6 @@ using EyeAuras.UI.Overlay.ViewModels;
 using EyeAuras.UI.Prism.Modularity;
 using EyeAuras.UI.RegionSelector.Services;
 using EyeAuras.UI.RegionSelector.ViewModels;
-using EyeAuras.UI.Sharing.Models;
 using EyeAuras.UI.Sharing.Services;
 using PoeShared.Modularity;
 using PoeShared.Scaffolding;

@@ -47,9 +47,11 @@
             </DockPanel>
             
             <DockPanel Grid.Column="0" Grid.Row="2" Margin="0,5,0,0" VerticalAlignment="Center">
-                <TextBox IsReadOnly="True" IsReadOnlyCaretVisible="True" 
-                         BorderThickness="0" 
-                         Text="{Binding StatusText, Mode=OneWay}" Background="Transparent"/>
+                <controls:ExtendedTextEditor 
+                                    IsReadOnly="True" 
+                                    BorderThickness="0" 
+                                    TextContent="{Binding StatusText, Mode=OneWay}" 
+                                    Background="Transparent"/>
             </DockPanel>
 
 

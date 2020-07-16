@@ -3,6 +3,8 @@ using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reactive.Linq;
 using System.Threading.Tasks;
+using DynamicData.Binding;
+using EyeAuras.Shared.Sharing.Services;
 using EyeAuras.UI.MainWindow.Models;
 using EyeAuras.UI.Sharing.Services;
 using JetBrains.Annotations;
@@ -31,9 +33,20 @@ namespace EyeAuras.UI.Sharing.ViewModels
             this.repository = repository;
             CloseCommand = CommandWrapper.Create(() => IsOpen = false);
 
-            this.WhenAnyValue(x => x.SelectedProvider)
-                .Where(x => x == null && KnownProviders.Any())
+            Observable.Merge(
+                    repository.Providers.ToObservableChangeSet().ToUnit(),
+                    this.WhenAnyValue(x => x.SelectedProvider).ToUnit())
+                .Where(_ => SelectedProvider == null && KnownProviders.Any())
                 .Subscribe(() => SelectedProvider = KnownProviders.First())
+                .AddTo(Anchors);
+
+            repository.Providers.ToObservableChangeSet().ToUnit()
+                .Subscribe(() => RaisePropertyChanged(nameof(IsAvailable)))
+                .AddTo(Anchors);
+
+            this.WhenAnyValue(x => x.IsAvailable)
+                .Where(x => IsOpen && !IsAvailable && CloseCommand.CanExecute(null))
+                .Subscribe(() => CloseCommand.Execute(null))
                 .AddTo(Anchors);
             
             ShowCommand = CommandWrapper.Create<object>(ShowCommandExecuted);
@@ -42,12 +55,19 @@ namespace EyeAuras.UI.Sharing.ViewModels
 
         private async Task ShareCommandExecuted(object arg)
         {
-            if (arg == null)
+            if (!(arg is string rawContent))
             {
                 return;
             }
 
-            if (SelectedProvider == null)
+            var aurasToUpload = auraSerializer.Deserialize(rawContent);
+            if (aurasToUpload?.Length <= 0)
+            {
+                return;
+            }
+            
+            var provider = selectedProvider;
+            if (provider == null)
             {
                 return;
             }
@@ -57,8 +77,9 @@ namespace EyeAuras.UI.Sharing.ViewModels
             StatusText = "Uploading...";
             try
             {
-                await Task.Delay(5000);
-                throw new NotImplementedException();
+                await Task.Delay(2000);
+                var result = await provider.UploadProperties(aurasToUpload);
+                StatusText = $"Uploaded to {result}";
             }
             catch (Exception e)
             {
@@ -86,6 +107,8 @@ namespace EyeAuras.UI.Sharing.ViewModels
         public CommandWrapper ShareCommand { get; }
 
         public ReadOnlyObservableCollection<IShareProvider> KnownProviders => repository.Providers;
+
+        public bool IsAvailable => KnownProviders.Any(); 
 
         public IShareProvider SelectedProvider
         {

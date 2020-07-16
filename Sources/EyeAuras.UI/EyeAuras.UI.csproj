@@ -107,6 +107,7 @@
     </ItemGroup>
 
     <ItemGroup>
+      <Folder Include="Sharing\Models" />
       <Folder Include="Triggers" />
     </ItemGroup>
 

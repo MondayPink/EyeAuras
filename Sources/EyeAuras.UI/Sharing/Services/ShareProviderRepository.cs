@@ -1,5 +1,6 @@
 ﻿using System.Collections.ObjectModel;
 using System.Linq;
+using EyeAuras.Shared.Sharing.Services;
 using log4net;
 using PoeShared.Scaffolding;
 
