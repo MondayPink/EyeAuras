@@ -1,6 +1,6 @@
 using Prism.Modularity;
 
-namespace EyeAuras.UI.MainWindow.ViewModels
+namespace EyeAuras.UI.MainWindow.Models
 {
     internal sealed class PrismModuleStatus
     {

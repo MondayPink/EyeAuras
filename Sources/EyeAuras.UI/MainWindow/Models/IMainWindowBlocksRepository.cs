@@ -3,7 +3,7 @@ using JetBrains.Annotations;
 
 namespace EyeAuras.UI.MainWindow.Models
 {
-    public interface IMainWindowBlocksProvider
+    public interface IMainWindowBlocksRepository
     {
         ReadOnlyObservableCollection<object> StatusBarItems { [NotNull] get; }
     }

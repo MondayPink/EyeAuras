@@ -10,10 +10,13 @@ using EyeAuras.UI.Overlay.ViewModels;
 using EyeAuras.UI.Prism.Modularity;
 using EyeAuras.UI.RegionSelector.Services;
 using EyeAuras.UI.RegionSelector.ViewModels;
+using EyeAuras.UI.Sharing.Models;
+using EyeAuras.UI.Sharing.Services;
 using PoeShared.Modularity;
 using PoeShared.Scaffolding;
 using Unity;
 using Unity.Extension;
+using IMainWindowBlocksRepository = EyeAuras.UI.MainWindow.Models.IMainWindowBlocksRepository;
 
 namespace EyeAuras.UI.Prism
 {
@@ -23,7 +26,8 @@ namespace EyeAuras.UI.Prism
         {
             Container
                 .RegisterSingleton<AuraRepository>(typeof(IAuraRepository), typeof(IAuraRegistrator))
-                .RegisterSingleton<MainWindowBlocksService>(typeof(IMainWindowBlocksProvider), typeof(IMainWindowBlocksRepository))
+                .RegisterSingleton<MainWindowBlocksService>(typeof(IMainWindowBlocksRepository), typeof(Shared.Services.IMainWindowBlocksRepository))
+                .RegisterSingleton<ShareProviderRepository>(typeof(IShareProviderRegistrator), typeof(IShareProviderRepository))
                 .RegisterSingleton<IWindowListProvider, WindowListProvider>()
                 .RegisterSingleton<SharedContext>(typeof(IGlobalContext), typeof(ISharedContext))
                 .RegisterSingleton<IRegionSelectorService, RegionSelectorService>()
@@ -31,6 +35,7 @@ namespace EyeAuras.UI.Prism
                 .RegisterSingleton<IWindowMatcher, WindowMatcher>()
                 .RegisterSingleton<IPrismModuleStatusViewModel, PrismModuleStatusViewModel>()
                 .RegisterSingleton<IAppModulePathResolver, AppModulePathResolver>()
+                .RegisterSingleton<IAuraSerializer, AuraSerializer>()
                 .RegisterSingleton<IMainWindowViewModel, MainWindowViewModel>();
 
             Container

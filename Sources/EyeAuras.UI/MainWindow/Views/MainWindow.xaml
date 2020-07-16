@@ -49,7 +49,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <blue:MultiplyDoubleConverter x:Key="MultiplyDoubleDivideByTwoConverter" Factor="0.5" />
-            <blue:MultiplyDoubleConverter x:Key="MultiplyDoubleAuraListConverter" Factor="0.95" />
+            <blue:MultiplyDoubleConverter x:Key="MultiplyDoubleDialogSizeConverter" Factor="0.75" />
 
             <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource SlimScrollBarStyleKey}" />
 
@@ -187,13 +187,20 @@
                                                 eye:CommandWrapperHelper.Icon="&#xF0EA;"
                                                 ToolTip="CTRL+V Paste tab"
                                                 Content="{Binding PasteTabCommand}" />
-
+                                
                                 <ContentControl DockPanel.Dock="Left" x:Name="CopyTabButton"
                                                 eye:CommandWrapperHelper.Text="COPY"
                                                 eye:CommandWrapperHelper.Icon="&#xF0C5;"
                                                 eye:CommandWrapperHelper.CommandParameter="{Binding TreeViewAdapter.SelectedItem}"
                                                 ToolTip="CTRL+C Copy selected tab to clipboard"
                                                 Content="{Binding CopyTabToClipboardCommand}" />
+                                
+                                <ContentControl DockPanel.Dock="Left" x:Name="ShareTabButton"
+                                                eye:CommandWrapperHelper.Text="SHARE..."
+                                                eye:CommandWrapperHelper.Icon="&#xf1e0;"
+                                                eye:CommandWrapperHelper.CommandParameter="{Binding TreeViewAdapter.SelectedItem}"
+                                                ToolTip="CTRL+S Share selected tab on Web"
+                                                Content="{Binding ShareMessageBox.ShowCommand}" />
 
                                 <TextBlock DockPanel.Dock="Left"
                                            Text="AURA LIST"
@@ -295,7 +302,7 @@
                                     </TreeView.ItemContainerStyle>
                                     
                                     <TreeView.Resources>
-                                        <DataTemplate DataType="{x:Type model:HolderTreeViewItemViewModel}">
+                                        <DataTemplate DataType="{x:Type viewModels:HolderTreeViewItemViewModel}">
                                             <DockPanel Background="Transparent"  Height="30">
                                                 <DockPanel.ContextMenu>
                                                     <ContextMenu>
@@ -318,6 +325,15 @@
                                                             </MenuItem.Icon>
                                                         </MenuItem>
 
+                                                        <MenuItem Header="Share..."
+                                                                  InputGestureText="CTRL+S"
+                                                                  Command="{Binding Data.ShareMessageBox.ShowCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  CommandParameter="{Binding Value}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xf1e0;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
                                                         <MenuItem Header="Copy"
                                                                   InputGestureText="CTRL+C"
                                                                   Command="{Binding Data.CopyTabToClipboardCommand, Source={StaticResource MainViewModelProxy}}"
@@ -373,7 +389,7 @@
                                         </DataTemplate>
 
                                         <HierarchicalDataTemplate
-                                            DataType="{x:Type model:DirectoryTreeViewItemViewModel}"
+                                            DataType="{x:Type viewModels:DirectoryTreeViewItemViewModel}"
                                             ItemsSource="{Binding Path=Children}">
                                             <DockPanel Background="Transparent"  Height="30">
                                                 <DockPanel.ContextMenu>
@@ -400,6 +416,15 @@
                                                                   Command="{Binding RenameCommand}">
                                                             <MenuItem.Icon>
                                                                 <TextBlock Text="&#xf044;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Share..."
+                                                                  InputGestureText="CTRL+S"
+                                                                  Command="{Binding Data.ShareMessageBox.ShowCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  CommandParameter="{Binding}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xf1e0;"
                                                                            Style="{StaticResource IconTextBlock}" />
                                                             </MenuItem.Icon>
                                                         </MenuItem>
@@ -525,6 +550,20 @@
                     materialDesign:TransitionAssist.DisableTransitions="True"
                     Visibility="{Binding MessageBox.IsOpen, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
                     DialogContent="{Binding MessageBox}" />
+                
+                <materialDesign:DialogHost
+                    IsOpen="{Binding ShareMessageBox.IsOpen}"
+                    Style="{StaticResource MaterialDesignEmbeddedDialogHost}"
+                    materialDesign:TransitionAssist.DisableTransitions="True"
+                    CloseOnClickAway="True"
+                    Visibility="{Binding ShareMessageBox.IsOpen, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                    <materialDesign:DialogHost.DialogContent>
+                        <ContentControl
+                            Width="{Binding ElementName=MainWindowRoot, Path=ActualWidth, Converter={StaticResource MultiplyDoubleDialogSizeConverter}}"
+                            Height="{Binding ElementName=MainWindowRoot, Path=ActualHeight, Converter={StaticResource MultiplyDoubleDialogSizeConverter}}"
+                            Content="{Binding ShareMessageBox}"/>
+                    </materialDesign:DialogHost.DialogContent>
+                </materialDesign:DialogHost>
 
                 <materialDesign:DialogHost
                     x:Name="SettingsHost"

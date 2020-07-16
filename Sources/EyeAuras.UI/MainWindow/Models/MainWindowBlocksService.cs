@@ -11,7 +11,7 @@ using PoeShared.Scaffolding;
 
 namespace EyeAuras.UI.MainWindow.Models
 {
-    internal sealed class MainWindowBlocksService : DisposableReactiveObject, IMainWindowBlocksProvider, IMainWindowBlocksRepository
+    internal sealed class MainWindowBlocksService : DisposableReactiveObject, IMainWindowBlocksRepository, Shared.Services.IMainWindowBlocksRepository
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(MainWindowBlocksService));
 

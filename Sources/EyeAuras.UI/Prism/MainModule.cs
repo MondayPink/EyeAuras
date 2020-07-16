@@ -3,6 +3,8 @@ using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.ViewModels;
 using EyeAuras.UI.MainWindow.ViewModels;
 using EyeAuras.UI.Prism.Modularity;
+using EyeAuras.UI.Sharing.Models;
+using EyeAuras.UI.Sharing.Services;
 using EyeAuras.UI.Triggers.AuraIsActive;
 using PoeShared;
 using PoeShared.Modularity;
@@ -51,6 +53,10 @@ namespace EyeAuras.UI.Prism
             auraManager.Register<EmptyAuraCore>();
             auraManager.Register<OverlayReplicaAuraCore>();
             auraManager.Register<OverlayImageAuraCore>();
+
+            var shareManager = container.Resolve<IShareProviderRegistrator>();
+            var nativeShareProvider = container.Resolve<NativeShareProvider>();
+            shareManager.Register(nativeShareProvider);
         }
     }
 }

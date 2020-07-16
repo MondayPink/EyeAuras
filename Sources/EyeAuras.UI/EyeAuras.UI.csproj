@@ -117,6 +117,9 @@
       <Page Update="Core\Views\EmptyAuraCoreEditor.xaml">
         <Generator>MSBuild:Compile</Generator>
       </Page>
+      <Page Update="Sharing\Views\ShareMessageBoxView.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
     </ItemGroup>
 
 </Project>

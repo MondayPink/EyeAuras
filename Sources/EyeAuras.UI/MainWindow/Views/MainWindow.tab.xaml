@@ -7,13 +7,14 @@
                     xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz"
                     xmlns:treeView="clr-namespace:PoeShared.UI.TreeView;assembly=PoeShared.Wpf"
                     xmlns:services="clr-namespace:EyeAuras.UI.MainWindow.Services"
-                    xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity">
+                    xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+                    xmlns:viewModels="clr-namespace:EyeAuras.UI.MainWindow.ViewModels">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/CommandWrapperView.xaml" />
     </ResourceDictionary.MergedDictionaries>
 
-    <DataTemplate x:Key="AuraViewModelHeaderTemplateKey" DataType="{x:Type services:HolderTreeViewItemViewModel}">
+    <DataTemplate x:Key="AuraViewModelHeaderTemplateKey" DataType="{x:Type viewModels:HolderTreeViewItemViewModel}">
         <DockPanel TextBlock.Foreground="WhiteSmoke" HorizontalAlignment="Stretch"
                    x:Name="AuraContainer">
             <Grid DockPanel.Dock="Left" Margin="5,0" VerticalAlignment="Center" Width="16">
@@ -122,7 +123,7 @@
         </DockPanel>
     </DataTemplate>
     
-    <DataTemplate x:Key="AuraDirectoryTemplateKey" DataType="{x:Type services:DirectoryTreeViewItemViewModel}">
+    <DataTemplate x:Key="AuraDirectoryTemplateKey" DataType="{x:Type viewModels:DirectoryTreeViewItemViewModel}">
         <DockPanel TextBlock.Foreground="WhiteSmoke" HorizontalAlignment="Stretch"
                    x:Name="AuraContainer">
             <materialDesign:PackIcon Kind="Folder" Width="28" Height="28" Visibility="{Binding IsExpanded,Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"/>

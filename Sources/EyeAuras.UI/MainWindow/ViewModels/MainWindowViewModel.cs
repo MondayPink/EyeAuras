@@ -25,6 +25,7 @@ using EyeAuras.UI.Core.ViewModels;
 using EyeAuras.UI.MainWindow.Models;
 using EyeAuras.UI.MainWindow.Services;
 using EyeAuras.UI.Prism.Modularity;
+using EyeAuras.UI.Sharing.ViewModels;
 using Humanizer;
 using JetBrains.Annotations;
 using log4net;
@@ -44,6 +45,7 @@ using ReactiveUI;
 using Unity;
 using Application = System.Windows.Application;
 using Color = System.Windows.Media.Color;
+using IMainWindowBlocksRepository = EyeAuras.UI.MainWindow.Models.IMainWindowBlocksRepository;
 using Size = System.Windows.Size;
 
 namespace EyeAuras.UI.MainWindow.ViewModels
@@ -58,9 +60,9 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         private readonly IFactory<IOverlayAuraTabViewModel, OverlayAuraProperties> auraViewModelFactory;
         private readonly IClipboardManager clipboardManager;
+        private readonly IAuraSerializer auraSerializer;
         private readonly IConfigProvider<EyeAurasConfig> configProvider;
         private readonly SharedContext sharedContext;
-        private readonly IConfigSerializer configSerializer;
         private readonly ISubject<Unit> configUpdateSubject = new Subject<Unit>();
 
         private readonly IHotkeyConverter hotkeyConverter;
@@ -83,13 +85,14 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private bool topmost;
 
         public MainWindowViewModel(
+            [NotNull] SharedContext sharedContext,
             [NotNull] IWindowViewController viewController,
             [NotNull] IUniqueIdGenerator idGenerator,
             [NotNull] IAppArguments appArguments,
             [NotNull] IFactory<IOverlayAuraTabViewModel, OverlayAuraProperties> auraViewModelFactory,
             [NotNull] IApplicationUpdaterViewModel appUpdater,
             [NotNull] IClipboardManager clipboardManager,
-            [NotNull] IConfigSerializer configSerializer,
+            [NotNull] IAuraSerializer auraSerializer,
             [NotNull] IGenericSettingsViewModel settingsViewModel,
             [NotNull] IMessageBoxViewModel messageBox,
             [NotNull] IHotkeyConverter hotkeyConverter,
@@ -97,14 +100,15 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             [NotNull] IConfigProvider<EyeAurasConfig> configProvider,
             [NotNull] IConfigProvider rootConfigProvider,
             [NotNull] IPrismModuleStatusViewModel moduleStatus,
-            [NotNull] IMainWindowBlocksProvider mainWindowBlocksProvider,
+            [NotNull] IMainWindowBlocksRepository mainWindowBlocksRepository,
             [NotNull] IFactory<IRegionSelectorService> regionSelectorServiceFactory,
-            [NotNull] SharedContext sharedContext,
             [NotNull] IComparisonService comparisonService,
             [NotNull] EyeTreeViewAdapter treeViewAdapter,
+            [NotNull] ShareMessageBoxViewModel shareMessageBox,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
             TreeViewAdapter = treeViewAdapter;
+            ShareMessageBox = shareMessageBox;
             using var unused = new OperationTimer(elapsed => Log.Debug($"{nameof(MainWindowViewModel)} initialization took {elapsed.TotalMilliseconds:F0}ms"));
             viewController
                 .WhenRendered
@@ -153,7 +157,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             ApplicationUpdater = appUpdater.AddTo(Anchors);
             MessageBox = messageBox.AddTo(Anchors);
             Settings = settingsViewModel.AddTo(Anchors);
-            StatusBarItems = mainWindowBlocksProvider.StatusBarItems;
+            StatusBarItems = mainWindowBlocksRepository.StatusBarItems;
 
             this.viewController = viewController;
             this.idGenerator = idGenerator;
@@ -163,7 +167,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             this.sharedContext = sharedContext;
             this.regionSelectorService = regionSelectorServiceFactory.Create();
             this.clipboardManager = clipboardManager;
-            this.configSerializer = configSerializer;
+            this.auraSerializer = auraSerializer;
             this.hotkeyConverter = hotkeyConverter;
             this.hotkeyTriggerFactory = hotkeyTriggerFactory;
 
@@ -338,6 +342,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         public IGenericSettingsViewModel Settings { get; }
         
         public EyeTreeViewAdapter TreeViewAdapter { get; }
+        
+        public ShareMessageBoxViewModel ShareMessageBox { get; }
 
         public Size MinSize { get; } = new Size(1150, 750);
 
@@ -629,21 +635,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
             Log.Debug($"Copying {parameter}...");
 
-            object dataToSerialize = parameter switch
-            {
-                IAuraTabViewModel auraTab => auraTab.Properties,
-                HolderTreeViewItemViewModel treeItemForAura => treeItemForAura.Value.Properties,
-                DirectoryTreeViewItemViewModel treeDirectory => treeDirectory
-                    .FindChildrenOfType<HolderTreeViewItemViewModel>()
-                    .Select(x => x.Value)
-                    .OfType<IAuraTabViewModel>()
-                    .Select(x => x.Properties)
-                    .ToArray(),
-                var _ => throw new ArgumentOutOfRangeException(nameof(parameter), parameter,
-                    $"Something went wrong - failed to copy parameter of type {parameter.GetType()}: {parameter}")
-            };
-
-            var data = configSerializer.Serialize(dataToSerialize);
+            var data = auraSerializer.Serialize(parameter);
             clipboardManager.SetText(data);
         }
 
@@ -672,26 +664,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             try
             {
                 content = clipboardManager.GetText() ?? "";
-                content = content.Trim();
-
-                var tabsToPaste = new List<OverlayAuraProperties>();
-                try
-                {
-                    var cfg = configSerializer.Deserialize<OverlayAuraProperties>(content);
-                    tabsToPaste.Add(cfg);
-                } catch { }
-                
-                try
-                {
-                    var cfg = configSerializer.Deserialize<List<OverlayAuraProperties>>(content);
-                    tabsToPaste.Add(cfg);
-                } catch { }
-
-                if (tabsToPaste.Count == 0)
-                {
-                    throw new FormatException($"Failed to paste clipboard content");
-                }
-
+                var tabsToPaste = auraSerializer.Deserialize(content);
                 tabsToPaste.ForEach(x => CreateAndAddTab(x));
             }
             catch (Exception e)
