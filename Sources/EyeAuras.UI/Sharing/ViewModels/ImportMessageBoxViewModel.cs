@@ -127,7 +127,6 @@ namespace EyeAuras.UI.Sharing.ViewModels
                 if (Uri.TryCreate(arg as string, UriKind.Absolute, out var uriArg))
                 {
                     ContentUri = uriArg.ToString();
-                    await Task.Delay(5000);
                     foreach (var provider in KnownProviders)
                     {
                         var result = (await provider.DownloadProperties(uriArg)).EmptyIfNull().OfType<OverlayAuraProperties>().ToArray();
