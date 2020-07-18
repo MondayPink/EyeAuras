@@ -10,6 +10,7 @@ using System.Windows.Interactivity;
 using System.Windows.Media;
 using EyeAuras.UI.Core.ViewModels;
 using EyeAuras.UI.MainWindow.Services;
+using EyeAuras.UI.MainWindow.ViewModels;
 using PoeShared.UI.TreeView;
 using DragDropEffects = System.Windows.DragDropEffects;
 using DragEventArgs = System.Windows.DragEventArgs;

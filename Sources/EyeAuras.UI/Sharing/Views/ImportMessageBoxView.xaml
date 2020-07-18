@@ -1,0 +1,80 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:eye="http://coderush.net/poeeye/"
+                    xmlns:viewModels1="clr-namespace:EyeAuras.UI.Sharing.ViewModels"
+                    xmlns:controls="clr-namespace:EyeAuras.CsScriptAuras.Controls;assembly=EyeAuras.CsScriptAuras"
+                    xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/CommandWrapperView.xaml" />
+        <ResourceDictionary
+            Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/materialdesigntheme.textblock.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+   
+    
+    <DataTemplate DataType="{x:Type viewModels1:ImportMessageBoxViewModel}">
+        <Grid x:Name="MessageBoxRoot" Margin="10">
+
+            <Grid.InputBindings>
+                <KeyBinding Gesture="Escape" Command="{Binding CloseCommand}" />
+                <KeyBinding Gesture="CTRL+V" Command="{Binding ImportCommand}" CommandParameter="{Binding Content}" />
+            </Grid.InputBindings>
+
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <DockPanel Grid.Column="0" Grid.Row="0" Grid.ColumnSpan="2">
+                <TextBlock Style="{StaticResource MaterialDesignHeadline6TextBlock}" Text="Import auras" />
+            </DockPanel>
+
+            <DockPanel Grid.Column="0" Grid.Row="1" Grid.ColumnSpan="2" 
+                       x:Name="MessageBoxContent">
+                <ContentControl DockPanel.Dock="Top"
+                                Visibility="{Binding AuraPreview.Content, Converter={StaticResource NullToCollapsedConverter}}"
+                                Content="{Binding AuraPreview}" />
+                <TextBox IsReadOnly="True" 
+                         MinHeight="30"
+                         VerticalContentAlignment="Center"
+                         Visibility="{Binding Content, Converter={StaticResource NotNullToCollapsedConverter}}"
+                         Text="{Binding ContentUri, Mode=TwoWay}">
+                    <i:Interaction.Behaviors>
+                        <eye:SelectAllOnFocusBehavior/>
+                    </i:Interaction.Behaviors>
+                </TextBox>
+            </DockPanel>
+
+            <DockPanel Grid.Column="1" Grid.Row="2" Margin="0,5,0,0" VerticalAlignment="Center">
+                <ContentControl DockPanel.Dock="Right"
+                                HorizontalAlignment="Right"
+                                eye:CommandWrapperHelper.Text="Close"
+                                Content="{Binding CloseCommand}" />
+                
+                <ContentControl DockPanel.Dock="Right"
+                                HorizontalAlignment="Right"
+                                MinWidth="100"
+                                Visibility="{Binding ContentUri, Converter={StaticResource NullToCollapsedConverter}}"
+                                eye:CommandWrapperHelper.Text="Process"
+                                eye:CommandWrapperHelper.IsDefault="True"
+                                eye:CommandWrapperHelper.CommandParameter="{Binding ContentUri}"
+                                eye:FocusHelper.IsFocused="{Binding ContentUri, Converter={StaticResource NullToTrueConverter}}"
+                                Content="{Binding DownloadCommand}" />
+                <ContentControl DockPanel.Dock="Right"
+                                HorizontalAlignment="Right"
+                                MinWidth="100"
+                                Visibility="{Binding Content, Converter={StaticResource NullToCollapsedConverter}}"
+                                eye:CommandWrapperHelper.Text="Import"
+                                eye:CommandWrapperHelper.IsDefault="True"
+                                eye:CommandWrapperHelper.CommandParameter="{Binding Content}"
+                                eye:FocusHelper.IsFocused="{Binding Content, Converter={StaticResource NullToTrueConverter}}"
+                                Content="{Binding ImportCommand}" />
+            </DockPanel>
+        </Grid>
+    </DataTemplate>
+</ResourceDictionary>

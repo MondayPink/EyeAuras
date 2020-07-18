@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using EyeAuras.UI.MainWindow.Models;
 using JetBrains.Annotations;
 using PoeShared.Scaffolding;
 

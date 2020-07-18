@@ -38,6 +38,7 @@
     x:Name="MainWindowRoot"
     Background="{StaticResource MaterialDesignPaper}"
     Title="{Binding Title}"
+    FrameworkElement.UseLayoutRounding="True"
     d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel}">
     <Window.Resources>
         <ResourceDictionary>
@@ -49,7 +50,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <blue:MultiplyDoubleConverter x:Key="MultiplyDoubleDivideByTwoConverter" Factor="0.5" />
-            <blue:MultiplyDoubleConverter x:Key="MultiplyDoubleAuraListConverter" Factor="0.95" />
+            <blue:MultiplyDoubleConverter x:Key="MultiplyDoubleDialogSizeConverter" Factor="0.75" />
 
             <Style TargetType="{x:Type ScrollBar}" BasedOn="{StaticResource SlimScrollBarStyleKey}" />
 
@@ -66,6 +67,7 @@
         <KeyBinding Gesture="CTRL+C" Command="{Binding CopyTabToClipboardCommand}"
                     CommandParameter="{Binding TreeViewAdapter.SelectedItem}" />
         <KeyBinding Gesture="CTRL+Z" Command="{Binding UndoCloseTabCommand}" />
+        <KeyBinding Gesture="CTRL+S" Command="{Binding ExportMessageBox.ShowCommand}" CommandParameter="{Binding TreeViewAdapter.SelectedItem}" />
     </Window.InputBindings>
 
     <DockPanel>
@@ -148,9 +150,17 @@
         </StatusBar>
 
         <materialDesign:DrawerHost DockPanel.Dock="Top" x:Name="MainDrawerHost">
-
-            <Grid>
-                <Grid>
+            
+            <Grid x:Name="WindowGrid">
+                <Grid x:Name="ContentGrid">
+                    <Grid.IsEnabled>
+                        <MultiBinding Converter="{StaticResource MultiBooleanAndConverter}">
+                            <Binding Path="MessageBox.IsOpen" Converter="{StaticResource NotConverter}"/>
+                            <Binding Path="ImportMessageBox.IsOpen" Converter="{StaticResource NotConverter}"/>
+                            <Binding Path="ExportMessageBox.IsOpen" Converter="{StaticResource NotConverter}"/>
+                            <Binding Path="Settings.IsOpen" Converter="{StaticResource NotConverter}"/>
+                        </MultiBinding>
+                    </Grid.IsEnabled>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="{Binding ListWidth, Mode=TwoWay}"
                                           MinWidth="360"
@@ -187,13 +197,21 @@
                                                 eye:CommandWrapperHelper.Icon="&#xF0EA;"
                                                 ToolTip="CTRL+V Paste tab"
                                                 Content="{Binding PasteTabCommand}" />
-
+                                
                                 <ContentControl DockPanel.Dock="Left" x:Name="CopyTabButton"
                                                 eye:CommandWrapperHelper.Text="COPY"
                                                 eye:CommandWrapperHelper.Icon="&#xF0C5;"
                                                 eye:CommandWrapperHelper.CommandParameter="{Binding TreeViewAdapter.SelectedItem}"
                                                 ToolTip="CTRL+C Copy selected tab to clipboard"
                                                 Content="{Binding CopyTabToClipboardCommand}" />
+                                
+                                <ContentControl DockPanel.Dock="Left" x:Name="ExportTabButton"
+                                                eye:CommandWrapperHelper.Text="SHARE..."
+                                                eye:CommandWrapperHelper.Icon="&#xf1e0;"
+                                                eye:CommandWrapperHelper.CommandParameter="{Binding TreeViewAdapter.SelectedItem}"
+                                                ToolTip="CTRL+S Share selected tab on Web"
+                                                Visibility="{Binding ExportMessageBox.IsAvailable, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                                                Content="{Binding ExportMessageBox.ShowCommand}" />
 
                                 <TextBlock DockPanel.Dock="Left"
                                            Text="AURA LIST"
@@ -295,7 +313,7 @@
                                     </TreeView.ItemContainerStyle>
                                     
                                     <TreeView.Resources>
-                                        <DataTemplate DataType="{x:Type model:HolderTreeViewItemViewModel}">
+                                        <DataTemplate DataType="{x:Type viewModels:HolderTreeViewItemViewModel}">
                                             <DockPanel Background="Transparent"  Height="30">
                                                 <DockPanel.ContextMenu>
                                                     <ContextMenu>
@@ -318,6 +336,16 @@
                                                             </MenuItem.Icon>
                                                         </MenuItem>
 
+                                                        <MenuItem Header="Share..."
+                                                                  InputGestureText="CTRL+S"
+                                                                  Visibility="{Binding ShareMessageBox.IsAvailable, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                                                                  Command="{Binding Data.ShareMessageBox.ShowCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  CommandParameter="{Binding Value}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xf1e0;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
                                                         <MenuItem Header="Copy"
                                                                   InputGestureText="CTRL+C"
                                                                   Command="{Binding Data.CopyTabToClipboardCommand, Source={StaticResource MainViewModelProxy}}"
@@ -373,7 +401,7 @@
                                         </DataTemplate>
 
                                         <HierarchicalDataTemplate
-                                            DataType="{x:Type model:DirectoryTreeViewItemViewModel}"
+                                            DataType="{x:Type viewModels:DirectoryTreeViewItemViewModel}"
                                             ItemsSource="{Binding Path=Children}">
                                             <DockPanel Background="Transparent"  Height="30">
                                                 <DockPanel.ContextMenu>
@@ -400,6 +428,16 @@
                                                                   Command="{Binding RenameCommand}">
                                                             <MenuItem.Icon>
                                                                 <TextBlock Text="&#xf044;"
+                                                                           Style="{StaticResource IconTextBlock}" />
+                                                            </MenuItem.Icon>
+                                                        </MenuItem>
+                                                        <MenuItem Header="Share..."
+                                                                  InputGestureText="CTRL+S"
+                                                                  Visibility="{Binding ShareMessageBox.IsAvailable, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                                                                  Command="{Binding Data.ShareMessageBox.ShowCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  CommandParameter="{Binding}">
+                                                            <MenuItem.Icon>
+                                                                <TextBlock Text="&#xf1e0;"
                                                                            Style="{StaticResource IconTextBlock}" />
                                                             </MenuItem.Icon>
                                                         </MenuItem>
@@ -511,6 +549,7 @@
                 </Grid>
 
                 <materialDesign:DrawerHost
+                    x:Name="ApplicationUpdaterDrawer"
                     IsBottomDrawerOpen="{Binding ApplicationUpdater.IsOpen}">
                     <materialDesign:DrawerHost.BottomDrawerContent>
                         <Grid Height="60">
@@ -520,11 +559,44 @@
                 </materialDesign:DrawerHost>
 
                 <materialDesign:DialogHost
+                    x:Name="MessageBoxHost"
                     IsOpen="{Binding MessageBox.IsOpen}"
                     Style="{StaticResource MaterialMessageBoxStyleKey}"
                     materialDesign:TransitionAssist.DisableTransitions="True"
                     Visibility="{Binding MessageBox.IsOpen, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
                     DialogContent="{Binding MessageBox}" />
+                
+                <materialDesign:DialogHost
+                    x:Name="ExportMessageBoxHost"
+                    Style="{StaticResource MaterialDesignEmbeddedDialogHost}"
+                    IsOpen="{Binding ExportMessageBox.IsOpen}"
+                    materialDesign:TransitionAssist.DisableTransitions="True"
+                    CloseOnClickAway="True"
+                    Visibility="{Binding ExportMessageBox.IsOpen, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                    <materialDesign:DialogHost.DialogContent>
+                        <ContentControl
+                            MaxWidth="{Binding ElementName=MainWindowRoot, Path=ActualWidth, Converter={StaticResource MultiplyDoubleDialogSizeConverter}}"
+                            MinWidth="600"
+                            MinHeight="100"
+                            Content="{Binding ExportMessageBox}"/>
+                    </materialDesign:DialogHost.DialogContent>
+                </materialDesign:DialogHost>
+                
+                <materialDesign:DialogHost
+                    x:Name="ImportMessageBoxHost"
+                    Style="{StaticResource MaterialDesignEmbeddedDialogHost}"
+                    IsOpen="{Binding ImportMessageBox.IsOpen}"
+                    materialDesign:TransitionAssist.DisableTransitions="True"
+                    CloseOnClickAway="True"
+                    Visibility="{Binding ImportMessageBox.IsOpen, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                    <materialDesign:DialogHost.DialogContent>
+                        <ContentControl
+                            MaxWidth="{Binding ElementName=MainWindowRoot, Path=ActualWidth, Converter={StaticResource MultiplyDoubleDialogSizeConverter}}"
+                            MinWidth="600"
+                            MinHeight="100"
+                            Content="{Binding ImportMessageBox}"/>
+                    </materialDesign:DialogHost.DialogContent>
+                </materialDesign:DialogHost>
 
                 <materialDesign:DialogHost
                     x:Name="SettingsHost"

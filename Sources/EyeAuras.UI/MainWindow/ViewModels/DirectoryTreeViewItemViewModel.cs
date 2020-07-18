@@ -1,16 +1,13 @@
-using System.Reactive.Linq;
-using System.Windows.Input;
-using JetBrains.Annotations;
-using log4net;
-using PoeShared.Scaffolding;
-using PoeShared.UI.TreeView;
-using Prism.Commands;
-using ReactiveUI;
 using System;
 using System.Linq;
+using System.Reactive.Linq;
+using log4net;
+using PoeShared.Scaffolding;
 using PoeShared.Scaffolding.WPF;
+using PoeShared.UI.TreeView;
+using ReactiveUI;
 
-namespace EyeAuras.UI.MainWindow.Services
+namespace EyeAuras.UI.MainWindow.ViewModels
 {
     internal class DirectoryTreeViewItemViewModel : EyeTreeItemViewModel, IDirectoryTreeViewItemViewModel
     {

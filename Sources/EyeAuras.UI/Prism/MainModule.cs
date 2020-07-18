@@ -3,6 +3,7 @@ using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.ViewModels;
 using EyeAuras.UI.MainWindow.ViewModels;
 using EyeAuras.UI.Prism.Modularity;
+using EyeAuras.UI.Sharing.Services;
 using EyeAuras.UI.Triggers.AuraIsActive;
 using PoeShared;
 using PoeShared.Modularity;

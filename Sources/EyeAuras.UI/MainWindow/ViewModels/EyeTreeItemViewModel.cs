@@ -1,14 +1,13 @@
 using System.IO;
 using System.Linq;
 using System.Text;
-using System.Windows.Input;
 using JetBrains.Annotations;
 using log4net;
 using PoeShared.Scaffolding;
 using PoeShared.Scaffolding.WPF;
 using PoeShared.UI.TreeView;
 
-namespace EyeAuras.UI.MainWindow.Services
+namespace EyeAuras.UI.MainWindow.ViewModels
 {
     internal abstract class EyeTreeItemViewModel : TreeViewItemViewModel
     {

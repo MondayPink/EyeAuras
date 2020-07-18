@@ -7,6 +7,7 @@ using System.Linq;
 using System.Reactive.Linq;
 using System.Windows.Input;
 using DynamicData.Binding;
+using EyeAuras.UI.MainWindow.Models;
 using log4net;
 using PoeShared;
 using PoeShared.Scaffolding.WPF;

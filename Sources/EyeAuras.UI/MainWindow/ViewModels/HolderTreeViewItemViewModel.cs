@@ -1,13 +1,11 @@
 using System;
 using System.Reactive.Linq;
-using System.Windows.Input;
 using EyeAuras.UI.Core.ViewModels;
 using log4net;
 using PoeShared.Scaffolding;
-using PoeShared.Scaffolding.WPF;
 using ReactiveUI;
 
-namespace EyeAuras.UI.MainWindow.Services
+namespace EyeAuras.UI.MainWindow.ViewModels
 {
     internal class HolderTreeViewItemViewModel : EyeTreeItemViewModel
     {
@@ -57,7 +55,7 @@ namespace EyeAuras.UI.MainWindow.Services
         
         public override string ToString()
         {
-            return $"Holder for {Value}";
+            return $"Holder({nameof(IsSelected)}: {IsSelected}) for {Value}";
         }
     }
 }
