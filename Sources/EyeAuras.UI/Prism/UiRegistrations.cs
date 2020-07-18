@@ -12,6 +12,7 @@ using EyeAuras.UI.Prism.Modularity;
 using EyeAuras.UI.RegionSelector.Services;
 using EyeAuras.UI.RegionSelector.ViewModels;
 using EyeAuras.UI.Sharing.Services;
+using EyeAuras.UI.Sharing.ViewModels;
 using PoeShared.Modularity;
 using PoeShared.Scaffolding;
 using Unity;
@@ -28,28 +29,30 @@ namespace EyeAuras.UI.Prism
                 .RegisterSingleton<AuraRepository>(typeof(IAuraRepository), typeof(IAuraRegistrator))
                 .RegisterSingleton<MainWindowBlocksService>(typeof(IMainWindowBlocksRepository), typeof(Shared.Services.IMainWindowBlocksRepository))
                 .RegisterSingleton<ShareProviderRepository>(typeof(IShareProviderRegistrator), typeof(IShareProviderRepository))
+                .RegisterSingleton<MainWindowViewModel>(typeof(IMainWindowViewModel))
+                .RegisterSingleton<GlobalContext>(typeof(IGlobalContext), typeof(ISharedContext));
+
+            Container
                 .RegisterSingleton<IWindowListProvider, WindowListProvider>()
-                .RegisterSingleton<SharedContext>(typeof(IGlobalContext), typeof(ISharedContext))
                 .RegisterSingleton<IRegionSelectorService, RegionSelectorService>()
                 .RegisterSingleton<IUniqueIdGenerator, UniqueIdGenerator>()
                 .RegisterSingleton<IWindowMatcher, WindowMatcher>()
                 .RegisterSingleton<IPrismModuleStatusViewModel, PrismModuleStatusViewModel>()
                 .RegisterSingleton<IAppModulePathResolver, AppModulePathResolver>()
                 .RegisterSingleton<IAuraSerializer, AuraSerializer>()
-                .RegisterSingleton<IMainWindowViewModel, MainWindowViewModel>();
+                .RegisterSingleton<IConfigProvider, ConfigProviderFromFile>();
 
             Container
                 .RegisterType<ISelectionAdornerViewModel, SelectionAdornerViewModel>()
                 .RegisterType<IWindowSelectorService, WindowSelectorService>()
                 .RegisterType<IMessageBoxViewModel, MessageBoxViewModel>()
                 .RegisterType<IOverlayAuraModel, OverlayAuraModel>()
+                .RegisterType<IAuraPreviewViewModel, AuraPreviewViewModel>()
                 .RegisterType<IRegionSelectorViewModel, RegionSelectorViewModel>()
                 .RegisterType<IPropertyEditorViewModel, PropertyEditorViewModel>()
                 .RegisterType<IOverlayAuraTabViewModel, OverlayAuraTabViewModel>()
                 .RegisterType<IImageOverlayViewModel, ImageOverlayViewModel>()
                 .RegisterType<IReplicaOverlayViewModel, ReplicaOverlayViewModel>();
-
-            Container.RegisterSingleton<IConfigProvider, ConfigProviderFromFile>();
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using DynamicData.Binding;
 using EyeAuras.Shared.Sharing.Services;
+using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.MainWindow.Models;
 using EyeAuras.UI.Sharing.Services;
 using JetBrains.Annotations;
@@ -15,20 +16,23 @@ using ReactiveUI;
 
 namespace EyeAuras.UI.Sharing.ViewModels
 {
-    internal sealed class ShareMessageBoxViewModel : DisposableReactiveObject
+    internal sealed class ExportMessageBoxViewModel : DisposableReactiveObject
     {
         private readonly IAuraSerializer auraSerializer;
         private readonly IShareProviderRepository repository;
         private bool isOpen;
         private IShareProvider selectedProvider;
-        private string content;
+        private OverlayAuraProperties[] content;
         private string statusText;
+        private string contentUri;
 
-        public ShareMessageBoxViewModel(
+        public ExportMessageBoxViewModel(
             [NotNull] IClipboardManager clipboardManager,
             [NotNull] IAuraSerializer auraSerializer,
+            [NotNull] IAuraPreviewViewModel auraPreview,
             [NotNull] IShareProviderRepository repository)
         {
+            AuraPreview = auraPreview.AddTo(Anchors);
             this.auraSerializer = auraSerializer;
             this.repository = repository;
             CloseCommand = CommandWrapper.Create(() => IsOpen = false);
@@ -51,16 +55,65 @@ namespace EyeAuras.UI.Sharing.ViewModels
             
             ShowCommand = CommandWrapper.Create<object>(ShowCommandExecuted);
             ShareCommand = CommandWrapper.Create<object>(ShareCommandExecuted);
+            CopyUriToClipboardCommand = CommandWrapper.Create(() => clipboardManager.SetText(ContentUri));
+
+            this.WhenAnyValue(x => x.Content)
+                .Subscribe(x => auraPreview.Content = x)
+                .AddTo(Anchors);
+        }
+        
+        public IAuraPreviewViewModel AuraPreview { get; }
+
+        public CommandWrapper CloseCommand { get; }
+        
+        public CommandWrapper ShowCommand { get; }
+        
+        public CommandWrapper ShareCommand { get; }
+        
+        public CommandWrapper CopyUriToClipboardCommand { get; }
+
+        public ReadOnlyObservableCollection<IShareProvider> KnownProviders => repository.Providers;
+
+        public bool IsAvailable => KnownProviders.Any();
+
+        public string ContentUri
+        {
+            get => contentUri;
+            private set => RaiseAndSetIfChanged(ref contentUri, value);
+        }
+        
+        public IShareProvider SelectedProvider
+        {
+            get => selectedProvider;
+            set => RaiseAndSetIfChanged(ref selectedProvider, value);
+        }
+
+        public bool IsOpen
+        {
+            get => isOpen;
+            set => RaiseAndSetIfChanged(ref isOpen, value);
+        }
+
+        public OverlayAuraProperties[] Content
+        {
+            get => content;
+            set => RaiseAndSetIfChanged(ref content, value);
+        }
+
+        public string StatusText
+        {
+            get => statusText;
+            private set => RaiseAndSetIfChanged(ref statusText, value);
         }
 
         private async Task ShareCommandExecuted(object arg)
         {
-            if (!(arg is string rawContent))
+            if (arg == null)
             {
                 return;
             }
 
-            var aurasToUpload = auraSerializer.Deserialize(rawContent);
+            var aurasToUpload = auraSerializer.Deserialize(auraSerializer.Serialize(arg));
             if (aurasToUpload?.Length <= 0)
             {
                 return;
@@ -79,7 +132,9 @@ namespace EyeAuras.UI.Sharing.ViewModels
             {
                 await Task.Delay(2000);
                 var result = await provider.UploadProperties(aurasToUpload);
-                StatusText = $"Uploaded to {result}";
+                StatusText = $"Uploaded successfully";
+                Content = null;
+                ContentUri = result.ToString();
             }
             catch (Exception e)
             {
@@ -94,44 +149,10 @@ namespace EyeAuras.UI.Sharing.ViewModels
                 return;
             }
 
+            var auras = auraSerializer.Deserialize(auraSerializer.Serialize(arg));
             IsOpen = true;
-            StatusText = null;
-            var data = auraSerializer.Serialize(arg);
-            Content = data;
-        }
-
-        public CommandWrapper CloseCommand { get; }
-        
-        public CommandWrapper ShowCommand { get; }
-        
-        public CommandWrapper ShareCommand { get; }
-
-        public ReadOnlyObservableCollection<IShareProvider> KnownProviders => repository.Providers;
-
-        public bool IsAvailable => KnownProviders.Any(); 
-
-        public IShareProvider SelectedProvider
-        {
-            get => selectedProvider;
-            set => RaiseAndSetIfChanged(ref selectedProvider, value);
-        }
-
-        public bool IsOpen
-        {
-            get => isOpen;
-            set => RaiseAndSetIfChanged(ref isOpen, value);
-        }
-
-        public string Content
-        {
-            get => content;
-            set => RaiseAndSetIfChanged(ref content, value);
-        }
-
-        public string StatusText
-        {
-            get => statusText;
-            private set => RaiseAndSetIfChanged(ref statusText, value);
+            ContentUri = null;
+            Content = auras;
         }
     }
 }

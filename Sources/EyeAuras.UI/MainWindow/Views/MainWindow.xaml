@@ -38,6 +38,7 @@
     x:Name="MainWindowRoot"
     Background="{StaticResource MaterialDesignPaper}"
     Title="{Binding Title}"
+    FrameworkElement.UseLayoutRounding="True"
     d:DataContext="{d:DesignInstance viewModels:MainWindowViewModel}">
     <Window.Resources>
         <ResourceDictionary>
@@ -66,6 +67,7 @@
         <KeyBinding Gesture="CTRL+C" Command="{Binding CopyTabToClipboardCommand}"
                     CommandParameter="{Binding TreeViewAdapter.SelectedItem}" />
         <KeyBinding Gesture="CTRL+Z" Command="{Binding UndoCloseTabCommand}" />
+        <KeyBinding Gesture="CTRL+S" Command="{Binding ExportMessageBox.ShowCommand}" CommandParameter="{Binding TreeViewAdapter.SelectedItem}" />
     </Window.InputBindings>
 
     <DockPanel>
@@ -148,9 +150,17 @@
         </StatusBar>
 
         <materialDesign:DrawerHost DockPanel.Dock="Top" x:Name="MainDrawerHost">
-
-            <Grid>
-                <Grid>
+            
+            <Grid x:Name="WindowGrid">
+                <Grid x:Name="ContentGrid">
+                    <Grid.IsEnabled>
+                        <MultiBinding Converter="{StaticResource MultiBooleanAndConverter}">
+                            <Binding Path="MessageBox.IsOpen" Converter="{StaticResource NotConverter}"/>
+                            <Binding Path="ImportMessageBox.IsOpen" Converter="{StaticResource NotConverter}"/>
+                            <Binding Path="ExportMessageBox.IsOpen" Converter="{StaticResource NotConverter}"/>
+                            <Binding Path="Settings.IsOpen" Converter="{StaticResource NotConverter}"/>
+                        </MultiBinding>
+                    </Grid.IsEnabled>
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="{Binding ListWidth, Mode=TwoWay}"
                                           MinWidth="360"
@@ -195,13 +205,13 @@
                                                 ToolTip="CTRL+C Copy selected tab to clipboard"
                                                 Content="{Binding CopyTabToClipboardCommand}" />
                                 
-                                <ContentControl DockPanel.Dock="Left" x:Name="ShareTabButton"
+                                <ContentControl DockPanel.Dock="Left" x:Name="ExportTabButton"
                                                 eye:CommandWrapperHelper.Text="SHARE..."
                                                 eye:CommandWrapperHelper.Icon="&#xf1e0;"
                                                 eye:CommandWrapperHelper.CommandParameter="{Binding TreeViewAdapter.SelectedItem}"
                                                 ToolTip="CTRL+S Share selected tab on Web"
-                                                Visibility="{Binding ShareMessageBox.IsAvailable, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
-                                                Content="{Binding ShareMessageBox.ShowCommand}" />
+                                                Visibility="{Binding ExportMessageBox.IsAvailable, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                                                Content="{Binding ExportMessageBox.ShowCommand}" />
 
                                 <TextBlock DockPanel.Dock="Left"
                                            Text="AURA LIST"
@@ -557,17 +567,34 @@
                     DialogContent="{Binding MessageBox}" />
                 
                 <materialDesign:DialogHost
-                    x:Name="ShareMessageBoxHost"
+                    x:Name="ExportMessageBoxHost"
                     Style="{StaticResource MaterialDesignEmbeddedDialogHost}"
-                    IsOpen="{Binding ShareMessageBox.IsOpen}"
+                    IsOpen="{Binding ExportMessageBox.IsOpen}"
                     materialDesign:TransitionAssist.DisableTransitions="True"
                     CloseOnClickAway="True"
-                    Visibility="{Binding ShareMessageBox.IsOpen, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                    Visibility="{Binding ExportMessageBox.IsOpen, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
                     <materialDesign:DialogHost.DialogContent>
                         <ContentControl
-                            Width="{Binding ElementName=MainWindowRoot, Path=ActualWidth, Converter={StaticResource MultiplyDoubleDialogSizeConverter}}"
-                            Height="{Binding ElementName=MainWindowRoot, Path=ActualHeight, Converter={StaticResource MultiplyDoubleDialogSizeConverter}}"
-                            Content="{Binding ShareMessageBox}"/>
+                            MaxWidth="{Binding ElementName=MainWindowRoot, Path=ActualWidth, Converter={StaticResource MultiplyDoubleDialogSizeConverter}}"
+                            MinWidth="600"
+                            MinHeight="100"
+                            Content="{Binding ExportMessageBox}"/>
+                    </materialDesign:DialogHost.DialogContent>
+                </materialDesign:DialogHost>
+                
+                <materialDesign:DialogHost
+                    x:Name="ImportMessageBoxHost"
+                    Style="{StaticResource MaterialDesignEmbeddedDialogHost}"
+                    IsOpen="{Binding ImportMessageBox.IsOpen}"
+                    materialDesign:TransitionAssist.DisableTransitions="True"
+                    CloseOnClickAway="True"
+                    Visibility="{Binding ImportMessageBox.IsOpen, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}">
+                    <materialDesign:DialogHost.DialogContent>
+                        <ContentControl
+                            MaxWidth="{Binding ElementName=MainWindowRoot, Path=ActualWidth, Converter={StaticResource MultiplyDoubleDialogSizeConverter}}"
+                            MinWidth="600"
+                            MinHeight="100"
+                            Content="{Binding ImportMessageBox}"/>
                     </materialDesign:DialogHost.DialogContent>
                 </materialDesign:DialogHost>
 

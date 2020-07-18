@@ -32,6 +32,8 @@ namespace EyeAuras.UI.Core.Models
         
         public IAuraProperties CoreProperties { get; set; }
 
+        public virtual bool IsValid => !string.IsNullOrEmpty(Id) && !string.IsNullOrEmpty(Name);
+
         public abstract int Version { get; set; }
     }
 }

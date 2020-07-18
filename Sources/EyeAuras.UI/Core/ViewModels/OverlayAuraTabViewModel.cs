@@ -194,7 +194,7 @@ namespace EyeAuras.UI.Core.ViewModels
 
         public override string ToString()
         {
-            return new {TabName, IsSelected, IsFlipped}.DumpToTextRaw();
+            return new {TabName, Id, IsSelected, IsFlipped}.DumpToTextRaw();
         }
     }
 }

@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using DynamicData;
 using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.ViewModels;
 using EyeAuras.UI.MainWindow.ViewModels;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PoeShared.Modularity;
 using PoeShared.UI.TreeView;
+using PoeShared.Wpf.Scaffolding;
+using PoeShared.Scaffolding;
 
 namespace EyeAuras.UI.MainWindow.Models
 {
@@ -23,8 +28,10 @@ namespace EyeAuras.UI.MainWindow.Models
         {
             object dataToSerialize = parameter switch
             {
-                IAuraTabViewModel auraTab => auraTab.Properties,
-                HolderTreeViewItemViewModel treeItemForAura => treeItemForAura.Value.Properties,
+                OverlayAuraProperties aura => new[] { aura },
+                OverlayAuraProperties[] auras => auras,
+                IAuraTabViewModel auraTab => new[] { auraTab.Properties },
+                HolderTreeViewItemViewModel treeItemForAura => new[] { treeItemForAura.Value.Properties },
                 DirectoryTreeViewItemViewModel treeDirectory => treeDirectory
                     .FindChildrenOfType<HolderTreeViewItemViewModel>()
                     .Select(x => x.Value)
@@ -42,26 +49,7 @@ namespace EyeAuras.UI.MainWindow.Models
         public OverlayAuraProperties[] Deserialize(string content)
         {
             content = content.Trim();
-
-            var tabsToPaste = new List<OverlayAuraProperties>();
-            try
-            {
-                var cfg = configSerializer.Deserialize<OverlayAuraProperties>(content);
-                tabsToPaste.Add(cfg);
-            } catch { }
-                
-            try
-            {
-                var cfg = configSerializer.Deserialize<List<OverlayAuraProperties>>(content);
-                tabsToPaste.Add(cfg);
-            } catch { }
-            
-            if (tabsToPaste.Count == 0)
-            {
-                throw new FormatException($"Failed to paste clipboard content");
-            }
-
-            return tabsToPaste.ToArray();
+            return configSerializer.DeserializeSingleOrList<OverlayAuraProperties>(content).Where(x => x.IsValid).ToArray();
         }
     }
 }

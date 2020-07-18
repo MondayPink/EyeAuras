@@ -58,11 +58,10 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private static readonly string ExplorerExecutablePath = Environment.ExpandEnvironmentVariables(@"%WINDIR%\explorer.exe");
         private static readonly TimeSpan ConfigSaveSamplingTimeout = TimeSpan.FromSeconds(5);
 
-        private readonly IFactory<IOverlayAuraTabViewModel, OverlayAuraProperties> auraViewModelFactory;
         private readonly IClipboardManager clipboardManager;
         private readonly IAuraSerializer auraSerializer;
         private readonly IConfigProvider<EyeAurasConfig> configProvider;
-        private readonly SharedContext sharedContext;
+        private readonly IGlobalContext globalContext;
         private readonly ISubject<Unit> configUpdateSubject = new Subject<Unit>();
 
         private readonly IHotkeyConverter hotkeyConverter;
@@ -70,7 +69,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private readonly CircularBuffer<OverlayAuraProperties> recentlyClosedQueries = new CircularBuffer<OverlayAuraProperties>(UndoStackDepth);
         private readonly IRegionSelectorService regionSelectorService;
         private readonly IWindowViewController viewController;
-        private readonly IUniqueIdGenerator idGenerator;
         private readonly IAppArguments appArguments;
 
         private double height;
@@ -85,11 +83,9 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private bool topmost;
 
         public MainWindowViewModel(
-            [NotNull] SharedContext sharedContext,
             [NotNull] IWindowViewController viewController,
-            [NotNull] IUniqueIdGenerator idGenerator,
+            [NotNull] IGlobalContext globalContext,
             [NotNull] IAppArguments appArguments,
-            [NotNull] IFactory<IOverlayAuraTabViewModel, OverlayAuraProperties> auraViewModelFactory,
             [NotNull] IApplicationUpdaterViewModel appUpdater,
             [NotNull] IClipboardManager clipboardManager,
             [NotNull] IAuraSerializer auraSerializer,
@@ -104,11 +100,13 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             [NotNull] IFactory<IRegionSelectorService> regionSelectorServiceFactory,
             [NotNull] IComparisonService comparisonService,
             [NotNull] EyeTreeViewAdapter treeViewAdapter,
-            [NotNull] ShareMessageBoxViewModel shareMessageBox,
+            [NotNull] ExportMessageBoxViewModel exportMessageBox,
+            [NotNull] ImportMessageBoxViewModel importMessageBox,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
             TreeViewAdapter = treeViewAdapter;
-            ShareMessageBox = shareMessageBox;
+            ExportMessageBox = exportMessageBox;
+            ImportMessageBox = importMessageBox;
             using var unused = new OperationTimer(elapsed => Log.Debug($"{nameof(MainWindowViewModel)} initialization took {elapsed.TotalMilliseconds:F0}ms"));
             viewController
                 .WhenRendered
@@ -141,7 +139,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .Subscribe(x => ShowInTaskbar = WindowState != WindowState.Minimized || !configProvider.ActualConfig.MinimizeToTray, Log.HandleUiException)
                 .AddTo(Anchors);
             
-            TabsList = sharedContext.TabList;
+            TabsList = globalContext.TabList;
             treeViewAdapter.WhenAnyValue(x => x.SelectedValue)
                 .Subscribe(x => SelectedTab = x)
                 .AddTo(Anchors);
@@ -160,11 +158,9 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             StatusBarItems = mainWindowBlocksRepository.StatusBarItems;
 
             this.viewController = viewController;
-            this.idGenerator = idGenerator;
             this.appArguments = appArguments;
-            this.auraViewModelFactory = auraViewModelFactory;
             this.configProvider = configProvider;
-            this.sharedContext = sharedContext;
+            this.globalContext = globalContext;
             this.regionSelectorService = regionSelectorServiceFactory.Create();
             this.clipboardManager = clipboardManager;
             this.auraSerializer = auraSerializer;
@@ -216,10 +212,10 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     this.WhenAnyProperty(x => x.Left, x => x.Top, x => x.Width, x => x.Height)
                         .Sample(ConfigSaveSamplingTimeout)
                         .Select(x => $"[{x.Sender}] Main window property change: {x.EventArgs.PropertyName}"),
-                    sharedContext.AuraList.ToObservableChangeSet()
+                    globalContext.AuraList.ToObservableChangeSet()
                         .Sample(ConfigSaveSamplingTimeout)
                         .Select(x => "Tabs list change"),
-                    sharedContext.TabList.ToObservableChangeSet()
+                    globalContext.TabList.ToObservableChangeSet()
                         .WhenPropertyChanged(x => x.Properties)
                         .Sample(ConfigSaveSamplingTimeout)
                         .WithPrevious((prev, curr) => new {prev, curr})
@@ -240,7 +236,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .AddTo(Anchors);
 
             GlobalHotkeyTrigger = CreateFreezeAurasTrigger();
-            sharedContext.SystemTrigger.Add(GlobalHotkeyTrigger);
+            globalContext.SystemTrigger.Add(GlobalHotkeyTrigger);
 
             configProvider
                 .WhenChanged
@@ -285,7 +281,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             Log.Info($"Updating configuration format");
             rootConfigProvider.Save();
 
-            if (sharedContext.AuraList.Count == 0)
+            if (globalContext.AuraList.Count == 0)
             {
                 CreateNewTabCommand.Execute(null);
             }
@@ -295,7 +291,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .Subscribe(SaveConfig, Log.HandleException)
                 .AddTo(Anchors);
 
-            sharedContext
+            globalContext
                 .TabList
                 .ToObservableChangeSet()
                 .ObserveOn(uiScheduler)
@@ -343,7 +339,9 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         
         public EyeTreeViewAdapter TreeViewAdapter { get; }
         
-        public ShareMessageBoxViewModel ShareMessageBox { get; }
+        public ExportMessageBoxViewModel ExportMessageBox { get; }
+        
+        public ImportMessageBoxViewModel ImportMessageBox { get; }
 
         public Size MinSize { get; } = new Size(1150, 750);
 
@@ -602,7 +600,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         private void CreateNewTabCommandExecuted()
         {
-            CreateAndAddTab(OverlayAuraProperties.Default);
+            CreateAura(OverlayAuraProperties.Default);
         }
 
         private void CreateNewTabInDirectoryCommandExecuted(object parameter)
@@ -618,7 +616,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
             var properties = OverlayAuraProperties.Default.CloneJson();
             properties.Path = path;
-            CreateAndAddTab(properties);
+            CreateAura(properties);
         }
         
         private bool CopyTabToClipboardCommandCanExecute(object parameter)
@@ -652,30 +650,16 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             }
 
             var closedAuraProperties = recentlyClosedQueries.PopBack();
-            CreateAndAddTab(closedAuraProperties);
+            CreateAura(closedAuraProperties);
             UndoCloseTabCommand.RaiseCanExecuteChanged();
         }
 
         private void PasteTabCommandExecuted()
         {
-            using var sw = new BenchmarkTimer("Paste tab", Log);
-
-            var content = "";
-            try
+            var content = clipboardManager.GetText() ?? "";
+            if (ImportMessageBox.DownloadCommand.CanExecute(content))
             {
-                content = clipboardManager.GetText() ?? "";
-                var tabsToPaste = auraSerializer.Deserialize(content);
-                tabsToPaste.ForEach(x => CreateAndAddTab(x));
-            }
-            catch (Exception e)
-            {
-                MessageBox.Content = string.IsNullOrWhiteSpace(content)
-                    ? "<Clipboard is empty>"
-                    : content;
-                MessageBox.IsOpen = true;
-                MessageBox.ContentHint = "Item has invalid format";
-                MessageBox.Title = "Failed to insert new item";
-                throw new FormatException($"Failed to parse/get clipboard content:\n{content}", e);
+                ImportMessageBox.DownloadCommand.Execute(content);
             }
         }
 
@@ -689,7 +673,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             Guard.ArgumentIsTrue(() => DuplicateTabCommandCanExecute());
 
             var cfg = selectedTab.Properties;
-            CreateAndAddTab(cfg);
+            CreateAura(cfg);
         }
 
         private bool CloseTabCommandCanExecute(IAuraTabViewModel tab)
@@ -712,8 +696,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 SelectedTab = tabToSelect;
             }
 
-            sharedContext.TabList.Remove(tab);
-            sw.Step($"Removed tab from AuraList (current count: {sharedContext.AuraList.Count})");
+            globalContext.TabList.Remove(tab);
+            sw.Step($"Removed tab from AuraList (current count: {globalContext.AuraList.Count})");
 
             var cfg = tab.Properties;
             recentlyClosedQueries.PushBack(cfg);
@@ -814,7 +798,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     auraProperties.OverlayBounds = Rectangle.Empty;
                 }
                 
-                CreateAndAddTab(auraProperties);
+                CreateAura(auraProperties);
             }
 
             Left = config.MainWindowBounds.Left;
@@ -828,40 +812,14 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 : new GridLength(config.ListWidth, GridUnitType.Pixel);
 
             Log.Debug($"Successfully loaded config, tabs count: {TabsList.Count}");
-            TreeViewAdapter.SyncWith(sharedContext.TabList, config.Directories.EmptyIfNull().ToArray());
-        }
-
-        private IAuraTabViewModel CreateAndAddTab(OverlayAuraProperties tabProperties)
-        {
-            using var sw = new BenchmarkTimer("Create new tab", Log);
-
-            Log.Debug($"Adding new tab using config {tabProperties.DumpToTextRaw()}...");
-
-            var existingTab = TabsList.FirstOrDefault(x => x.Id == tabProperties.Id);
-            if (existingTab != null)
-            {
-                var newId = idGenerator.Next();
-                Log.Warn($"Tab with the same Id({tabProperties.Id}) already exists: {existingTab}, changing Id of a new tab to {newId}");
-                tabProperties.Id = newId;
-            }
-
-            var auraViewModel = (IAuraTabViewModel)auraViewModelFactory.Create(tabProperties);
-            sw.Step($"Created view model of type {auraViewModel.GetType()}: {auraViewModel}");
-            var auraCloseController = new CloseController<IAuraTabViewModel>(auraViewModel, () => CloseTabCommandExecuted(auraViewModel));
-            auraViewModel.SetCloseController(auraCloseController);
-            sw.Step($"Initialized CloseController");
-
-            sharedContext.TabList.Add(auraViewModel);
-            sw.Step($"Added to AuraList(current count: {sharedContext.AuraList.Count})");
-
-            return auraViewModel;
+            TreeViewAdapter.SyncWith(globalContext.TabList, config.Directories.EmptyIfNull().ToArray());
         }
 
         private void AddNewCommandExecuted(OverlayAuraProperties tabProperties, bool rename = true)
         {
             try
             {
-                var newTab = CreateAndAddTab(tabProperties);
+                var newTab = CreateAura(tabProperties);
                 
                 if (newTab is IOverlayAuraTabViewModel newOverlayTab)
                 {
@@ -884,6 +842,19 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             {
                 Log.HandleUiException(e);
             }
+        }
+        
+        public IAuraTabViewModel[] CreateAura(params OverlayAuraProperties[] properties)
+        {
+            return properties.Select(CreateAura).ToArray();
+        }
+
+        private IAuraTabViewModel CreateAura(OverlayAuraProperties tabProperties)
+        {
+            var auraViewModel = globalContext.CreateAura(tabProperties).Single();
+            var auraCloseController = new CloseController<IAuraTabViewModel>(auraViewModel, () => CloseTabCommandExecuted(auraViewModel));
+            auraViewModel.SetCloseController(auraCloseController);
+            return auraViewModel;
         }
     }
 }

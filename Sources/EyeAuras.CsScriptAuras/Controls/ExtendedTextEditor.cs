@@ -55,7 +55,7 @@ namespace EyeAuras.CsScriptAuras.Controls
                 AllowToggleOverstrikeMode = false,
                 ConvertTabsToSpaces = true,
                 EnableEmailHyperlinks = false,
-                EnableHyperlinks = true,
+                EnableHyperlinks = false,
                 EnableImeSupport = false,
                 EnableRectangularSelection = false,
                 EnableTextDragDrop = false,

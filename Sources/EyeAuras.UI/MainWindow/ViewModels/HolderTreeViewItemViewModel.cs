@@ -55,7 +55,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         
         public override string ToString()
         {
-            return $"Holder for {Value}";
+            return $"Holder({nameof(IsSelected)}: {IsSelected}) for {Value}";
         }
     }
 }

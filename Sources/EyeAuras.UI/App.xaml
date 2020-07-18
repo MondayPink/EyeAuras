@@ -21,7 +21,9 @@
                 <ResourceDictionary Source="MainWindow/Views/MessageBoxView.xaml" />
                 <ResourceDictionary Source="MainWindow/Views/EyeAurasSettingsView.xaml" />
                 <ResourceDictionary Source="RegionSelector/Views/SelectionAdornerView.xaml" />
-                <ResourceDictionary Source="Sharing/Views/ShareMessageBoxView.xaml" />
+                <ResourceDictionary Source="Sharing/Views/ExportMessageBoxView.xaml" />
+                <ResourceDictionary Source="Sharing/Views/ImportMessageBoxView.xaml" />
+                <ResourceDictionary Source="Sharing/Views/AuraPreviewView.xaml" />
 
                 <ResourceDictionary Source="SplashWindow/Views/SplashWindowView.xaml" />
                 <ResourceDictionary Source="Overlay/Views/EyeOverlayWindowView.xaml" />

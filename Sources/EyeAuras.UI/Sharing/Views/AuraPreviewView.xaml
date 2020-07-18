@@ -1,0 +1,63 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+                    xmlns:eye="http://coderush.net/poeeye/"
+                    xmlns:viewModels1="clr-namespace:EyeAuras.UI.Sharing.ViewModels"
+                    xmlns:controls="clr-namespace:EyeAuras.CsScriptAuras.Controls;assembly=EyeAuras.CsScriptAuras"
+                    xmlns:treeView="clr-namespace:PoeShared.UI.TreeView;assembly=PoeShared.Wpf"
+                    xmlns:viewModels="clr-namespace:EyeAuras.UI.MainWindow.ViewModels">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/CommandWrapperView.xaml" />
+        <ResourceDictionary
+            Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/materialdesigntheme.textblock.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+
+    <DataTemplate DataType="{x:Type viewModels1:AuraPreviewViewModel}">
+        <DockPanel>
+            <treeView:StretchingTreeView ItemsSource="{Binding PreviewData}" Margin="2.5" x:Name="PreviewTreeView"
+                                         DockPanel.Dock="Top"
+                                         VirtualizingPanel.IsVirtualizing="False"
+                                         ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                         HorizontalContentAlignment="Stretch">
+                <treeView:StretchingTreeView.Style>
+                    <Style TargetType="{x:Type TreeView}" BasedOn="{StaticResource MaterialDesignTreeView}">
+                        <Setter Property="Background" Value="{x:Null}" />
+                        <Setter Property="BorderBrush"
+                                Value="{StaticResource SecondaryAccentForegroundBrush}" />
+                        <Setter Property="BorderThickness" Value="0" />
+                        <Setter Property="Foreground"
+                                Value="{StaticResource PrimaryHueDarkForegroundBrush}" />
+                    </Style>
+                </treeView:StretchingTreeView.Style>
+
+                <TreeView.ItemContainerStyle>
+                    <Style TargetType="{x:Type TreeViewItem}" BasedOn="{StaticResource MaterialDesignTreeViewItem}">
+                        <Setter Property="IsExpanded" Value="{Binding IsExpanded, Mode=TwoWay}" />
+                        <Setter Property="IsSelected" Value="{Binding IsSelected, Mode=TwoWay}" />
+                        <Setter Property="Padding" Value="0 5 0 5" />
+                        <Setter Property="Margin" Value="0 0 0 0" />
+                        <Setter Property="HorizontalAlignment" Value="Stretch" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Style.Triggers>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter Property="BorderBrush"
+                                        Value="{StaticResource SecondaryAccentBrush}" />
+                                <Setter Property="Background"
+                                        Value="{StaticResource PrimaryHueDarkBrush}" />
+                            </Trigger>
+                        </Style.Triggers>
+                    </Style>
+                </TreeView.ItemContainerStyle>
+
+                <TreeView.Resources>
+                    <DataTemplate DataType="{x:Type viewModels:TextEyeTreeItemViewModel}">
+                        <DockPanel Background="Transparent" Height="30">
+                            <TextBlock Text="{Binding Name}" />
+                        </DockPanel>
+                    </DataTemplate>
+                </TreeView.Resources>
+            </treeView:StretchingTreeView>
+        </DockPanel>
+    </DataTemplate>
+</ResourceDictionary>

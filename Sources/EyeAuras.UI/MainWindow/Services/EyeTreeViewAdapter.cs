@@ -4,17 +4,21 @@ using System.Collections.ObjectModel;
 using System.Drawing.Imaging;
 using System.IO;
 using System.Linq;
+using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using DynamicData;
 using DynamicData.Binding;
 using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.Core.ViewModels;
 using EyeAuras.UI.MainWindow.ViewModels;
+using JetBrains.Annotations;
 using log4net;
 using PoeShared;
+using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using PoeShared.UI.TreeView;
 using ReactiveUI;
+using Unity;
 
 namespace EyeAuras.UI.MainWindow.Services
 {
@@ -22,13 +26,15 @@ namespace EyeAuras.UI.MainWindow.Services
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(EyeTreeViewAdapter));
 
+        private readonly DirectoryTreeViewItemViewModel root = new DirectoryTreeViewItemViewModel(null) {};
+        private readonly IScheduler uiScheduler;
         private ITreeViewItemViewModel selectedItem;
         private IAuraTabViewModel selectedValue;
-        private readonly DirectoryTreeViewItemViewModel root = new DirectoryTreeViewItemViewModel(null) {};
         private ObservableCollection<IAuraTabViewModel> itemsSource;
 
-        public EyeTreeViewAdapter()
+        public EyeTreeViewAdapter( [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
+            this.uiScheduler = uiScheduler;
             TreeViewItems = root.Children;
         }
 
@@ -123,6 +129,7 @@ namespace EyeAuras.UI.MainWindow.Services
             source.ToObservableChangeSet()
                 .ForEachItemChange(x =>
                 {
+                    Log.Debug($"Source collection changed: {x.Reason}, previous: {x.Previous}, current: {x.Current}");
                     switch (x.Reason)
                     {
                         case ListChangeReason.Add:
@@ -149,23 +156,22 @@ namespace EyeAuras.UI.MainWindow.Services
                 .Subscribe(() => { }, Log.HandleUiException)
                 .AddTo(Anchors);
 
-            source
-                .ToObservableChangeSet()
-                .WhenPropertyChanged(x => x.IsSelected)
-                .Where(x => x.Value)
-                .Subscribe(x =>
-                {
-                    SelectedValue = x.Sender;
-                }, Log.HandleUiException)
-                .AddTo(Anchors);
-
             this.WhenAnyValue(x => x.SelectedValue)
                 .Subscribe(x =>
                 {
+                    Log.Debug($"SelectedValue changed, syncing SelectedItem and SelectedValue, values with IsSelected=true: {source.Where(y => y.IsSelected).Select(y => y.ToString()).DumpToTextRaw()}, items: {TreeViewItems.Where(y => y.IsSelected).Select(y => y.ToString()).DumpToTextRaw()}");
+                    source.ForEach(y => y.IsSelected = y == x);
                     SelectedItem = x == null ? null : FindItemByTab(x);
-                    if (SelectedItem != null)
+                })
+                .AddTo(Anchors);
+
+            this.WhenAnyValue(x => x.SelectedItem)
+                .Subscribe(x =>
+                {
+                    Log.Debug($"SelectedItem changed to {x}, actualizing IsSelected for items values with IsSelected=true: {source.Where(y => y.IsSelected).Select(y => y.ToString()).DumpToTextRaw()}, items: {TreeViewItems.Where(y => y.IsSelected).Select(y => y.ToString()).DumpToTextRaw()}");
+                    if (SelectedItem is HolderTreeViewItemViewModel holder)
                     {
-                        SelectedItem.IsSelected = true;
+                        SelectedValue = holder.Value;
                     }
                 })
                 .AddTo(Anchors);
@@ -175,6 +181,8 @@ namespace EyeAuras.UI.MainWindow.Services
                 .WhenPropertyChanged(x => x.Path)
                 .Subscribe(x =>
                 {
+                    Log.Info($"{x.Sender} path updated to {x.Sender.Path}");
+
                     var node = FindItemByTab(x.Sender);
                     if (node == null)
                     {
