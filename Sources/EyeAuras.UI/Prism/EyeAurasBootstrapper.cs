@@ -121,6 +121,14 @@ namespace EyeAuras.UI.Prism
                     ModuleName = mainModule.Name,
                     ModuleType = mainModule.AssemblyQualifiedName,
                 });
+
+            var updaterModule = typeof(UpdaterModule);
+            ModuleCatalog.AddModule(
+                new ModuleInfo
+                {
+                    ModuleName = updaterModule.Name,
+                    ModuleType = updaterModule.AssemblyQualifiedName,
+                });
         }
 
         public override void Run(bool runWithDefaultConfiguration)
