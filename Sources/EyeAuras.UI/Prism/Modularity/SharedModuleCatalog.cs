@@ -20,14 +20,15 @@ using Prism.Modularity;
 using SharpCompress.Archives;
 using SharpCompress.Archives.SevenZip;
 using SharpCompress.Readers;
+using IModule = Prism.Modularity.IModule;
 
 namespace EyeAuras.UI.Prism.Modularity
 {
-    internal sealed class SharedModuleCatalog : ModuleCatalog, IAppModuleLoader
+    internal sealed class SharedModuleCatalog : ModuleCatalog, IAppModuleLoader, IDisposable
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(SharedModuleCatalog));
         private static readonly string PrismModuleInterfaceName = typeof(IDynamicModule).FullName;
-        public static readonly string ModulesFolderName = "modules";
+        private static readonly string ModulesFolderName = "modules";
         private static readonly HashSet<string> SupportedArchives = new HashSet<string>() { ".zip", ".7z" };
 
         private IModuleCatalog moduleCatalog;
@@ -40,6 +41,8 @@ namespace EyeAuras.UI.Prism.Modularity
             ModulesDirectory = new DirectoryInfo(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, ModulesFolderName));
             Log.Debug($"Creating {nameof(SharedModuleCatalog)}, modulesDirectory: {ModulesDirectory}");
             AssemblyLoadContext.Default.Resolving += DefaultOnResolving;
+            Disposable.Create(() => AssemblyLoadContext.Default.Resolving -= DefaultOnResolving);
+            Disposable.Create(() => Log.Info($"Disposed {nameof(SharedModuleCatalog)}"));
         }
         private const string NeutralCultureName = "neutral";
         private Assembly? DefaultOnResolving(AssemblyLoadContext context, AssemblyName assemblyName)
@@ -194,7 +197,7 @@ namespace EyeAuras.UI.Prism.Modularity
                 where !loadedModules.Contains(dllFile)
                 let moduleContext = ModuleDef.CreateModuleContext()
                 let dllFileData = File.ReadAllBytes(dllFile.FullName)
-                let module = LoadModuleSafe(dllFileData, moduleContext, dllFile.FullName)
+                let module = LoadModuleDef(dllFileData, moduleContext, dllFile.FullName)
                 where module != null
                 select new {module, dllFile}).ToArray();
 
@@ -300,7 +303,7 @@ namespace EyeAuras.UI.Prism.Modularity
             return loadedAssemblies;
         }
         
-        private static ModuleDefMD LoadModuleSafe(byte[] assemblyBytes, ModuleContext moduleContext, string fileName = null)
+        private static ModuleDefMD LoadModuleDef(byte[] assemblyBytes, ModuleContext moduleContext, string fileName = null)
         {
             try
             {
@@ -345,7 +348,7 @@ namespace EyeAuras.UI.Prism.Modularity
         {
             Log.Debug($"Trying to load Prism module definition from byte array, size: {assemblyBytes.Length}");
             var moduleContext = new ModuleContext();
-            var moduleDef = LoadModuleSafe(assemblyBytes, moduleContext);
+            var moduleDef = LoadModuleDef(assemblyBytes, moduleContext);
             var prismBootstrappers = GetPrismBootstrapperTypes(moduleDef);
             if (!prismBootstrappers.Any())
             {
@@ -369,6 +372,11 @@ namespace EyeAuras.UI.Prism.Modularity
         public void LoadModulesFromBytes(byte[] assemblyBytes, FileInfo moduleRef)
         {
             LoadModulesFromBytes(assemblyBytes, moduleRef.FullName);
+        }
+
+        public void Dispose()
+        {
+            anchors.Dispose();
         }
     }
 }

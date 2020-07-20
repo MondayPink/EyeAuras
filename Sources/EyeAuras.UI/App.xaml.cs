@@ -6,12 +6,16 @@ using System.Reflection;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Media.Animation;
 using System.Windows.Threading;
 using EyeAuras.UI.Prism;
 using log4net;
 using PoeShared;
+using PoeShared.Modularity;
 using PoeShared.Native;
+using PoeShared.Prism;
 using PoeShared.Scaffolding;
+using PoeShared.Squirrel.Prism;
 using PoeShared.Wpf.UI.ExceptionViewer;
 using Prism.Unity;
 using ReactiveUI;
@@ -49,17 +53,26 @@ namespace EyeAuras.UI
                 Log.Debug($"Runtime: {new { System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription, System.Runtime.InteropServices.RuntimeInformation.OSDescription }}");
                 Log.Debug($"Culture: {Thread.CurrentThread.CurrentCulture}, UICulture: {Thread.CurrentThread.CurrentUICulture}");
                 Log.Debug($"Is Elevated: {AppArguments.Instance.IsElevated}");
+                
+                var container = new UnityContainer();
+                container.AddNewExtension<Diagnostic>();
+                container.AddNewExtension<UiRegistrations>();
+                container.AddNewExtension<WpfCommonRegistrations>();
+                container.AddNewExtension<UpdaterRegistrations>();
+                container.AddNewExtension<NativeRegistrations>();
+                container.AddNewExtension<CommonRegistrations>();
+                aurasBootstrapper = new EyeAurasBootstrapper(container);
 
                 Log.Debug($"UI Scheduler: {RxApp.MainThreadScheduler}");
                 RxApp.MainThreadScheduler = DispatcherScheduler.Current;
                 RxApp.TaskpoolScheduler = TaskPoolScheduler.Default;
                 Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
                 Log.Debug($"New UI Scheduler: {RxApp.MainThreadScheduler}");
+                Log.Debug($"BG Scheduler: {RxApp.TaskpoolScheduler}");
                 
                 Log.Debug($"Configuring AllowSetForegroundWindow permissions");
                 UnsafeNative.AllowSetForegroundWindow();
-                
-                aurasBootstrapper = new EyeAurasBootstrapper();
+
                 Disposable.Create(
                         () =>
                         {

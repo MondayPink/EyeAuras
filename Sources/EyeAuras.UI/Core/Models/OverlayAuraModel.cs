@@ -91,7 +91,7 @@ namespace EyeAuras.UI.Core.Models
                     triggers = $"{Triggers.Items.Select(x => x.ToString()).DumpToTextRaw()}", 
                     systemTriggers = $"{sharedContext.SystemTrigger.Items.Select(x => x.ToString()).DumpToTextRaw()}"
                 })
-                .Throttle(TriggerDefaultThrottle);
+                .Throttle(TriggerDefaultThrottle, bgScheduler);
             
             //FIXME Move Trigger processing to BG scheduler
             triggerIsActive
@@ -437,7 +437,7 @@ namespace EyeAuras.UI.Core.Models
 
         public override string ToString()
         {
-            return $"[{Name}({Id}){(IsActive ? " Active" : string.Empty)}]";
+            return $"{Name}({Id}){(IsActive ? " Active" : string.Empty)}";
         }
     }
 }

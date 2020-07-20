@@ -62,8 +62,7 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
                 .Switch()
                 .Subscribe(sourceIsActive =>
                 {
-                    Log.Info(
-                        $"AuraIsActive for aura {AuraTab} changed, IsActive = {sourceIsActive}, ActivationTimeout = {ActivationTimeout}");
+                    Log.Debug($"AuraIsActive for aura {AuraTab} changed, IsActive = {sourceIsActive}, ActivationTimeout = {ActivationTimeout}");
                     TriggerValue = sourceIsActive;
                 }, Log.HandleUiException)
                 .AddTo(Anchors);

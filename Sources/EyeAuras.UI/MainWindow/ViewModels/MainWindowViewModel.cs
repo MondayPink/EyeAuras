@@ -102,6 +102,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             [NotNull] EyeTreeViewAdapter treeViewAdapter,
             [NotNull] ExportMessageBoxViewModel exportMessageBox,
             [NotNull] ImportMessageBoxViewModel importMessageBox,
+            [NotNull] [Dependency(WellKnownSchedulers.Background)] IScheduler bgScheduler,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
             TreeViewAdapter = treeViewAdapter;
@@ -210,19 +211,19 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
             Observable.Merge(
                     this.WhenAnyProperty(x => x.Left, x => x.Top, x => x.Width, x => x.Height)
-                        .Sample(ConfigSaveSamplingTimeout)
+                        .Sample(ConfigSaveSamplingTimeout, bgScheduler)
                         .Select(x => $"[{x.Sender}] Main window property change: {x.EventArgs.PropertyName}"),
                     globalContext.AuraList.ToObservableChangeSet()
-                        .Sample(ConfigSaveSamplingTimeout)
+                        .Sample(ConfigSaveSamplingTimeout, bgScheduler)
                         .Select(x => "Tabs list change"),
                     globalContext.TabList.ToObservableChangeSet()
                         .WhenPropertyChanged(x => x.Properties)
-                        .Sample(ConfigSaveSamplingTimeout)
+                        .Sample(ConfigSaveSamplingTimeout, bgScheduler)
                         .WithPrevious((prev, curr) => new {prev, curr})
                         .Select(x => new { x.curr.Sender, ComparisonResult = comparisonService.Compare(x.prev?.Value, x.curr.Value) })
                         .Where(x => !x.ComparisonResult.AreEqual)
                         .Select(x => $"[{x.Sender.TabName}] Tab properties change: {x.ComparisonResult.DifferencesString}"))
-                .Buffer(ConfigSaveSamplingTimeout)
+                .Buffer(ConfigSaveSamplingTimeout, bgScheduler)
                 .Where(x => x.Count > 0)
                 .Subscribe(
                     reasons =>
@@ -287,7 +288,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             }
 
             configUpdateSubject
-                .Sample(ConfigSaveSamplingTimeout)
+                .Sample(ConfigSaveSamplingTimeout, bgScheduler)
                 .Subscribe(SaveConfig, Log.HandleException)
                 .AddTo(Anchors);
 

@@ -26,25 +26,26 @@ namespace EyeAuras.UI.Prism
 {
     internal sealed class EyeAurasBootstrapper : UnityBootstrapper
     {
+        private readonly IUnityContainer unityContainer;
         private static readonly ILog Log = LogManager.GetLogger(typeof(EyeAurasBootstrapper));
 
         private readonly CompositeDisposable anchors = new CompositeDisposable();
 
-        public EyeAurasBootstrapper()
+        public EyeAurasBootstrapper(IUnityContainer unityContainer)
         {
+            this.unityContainer = unityContainer;
             Log.Debug($"Initializing EyeAuras bootstrapper");
         }
 
         protected override DependencyObject CreateShell()
         {
             Log.Info("Creating shell...");
-            Container.AddNewExtension<Diagnostic>();
-            Container.AddNewExtension<UiRegistrations>();
-            Container.AddNewExtension<WpfCommonRegistrations>();
-            Container.AddNewExtension<UpdaterRegistrations>();
-            Container.AddNewExtension<NativeRegistrations>();
-            Container.AddNewExtension<CommonRegistrations>();
             return Container.Resolve<MainWindow.Views.MainWindow>();
+        }
+
+        protected override IUnityContainer CreateContainer()
+        {
+            return unityContainer;
         }
 
         protected override void InitializeShell()
@@ -172,6 +173,7 @@ namespace EyeAuras.UI.Prism
         {
             Log.Info("Disposing Main bootstrapper...");
             anchors.Dispose();
+            Log.Info("Disposed Main bootstrapper...");
         }
     }
 }
