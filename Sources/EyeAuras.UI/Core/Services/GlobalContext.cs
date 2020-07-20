@@ -61,7 +61,7 @@ namespace EyeAuras.UI.Core.Services
         {
             using var sw = new BenchmarkTimer("Create new tab", Log);
 
-            Log.Debug($"Adding new tab using config {tabProperties.DumpToTextRaw()}...");
+            Log.Debug($"Adding new tab {tabProperties.Name}");
 
             var existingTab = TabList.FirstOrDefault(x => x.Id == tabProperties.Id);
             if (existingTab != null)

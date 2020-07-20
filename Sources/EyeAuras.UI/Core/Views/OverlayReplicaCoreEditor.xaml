@@ -10,7 +10,8 @@
                     xmlns:utilities="clr-namespace:EyeAuras.UI.Core.Utilities"
                     xmlns:fa="http://schemas.fontawesome.io/icons/"
                     xmlns:system="clr-namespace:System;assembly=System.Runtime"
-                    xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity">
+                    xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
+                    xmlns:models="clr-namespace:EyeAuras.UI.Core.Models">
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
         <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Styles.xaml" />
@@ -134,6 +135,14 @@
         </DockPanel>
     </DataTemplate>
 
+    <ObjectDataProvider x:Key="RegionAnchorEnumDataProvider"
+                        MethodName="GetValuesAndDescriptions"
+                        ObjectType="eye:EnumHelper">
+        <ObjectDataProvider.MethodParameters>
+            <x:TypeExtension TypeName="models:RegionAnchor" />
+        </ObjectDataProvider.MethodParameters>
+    </ObjectDataProvider>
+    
     <DataTemplate DataType="{x:Type viewModels:OverlayImageCoreEditorViewModel}">
         <DockPanel>
             <DockPanel DockPanel.Dock="Top" Margin="0,15,0,0">
@@ -156,8 +165,15 @@
             </DockPanel>
 
             <DockPanel DockPanel.Dock="Top" Margin="0,15,0,0" LastChildFill="False">
-                <ContentControl Content="{Binding Source.Overlay}"
-                                ContentTemplate="{StaticResource EyeOverlayViewModelPositionEditor}" />
+                <StackPanel Orientation="Vertical">
+                    <ContentControl Content="{Binding Source.PositionAdapter.RelativeBounds}" BorderBrush="Green" BorderThickness="1" />
+                    <ComboBox DisplayMemberPath="Description" Margin="10,0,0,0"
+                              SelectedValuePath="Value"
+                              SelectedValue="{Binding Source.PositionAdapter.OverlayAnchor, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                              MinWidth="70"
+                              ItemsSource="{Binding Source={StaticResource RegionAnchorEnumDataProvider}}" />
+                </StackPanel>
+                <ContentControl Content="{Binding Source.PositionAdapter.AbsoluteBounds}" BorderBrush="Red" BorderThickness="1" Margin="10,0,0,0" />
                 <DockPanel Margin="10,0,0,0">
                     <DockPanel DockPanel.Dock="Top" VerticalAlignment="Top" Height="36"
                                IsEnabled="{Binding Source.Overlay.IsLocked}"

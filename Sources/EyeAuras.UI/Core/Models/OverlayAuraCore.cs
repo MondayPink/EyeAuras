@@ -14,6 +14,7 @@ namespace EyeAuras.UI.Core.Models
 {
     internal abstract class OverlayAuraCore<T> : AuraCore<T>,IOverlayAuraCore where T : class, IOverlayCoreProperties, new()
     {
+        public OverlayPositionAdapter PositionAdapter { get; }
         private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraCore<>));
 
         private readonly IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory;
@@ -25,6 +26,7 @@ namespace EyeAuras.UI.Core.Models
             [NotNull] IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory,
             [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory)
         {
+            PositionAdapter = new OverlayPositionAdapter();
             this.overlayWindowControllerFactory = overlayWindowControllerFactory;
             this.windowTrackerFactory = windowTrackerFactory;
 
@@ -32,6 +34,10 @@ namespace EyeAuras.UI.Core.Models
                 .Where(x => x.controller != null && x.auraContext != null)
                 .Take(1)
                 .Subscribe(HandleInitialization)
+                .AddTo(Anchors);
+
+            this.WhenAnyValue(x => x.Overlay)
+                .Subscribe(x => PositionAdapter.Overlay = x)
                 .AddTo(Anchors);
         }
         
@@ -43,20 +49,20 @@ namespace EyeAuras.UI.Core.Models
 
         protected abstract IEyeOverlayViewModel CreateOverlay(IOverlayWindowController windowController, IAuraModelController modelController);
 
-        protected void VisitSave(IOverlayCoreProperties properties)
+        public void VisitSave(IOverlayCoreProperties properties)
         {
             if (Overlay != null)
             {
-                properties.OverlayBounds = Overlay.NativeBounds;
                 properties.IsClickThrough = Overlay.IsClickThrough;
                 properties.ThumbnailOpacity = Overlay.ThumbnailOpacity;
                 properties.MaintainAspectRatio = Overlay.MaintainAspectRatio;
                 properties.BorderColor = Overlay.BorderColor;
                 properties.BorderThickness = Overlay.BorderThickness;
             }
+            PositionAdapter.VisitSave(properties);
         }
 
-        protected void VisitLoad(IOverlayCoreProperties source)
+        public void VisitLoad(IOverlayCoreProperties source)
         {
             if (Overlay != null)
             {
@@ -65,13 +71,8 @@ namespace EyeAuras.UI.Core.Models
                 Overlay.MaintainAspectRatio = source.MaintainAspectRatio;
                 Overlay.BorderColor = source.BorderColor;
                 Overlay.BorderThickness = source.BorderThickness;
-            
-                var bounds = source.OverlayBounds.ScaleToWpf();
-                Overlay.Left = bounds.Left;
-                Overlay.Top = bounds.Top;
-                Overlay.Height = bounds.Height;
-                Overlay.Width = bounds.Width;
             }
+            PositionAdapter.VisitLoad(source);
         }
 
         protected virtual void HandleInitialization()

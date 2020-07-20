@@ -21,14 +21,13 @@ namespace EyeAuras.OnTopReplica
         /// </summary>
         public ThumbnailRegion(Rectangle rectangle)
         {
-            SetValue(rectangle);
-
             bounds = this.WhenAnyProperty(x => x.RegionX, x => x.RegionY, x => x.RegionHeight, x => x.RegionWidth)
                 .Select(() => RegionWidth <= 0 || RegionHeight <= 0
                         ? Rectangle.Empty
                         : new Rectangle(RegionX, RegionY, RegionWidth, RegionHeight))
                 .ToPropertyHelper(this, x => x.Bounds)
                 .AddTo(Anchors);
+            SetValue(rectangle);
         }
 
         public Rectangle Bounds => bounds.Value;
@@ -59,6 +58,10 @@ namespace EyeAuras.OnTopReplica
 
         public void SetValue(Rectangle rectangle)
         {
+            if (rectangle == bounds.Value)
+            {
+                return;
+            }
             var previousState = new { RegionX, RegionY, RegionHeight, RegionWidth };
             regionWidth = rectangle.Width;
             regionHeight = rectangle.Height;

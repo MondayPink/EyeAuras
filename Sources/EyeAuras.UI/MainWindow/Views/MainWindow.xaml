@@ -8,12 +8,9 @@
     xmlns:viewModels="clr-namespace:EyeAuras.UI.MainWindow.ViewModels"
     xmlns:eye="http://coderush.net/poeeye/"
     xmlns:tb="http://www.hardcodet.net/taskbar"
-    xmlns:utilities="clr-namespace:EyeAuras.UI.Core.Utilities"
-    xmlns:dragablz="http://dragablz.net/winfx/xaml/dragablz"
     xmlns:mah="http://metro.mahapps.com/winfx/xaml/controls"
     xmlns:viewModels1="clr-namespace:EyeAuras.UI.Core.ViewModels"
     xmlns:blue="http://www.nuget.org/Blue.MVVM"
-    xmlns:model="clr-namespace:EyeAuras.UI.MainWindow.Services"
     xmlns:treeView="clr-namespace:PoeShared.UI.TreeView;assembly=PoeShared.Wpf"
     xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity"
     xmlns:behaviors="clr-namespace:EyeAuras.UI.MainWindow.Behaviors"
@@ -338,8 +335,8 @@
 
                                                         <MenuItem Header="Share..."
                                                                   InputGestureText="CTRL+S"
-                                                                  Visibility="{Binding ShareMessageBox.IsAvailable, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
-                                                                  Command="{Binding Data.ShareMessageBox.ShowCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  Visibility="{Binding ImportMessageBox.IsAvailable, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                                                                  Command="{Binding Data.ImportMessageBox.ShowCommand, Source={StaticResource MainViewModelProxy}}"
                                                                   CommandParameter="{Binding Value}">
                                                             <MenuItem.Icon>
                                                                 <TextBlock Text="&#xf1e0;"
@@ -433,8 +430,8 @@
                                                         </MenuItem>
                                                         <MenuItem Header="Share..."
                                                                   InputGestureText="CTRL+S"
-                                                                  Visibility="{Binding ShareMessageBox.IsAvailable, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
-                                                                  Command="{Binding Data.ShareMessageBox.ShowCommand, Source={StaticResource MainViewModelProxy}}"
+                                                                  Visibility="{Binding ImportMessageBox.IsAvailable, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                                                                  Command="{Binding Data.ImportMessageBox.ShowCommand, Source={StaticResource MainViewModelProxy}}"
                                                                   CommandParameter="{Binding}">
                                                             <MenuItem.Icon>
                                                                 <TextBlock Text="&#xf1e0;"

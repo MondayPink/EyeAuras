@@ -738,7 +738,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             Log.Debug($"Loading config (provider: {configProvider})...");
 
             var config = configProvider.ActualConfig;
-
             Log.Debug($"Received configuration DTO:\r\n{config.DumpToText()}");
             
             var desktopHandle = UnsafeNative.GetDesktopWindow();
