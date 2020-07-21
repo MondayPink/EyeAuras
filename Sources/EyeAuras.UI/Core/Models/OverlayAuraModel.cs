@@ -31,6 +31,7 @@ namespace EyeAuras.UI.Core.Models
         private static readonly TimeSpan TriggerDefaultThrottle = TimeSpan.FromMilliseconds(10);
         private static int GlobalAuraIdx;
 
+        private readonly IGlobalContext globalContext;
         private readonly IAuraRepository repository;
         private readonly IConfigSerializer configSerializer;
 
@@ -51,7 +52,7 @@ namespace EyeAuras.UI.Core.Models
         private IAuraCore core;
 
         public OverlayAuraModel(
-            [NotNull] IGlobalContext sharedContext,
+            [NotNull] IGlobalContext globalContext,
             [NotNull] IAuraRepository repository,
             [NotNull] IConfigSerializer configSerializer,
             [NotNull] IUniqueIdGenerator idGenerator,
@@ -75,21 +76,22 @@ namespace EyeAuras.UI.Core.Models
             OnEnterActions.Connect().OnItemAdded(x => x.Context = this).Subscribe().AddTo(Anchors);
             OnExitActions.Connect().OnItemAdded(x => x.Context = this).Subscribe().AddTo(Anchors);
             WhileActiveActions.Connect().OnItemAdded(x => x.Context = this).Subscribe().AddTo(Anchors);
-            
+
+            this.globalContext = globalContext;
             this.repository = repository;
             this.configSerializer = configSerializer;
 
             var triggerIsActive = Observable.CombineLatest(
                     triggersHolder.WhenAnyValue(x => x.IsActive),
-                    sharedContext.SystemTrigger.WhenAnyValue(x => x.IsActive))
-                .Select(x => (Triggers.Count > 0 && Triggers.IsActive || Triggers.Count == 0) && sharedContext.SystemTrigger.IsActive)
+                    globalContext.SystemTrigger.WhenAnyValue(x => x.IsActive))
+                .Select(x => (Triggers.Count > 0 && Triggers.IsActive || Triggers.Count == 0) && globalContext.SystemTrigger.IsActive)
                 .DistinctUntilChanged()
                 .WithPrevious((prev, curr) => new
                 {
                     prev, 
                     curr, 
                     triggers = $"{Triggers.Items.Select(x => x.ToString()).DumpToTextRaw()}", 
-                    systemTriggers = $"{sharedContext.SystemTrigger.Items.Select(x => x.ToString()).DumpToTextRaw()}"
+                    systemTriggers = $"{globalContext.SystemTrigger.Items.Select(x => x.ToString()).DumpToTextRaw()}"
                 })
                 .Throttle(TriggerDefaultThrottle, bgScheduler);
             
