@@ -8,7 +8,5 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
         public string AuraId { get; set; }
         
         public override int Version { get; set; } = 1;
-        
-        public TimeSpan ActivationTimeout { get; set; }
     }
 }

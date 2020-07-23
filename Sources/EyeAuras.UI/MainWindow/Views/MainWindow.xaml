@@ -61,9 +61,9 @@
     <Window.InputBindings>
         <KeyBinding Gesture="CTRL+T" Command="{Binding CreateNewTabCommand}" />
         <KeyBinding Gesture="CTRL+N" Command="{Binding CreateDirectoryCommand}" />
-        <KeyBinding Gesture="CTRL+W" Command="{Binding CloseTabCommand}" CommandParameter="{Binding SelectedTab}" />
+        <KeyBinding Gesture="CTRL+W" Command="{Binding CloseTabCommand}" CommandParameter="{Binding SelectedAura}" />
         <KeyBinding Gesture="CTRL+V" Command="{Binding PasteTabCommand}" />
-        <KeyBinding Gesture="CTRL+D" Command="{Binding DuplicateTabCommand}" CommandParameter="{Binding SelectedTab}" />
+        <KeyBinding Gesture="CTRL+D" Command="{Binding DuplicateTabCommand}" CommandParameter="{Binding SelectedAura}" />
         <KeyBinding Gesture="CTRL+C" Command="{Binding CopyTabToClipboardCommand}"
                     CommandParameter="{Binding TreeViewAdapter.SelectedItem}" />
         <KeyBinding Gesture="CTRL+Z" Command="{Binding UndoCloseTabCommand}" />
@@ -188,7 +188,7 @@
                                 <ContentControl DockPanel.Dock="Left" x:Name="CloneTabButton"
                                                 eye:CommandWrapperHelper.Text="CLONE"
                                                 eye:CommandWrapperHelper.Icon="&#xF24D;"
-                                                eye:CommandWrapperHelper.CommandParameter="{Binding SelectedTab}"
+                                                eye:CommandWrapperHelper.CommandParameter="{Binding SelectedAura}"
                                                 ToolTip="CTRL+D Duplicate selected tab"
                                                 Content="{Binding DuplicateTabCommand}" />
 
@@ -249,7 +249,7 @@
                                        FontSize="16" Text="Add your first Aura &#x2196;" VerticalAlignment="Top"
                                        IsEnabled="False"
                                        HorizontalAlignment="Center"
-                                       Visibility="{Binding SelectedTab, Converter={StaticResource NotNullToCollapsedConverter}}" />
+                                       Visibility="{Binding SelectedAura, Converter={StaticResource NotNullToCollapsedConverter}}" />
 
                             <DockPanel Background="Transparent">
                                 <DockPanel.ContextMenu>
@@ -514,10 +514,10 @@
                     <TextBlock x:Name="TabIsNotSelectedTip" Grid.Row="0" Grid.Column="2" FontSize="16"
                                Text="Select or Add Aura" VerticalAlignment="Center"
                                HorizontalAlignment="Center"
-                               Visibility="{Binding SelectedTab, Converter={StaticResource NotNullToCollapsedConverter}}" />
+                               Visibility="{Binding SelectedAura, Converter={StaticResource NotNullToCollapsedConverter}}" />
 
                     <Border x:Name="SelectedTabContent" Grid.Row="0" Grid.Column="2" Margin="2.5"
-                            Visibility="{Binding SelectedTab, Converter={StaticResource NullToCollapsedConverter}}">
+                            Visibility="{Binding SelectedAura, Converter={StaticResource NullToCollapsedConverter}}">
                         <ScrollViewer DockPanel.Dock="Top" VerticalScrollBarVisibility="Auto" IsTabStop="False"
                                       Focusable="False">
                             <ItemsControl ItemsSource="{Binding TabsList}" Focusable="False">
@@ -532,7 +532,7 @@
                                             <ContentControl.Visibility>
                                                 <MultiBinding Converter="{StaticResource EqualToVisibleConverter}">
                                                     <Binding />
-                                                    <Binding Path="DataContext.SelectedTab"
+                                                    <Binding Path="DataContext.SelectedAura"
                                                              ElementName="SelectedTabContent" />
                                                 </MultiBinding>
                                             </ContentControl.Visibility>

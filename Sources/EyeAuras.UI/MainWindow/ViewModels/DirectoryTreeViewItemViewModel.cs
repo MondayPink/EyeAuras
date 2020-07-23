@@ -21,15 +21,16 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     this.WhenAnyValue(x => x.Parent)
                         .Select(x => x is DirectoryTreeViewItemViewModel eyeItem ? eyeItem.WhenAnyValue(y => y.Name) : Observable.Return(string.Empty))
                         .Switch()
-                        .ToUnit(),
-                    this.WhenAnyValue(x => x.Name).ToUnit()
-                    )
+                        .Select(_ => "Aura name changed"),
+                    this.WhenAnyValue(x => x.Name).Select(_ => "Directory name changed"))
                 .Select(x => FindPath(this))
                 .WithPrevious((prev, curr) => new { prev, curr })
+                .Where(x => x.prev != x.curr)
+                .DistinctUntilChanged()
                 .Subscribe(x =>
                 {
                     Log.Debug($"[{this}] Changing Directory Path {x.prev} => {x.curr}");
-                    Path = FindPath(this);
+                    Path = x.curr;
                 })
                 .AddTo(Anchors);
             

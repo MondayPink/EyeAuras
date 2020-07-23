@@ -26,12 +26,14 @@ namespace EyeAuras.DefaultAuras.Actions.WinActivate
 
         public IWindowSelectorService WindowSelector { get; }
 
+        [AuraProperty]
         public WindowMatchParams TargetWindow
         {
             get => WindowSelector.TargetWindow;
             set => WindowSelector.TargetWindow = value;
         }
 
+        [AuraProperty]
         public TimeSpan Timeout
         {
             get => timeout;

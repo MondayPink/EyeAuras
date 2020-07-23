@@ -28,6 +28,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .Switch()
                 .Select(x => FindPath(this))
                 .WithPrevious((prev, curr) => new { prev, curr })
+                .Where(x => x.prev != x.curr)
+                .DistinctUntilChanged()
                 .Subscribe(x =>
                 {
                     Log.Debug($"[{this}] Changing Aura Path {x.prev} => {x.curr}");

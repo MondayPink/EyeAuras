@@ -12,8 +12,9 @@ namespace EyeAuras.DefaultAuras.Triggers.Default
 
         public DefaultTrigger()
         {
+            RaisePropertiesWhen(this.WhenAnyProperty(x => x.TriggerValue));
         }
-
+        
         protected override void VisitLoad(DefaultTriggerProperties source)
         {
             base.VisitLoad(source);

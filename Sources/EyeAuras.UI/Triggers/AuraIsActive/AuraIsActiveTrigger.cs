@@ -24,7 +24,7 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
 
         public AuraIsActiveTrigger(
             [NotNull] ISharedContext sharedContext,
-            IClock clock,
+            [NotNull] IClock clock,
             [NotNull] [Dependency(WellKnownSchedulers.Background)] IScheduler bgScheduler)
         {
             this.WhenAnyValue(x => x.AuraId)
@@ -53,7 +53,7 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
                 .Subscribe(x => AuraTab = x, Log.HandleUiException)
                 .AddTo(Anchors);
 
-            var isActiveSource = this.WhenAnyValue(x => x.AuraTab, x => x.ActivationTimeout)
+            this.WhenAnyValue(x => x.AuraTab, x => x.ActivationTimeout)
                 .Select(_ => AuraTab == null
                     ? Observable.Return(false)
                     : AuraTab.WhenAnyValue(y => y.IsActive).Do(y =>
@@ -74,6 +74,7 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
             private set => this.RaiseAndSetIfChanged(ref aura, value);
         }
 
+        [AuraProperty]
         public string AuraId    
         {
             get => auraId;
@@ -88,13 +89,11 @@ namespace EyeAuras.UI.Triggers.AuraIsActive
         {
             base.VisitLoad(source);
             AuraId = source.AuraId;
-            ActivationTimeout = source.ActivationTimeout;
         }
 
         protected override void VisitSave(AuraIsActiveTriggerProperties source)
         {
             source.AuraId = AuraId;
-            source.ActivationTimeout = ActivationTimeout;
             base.VisitSave(source);
         }
 

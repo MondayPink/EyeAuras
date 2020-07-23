@@ -248,6 +248,7 @@ namespace EyeAuras.UI.Core.ViewModels
                 .Where(x => Source?.Properties?.CoreProperties.GetType() != x.Properties?.GetType())
                 .Subscribe(x =>
                 {
+                    //FIXME Rework Core creating method - current implementation re-initializes the WHOLE aura
                     var properties = Source.Properties;
                     properties.CoreProperties = x.Properties;
                     Source.Properties = properties;

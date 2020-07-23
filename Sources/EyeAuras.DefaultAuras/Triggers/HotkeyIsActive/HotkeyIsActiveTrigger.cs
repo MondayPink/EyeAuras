@@ -87,18 +87,21 @@ namespace EyeAuras.DefaultAuras.Triggers.HotkeyIsActive
                 .AddTo(Anchors);
         }
 
+        [AuraProperty]
         public HotkeyGesture Hotkey
         {
             get => hotkey;
             set => RaiseAndSetIfChanged(ref hotkey, value);
         }
 
+        [AuraProperty]
         public HotkeyMode HotkeyMode
         {
             get => hotkeyMode;
             set => RaiseAndSetIfChanged(ref hotkeyMode, value);
         }
 
+        [AuraProperty]
         public bool SuppressKey
         {
             get => suppressKey;

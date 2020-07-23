@@ -35,7 +35,6 @@ using PoeShared.Native;
 using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using PoeShared.Scaffolding.WPF;
-using PoeShared.Services;
 using PoeShared.Squirrel.Updater;
 using PoeShared.UI;
 using PoeShared.UI.Hotkeys;
@@ -74,7 +73,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private double height;
         private double left;
         private GridLength listWidth;
-        private IAuraTabViewModel selectedTab;
+        private IAuraTabViewModel selectedAura;
         private double top;
         private double width;
         private WindowState windowState;
@@ -98,7 +97,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             [NotNull] IPrismModuleStatusViewModel moduleStatus,
             [NotNull] IMainWindowBlocksRepository mainWindowBlocksRepository,
             [NotNull] IFactory<IRegionSelectorService> regionSelectorServiceFactory,
-            [NotNull] IComparisonService comparisonService,
             [NotNull] EyeTreeViewAdapter treeViewAdapter,
             [NotNull] ExportMessageBoxViewModel exportMessageBox,
             [NotNull] ImportMessageBoxViewModel importMessageBox,
@@ -142,10 +140,10 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             
             TabsList = globalContext.TabList;
             treeViewAdapter.WhenAnyValue(x => x.SelectedValue)
-                .Subscribe(x => SelectedTab = x)
+                .Subscribe(x => SelectedAura = x, Log.HandleUiException)
                 .AddTo(Anchors);
-            this.WhenAnyValue(x => x.SelectedTab)
-                .Subscribe(x => treeViewAdapter.SelectedValue = x)
+            this.WhenAnyValue(x => x.SelectedAura)
+                .Subscribe(x => treeViewAdapter.SelectedValue = x, Log.HandleUiException)
                 .AddTo(Anchors);
             
             ModuleStatus = moduleStatus.AddTo(Anchors);
@@ -180,11 +178,11 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             CreateNewTabInDirectoryCommand = CommandWrapper.Create<object>(CreateNewTabInDirectoryCommandExecuted);
             CloseTabCommand = CommandWrapper
                 .Create<IOverlayAuraTabViewModel>(CloseTabCommandExecuted, CloseTabCommandCanExecute)
-                .RaiseCanExecuteChangedWhen(this.WhenAnyProperty(x => x.SelectedTab));
+                .RaiseCanExecuteChangedWhen(this.WhenAnyProperty(x => x.SelectedAura));
 
             DuplicateTabCommand = CommandWrapper
                 .Create(DuplicateTabCommandExecuted, DuplicateTabCommandCanExecute)
-                .RaiseCanExecuteChangedWhen(this.WhenAnyProperty(x => x.SelectedTab));
+                .RaiseCanExecuteChangedWhen(this.WhenAnyProperty(x => x.SelectedAura));
             CopyTabToClipboardCommand = CommandWrapper
                 .Create<object>(CopyTabToClipboardExecuted);
 
@@ -219,10 +217,12 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     globalContext.TabList.ToObservableChangeSet()
                         .WhenPropertyChanged(x => x.Properties)
                         .Sample(ConfigSaveSamplingTimeout, bgScheduler)
-                        .WithPrevious((prev, curr) => new {prev, curr})
-                        .Select(x => new { x.curr.Sender, ComparisonResult = comparisonService.Compare(x.prev?.Value, x.curr.Value) })
-                        .Where(x => !x.ComparisonResult.AreEqual)
-                        .Select(x => $"[{x.Sender.TabName}] Tab properties change: {x.ComparisonResult.DifferencesString}"))
+                        .Select(x => $"[{x.Sender}] Properties have changed"),
+                    TreeViewAdapter.TreeViewItems.ToObservableChangeSet()
+                        .Select(x => $"Aura list changed, item count: {TreeViewAdapter.TreeViewItems.Count}"),
+                    TreeViewAdapter.TreeViewItems.ToObservableChangeSet()
+                        .WhenPropertyChanged(nameof(EyeTreeItemViewModel.Name), nameof(ITreeViewItemViewModel.IsExpanded))
+                        .Select(x => $"[{x.Sender}].{x.EventArgs.PropertyName} changed"))
                 .Buffer(ConfigSaveSamplingTimeout, bgScheduler)
                 .Where(x => x.Count > 0)
                 .Subscribe(
@@ -230,7 +230,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     {
                         const int maxReasonsToOutput = 50;
                         Log.Debug(
-                            $"Config Save reasons{(reasons.Count <= maxReasonsToOutput ? string.Empty : $"first {maxReasonsToOutput} of {reasons.Count} items")}:\r\n\t{reasons.Take(maxReasonsToOutput).DumpToTable()}");
+                            $"Config Save reasons({(reasons.Count <= maxReasonsToOutput ? $"{reasons.Count} items" : $"first {maxReasonsToOutput} of {reasons.Count} items")}):\r\n\t{reasons.Take(maxReasonsToOutput).JoinStrings("\r\n\t")}");
                         configUpdateSubject.OnNext(Unit.Default);
                     },
                     Log.HandleUiException)
@@ -296,11 +296,12 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 .TabList
                 .ToObservableChangeSet()
                 .ObserveOn(uiScheduler)
-                .OnItemAdded(x => SelectedTab = x)
+                .SkipInitial()
+                .OnItemAdded(x => SelectedAura = x)
                 .Subscribe()
                 .AddTo(Anchors);
 
-            this.WhenAnyValue(x => x.SelectedTab)
+            this.WhenAnyValue(x => x.SelectedAura)
                 .Subscribe(x => Log.Debug($"Selected tab: {x}"))
                 .AddTo(Anchors);
             
@@ -346,10 +347,10 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         public Size MinSize { get; } = new Size(1150, 750);
 
-        public IAuraTabViewModel SelectedTab
+        public IAuraTabViewModel SelectedAura
         {
-            get => selectedTab;
-            set => RaiseAndSetIfChanged(ref selectedTab, value);
+            get => selectedAura;
+            set => RaiseAndSetIfChanged(ref selectedAura, value);
         }
 
         public GridLength ListWidth
@@ -666,14 +667,14 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         private bool DuplicateTabCommandCanExecute()
         {
-            return selectedTab != null;
+            return selectedAura != null;
         }
 
         private void DuplicateTabCommandExecuted()
         {
             Guard.ArgumentIsTrue(() => DuplicateTabCommandCanExecute());
 
-            var cfg = selectedTab.Properties;
+            var cfg = selectedAura.Properties;
             CreateAura(cfg);
         }
 
@@ -694,7 +695,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             {
                 var tabToSelect = TabsList[tabIdx - 1];
                 Log.Debug($"Selecting neighbour tab {tabToSelect}...");
-                SelectedTab = tabToSelect;
+                SelectedAura = tabToSelect;
             }
 
             globalContext.TabList.Remove(tab);
@@ -710,17 +711,15 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         private void SaveConfig()
         {
-            using var unused = new OperationTimer(elapsed => Log.Debug($"{nameof(SaveConfig)} took {elapsed.TotalMilliseconds:F0}ms"));
-            Log.Debug($"Saving config (provider: {configProvider})...");
-
+            using var profiler = new BenchmarkTimer("Config save routine", Log);
             var config = PrepareConfig();
+            profiler.Step("Preparing config");
             configProvider.Save(config);
+            profiler.Step("Saving config");
         }
 
         private EyeAurasConfig PrepareConfig()
         {
-            using var unused = new BenchmarkTimer("Prepare config", Log);
-
             var positionedItems = TabsList;
             Log.Debug($"Preparing config, tabs count: {positionedItems.Count}");
             var config = configProvider.ActualConfig.CloneJson();

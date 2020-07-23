@@ -3,6 +3,7 @@ using System;
 using System.Reactive.Linq;
 using log4net;
 using PoeShared.Scaffolding;
+using ObservableEx = PoeShared.Scaffolding.ObservableEx;
 
 namespace EyeAuras.Shared
 {
@@ -21,7 +22,7 @@ namespace EyeAuras.Shared
 
         protected AuraTriggerBase()
         {
-            //FIXME This class really starts to stink
+            //FIXME This class really starts to stink, double-value triggers kinda hard to debug
             this.WhenAnyValue(x => x.IsInverted)
                 .Subscribe(x => RaisePropertyChanged(nameof(IsActive)))
                 .AddTo(Anchors);
@@ -61,8 +62,8 @@ namespace EyeAuras.Shared
                 .Subscribe(() => RaisePropertyChanged(nameof(ActivationProgress)))
                 .AddTo(Anchors);
             
-            Observable
-                .Timer(DateTimeOffset.Now, TimeSpan.FromMilliseconds(250))
+            ObservableEx
+                .BlockingTimer( TimeSpan.FromMilliseconds(250))
                 .Subscribe(
                     () =>
                     {

@@ -84,6 +84,7 @@ namespace EyeAuras.UI.MainWindow.Services
 
         public DirectoryTreeViewItemViewModel AddDirectory(string path)
         {
+            Log.Debug($"Adding new directory @ {path ?? "root"}");
             const string defaultNewDirectoryName = "New folder";
             var idx = 1;
             while (true)
@@ -156,11 +157,12 @@ namespace EyeAuras.UI.MainWindow.Services
                 .Subscribe(() => { }, Log.HandleUiException)
                 .AddTo(Anchors);
 
+            //FIXME This whole sync mechanic seems very error-prone, should be updated to something more concrete
             this.WhenAnyValue(x => x.SelectedValue)
                 .Subscribe(x =>
                 {
                     Log.Debug($"SelectedValue changed, syncing SelectedItem and SelectedValue, values with IsSelected=true: {source.Where(y => y.IsSelected).Select(y => y.ToString()).DumpToTextRaw()}, items: {TreeViewItems.Where(y => y.IsSelected).Select(y => y.ToString()).DumpToTextRaw()}");
-                    source.ForEach(y => y.IsSelected = y == x);
+                    source.ForEach(y => y.IsSelected = ReferenceEquals(x, y));
                     SelectedItem = x == null ? null : FindItemByTab(x);
                 })
                 .AddTo(Anchors);
@@ -219,12 +221,7 @@ namespace EyeAuras.UI.MainWindow.Services
                 var directory =  currentNode.Children.OfType<DirectoryTreeViewItemViewModel>().FirstOrDefault(x => x.Name == directoryName);
                 if (directory == null)
                 {
-                    var newDirectoryNode = new DirectoryTreeViewItemViewModel(currentNode)
-                    {
-                        Name = directoryName, 
-                        Parent = currentNode 
-                    };
-
+                    var newDirectoryNode = new DirectoryTreeViewItemViewModel(currentNode) { Name = directoryName };
                     currentNode = newDirectoryNode;
                 }
                 else

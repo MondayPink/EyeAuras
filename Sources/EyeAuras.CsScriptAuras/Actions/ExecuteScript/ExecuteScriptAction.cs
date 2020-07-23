@@ -103,6 +103,7 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
             source.SourceCode = SourceCode;
         }
 
+        [AuraProperty]
         public string SourceCode
         {
             get => sourceCode;

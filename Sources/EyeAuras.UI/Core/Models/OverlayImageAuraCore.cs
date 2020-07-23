@@ -5,6 +5,7 @@ using PoeShared.Prism;
 using ReactiveUI;
 using System;
 using System.Windows.Media.Imaging;
+using EyeAuras.Shared;
 using PoeShared.Scaffolding;
 
 namespace EyeAuras.UI.Core.Models
@@ -45,6 +46,7 @@ namespace EyeAuras.UI.Core.Models
 
         private string imageFilePath;
 
+        [AuraProperty]
         public string ImageFilePath
         {
             get => imageFilePath;

@@ -30,6 +30,7 @@ namespace EyeAuras.UI.Core.Models
         private static readonly TimeSpan ModelsReloadTimeout = TimeSpan.FromSeconds(1);
         private static readonly TimeSpan TriggerDefaultThrottle = TimeSpan.FromMilliseconds(10);
         private static int GlobalAuraIdx;
+        private static readonly TimeSpan PropertiesSamplingTimeout = TimeSpan.FromSeconds(5);
 
         private readonly IGlobalContext globalContext;
         private readonly IAuraRepository repository;
@@ -156,26 +157,26 @@ namespace EyeAuras.UI.Core.Models
                         ReloadCollections(properties);
                     })
                 .AddTo(Anchors);
-            
-            var modelPropertiesToIgnore = new[]
-            {
-                nameof(IAuraTrigger.IsActive),
-                nameof(IAuraTrigger.TriggerDescription),
-                nameof(IAuraTrigger.TriggerName),
-            }.ToImmutableHashSet();
 
-            //FIXME Properties mechanism should have inverted logic - only important parameters must matter
             Observable.Merge(
-                    this.WhenAnyProperty(x => x.Name, x => x.IsEnabled, x => x.Path).Select(x => $"[{Name}].{x.EventArgs.PropertyName} property changed"),
-                    this.WhenAnyValue(x => x.Core).Select(x => x == null ? Observable.Empty<Unit>() : x.WhenAnyValue(y => y.Properties).ToUnit()).Switch().Select(x => $"[{Name}].{Core} properties changed"),
-                    Triggers.Connect().Select(x => $"[{Name}({Id})] Trigger list changed, item count: {Triggers.Count}"),
-                    Triggers.Connect().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName} Trigger property changed"),
+                    this.WhenAnyValue(x => x.Core).Select(x => x == null ? Observable.Empty<Unit>() : x.WhenAnyProperty(y => y.Properties).ToUnit()).Switch().Select(x => $"[{Name}].{Core} properties changed"),
                     OnEnterActions.Connect().Select(x => $"[{Name}({Id})] [OnEnter]  Action list changed, item count: {OnEnterActions.Count}"),
-                    OnEnterActions.Connect().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName} [OnEnter] Action property changed"),
                     OnExitActions.Connect().Select(x => $"[{Name}({Id})] [OnExit]  Action list changed, item count: {OnEnterActions.Count}"),
-                    OnExitActions.Connect().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName} [OnExit] Action property changed"),
                     WhileActiveActions.Connect().Select(x => $"[{Name}({Id})] [WhileActive] Action list changed, item count: {OnEnterActions.Count}"),
-                    WhileActiveActions.Connect().WhenPropertyChanged().Where(x => !modelPropertiesToIgnore.Contains(x.EventArgs.PropertyName)).Select(x => $"[{Name}].{x.Sender}.{x.EventArgs.PropertyName}  [WhileActive] Action property changed"))
+                    Triggers.Connect().Select(x => $"[{Name}({Id})] Trigger list changed, item count: {Triggers.Count}"),
+                    Triggers.Connect().WhenPropertyChanged(x => x.Properties).Select(x => $"[{Name}] [{x.Sender}] Trigger Properties changed"),
+                    OnEnterActions.Connect().WhenPropertyChanged(x => x.Properties).Select(x => $"[{Name}] [{x.Sender}] [OnEnter] Action Properties changed"),
+                    OnExitActions.Connect().WhenPropertyChanged(x => x.Properties).Select(x => $"[{Name}] [{x.Sender}] [OnExit] Action Properties changed"),
+                    WhileActiveActions.Connect().WhenPropertyChanged(x => x.Properties).Select(x => $"[{Name}] [{x.Sender}] [WhileActive] Action Properties changed"))
+                .Buffer(PropertiesSamplingTimeout, bgScheduler)
+                .Where(x => x.Count > 0)
+                .Do(
+                    reasons =>
+                    {
+                        const int maxReasonsToOutput = 50;
+                        Log.Debug($"[{this}] Properties have changed({(reasons.Count <= maxReasonsToOutput ? $"{reasons.Count} items" : $"first {maxReasonsToOutput} of {reasons.Count} items")}):\r\n\t{reasons.Take(maxReasonsToOutput).JoinStrings("\r\n\t")}");
+                    },
+                    Log.HandleUiException)
                 .Subscribe(reason => RaisePropertyChanged(nameof(Properties)))
                 .AddTo(Anchors);
             sw.Step($"Overlay model properties initialized");
@@ -232,6 +233,7 @@ namespace EyeAuras.UI.Core.Models
             private set => RaiseAndSetIfChanged(ref core, value);
         }
 
+        [AuraProperty]
         public bool IsEnabled
         {
             get => isEnabled;
@@ -264,6 +266,7 @@ namespace EyeAuras.UI.Core.Models
             set => Variables.Edit(x => x.AddOrUpdate(new KeyValuePair<string, object>(key, value)));
         }
 
+        [AuraProperty]
         public TimeSpan WhileActiveActionsTimeout
         {
             get => whileActiveActionsTimeout;
@@ -283,12 +286,14 @@ namespace EyeAuras.UI.Core.Models
             private set => RaiseAndSetIfChanged(ref closeController, value);
         }
 
+        [AuraProperty]
         public string Name
         {
             get => name;
             set => RaiseAndSetIfChanged(ref name, value);
         }
 
+        [AuraProperty]
         public string Path
         {
             get => path;

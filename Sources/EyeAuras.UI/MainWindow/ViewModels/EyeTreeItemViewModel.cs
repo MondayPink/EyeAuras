@@ -71,18 +71,20 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         
         public static string FindPath(ITreeViewItemViewModel node)
         {
-            var result = new StringBuilder();
+            var resultBuilder = new StringBuilder();
 
             while (node != null)
             {
                 if (node is DirectoryTreeViewItemViewModel parentDir)
                 {
-                    result.Insert(0, parentDir.Name + Path.DirectorySeparatorChar);
+                    resultBuilder.Insert(0, parentDir.Name + Path.DirectorySeparatorChar);
                 }
 
                 node = node.Parent;
             }
-            return result.ToString().Trim(Path.DirectorySeparatorChar);
+
+            var result = resultBuilder.ToString().Trim(Path.DirectorySeparatorChar);
+            return string.IsNullOrEmpty(result) ? null : result;
         }
          
         private void RenameCommandExecuted(string value)

@@ -75,12 +75,14 @@ namespace EyeAuras.DefaultAuras.Triggers.Timer
             set => this.RaiseAndSetIfChanged(ref nextDeactivationTimestamp, value);
         }
 
+        [AuraProperty]
         public TimeSpan DeactivationTimeout
         {
             get => deactivationTimeout;
             set => this.RaiseAndSetIfChanged(ref deactivationTimeout, value);
         }
 
+        [AuraProperty]
         public TimeSpan ActivationPeriod
         {
             get => activationPeriod;

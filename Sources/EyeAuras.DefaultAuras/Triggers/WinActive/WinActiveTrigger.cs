@@ -36,7 +36,8 @@ namespace EyeAuras.DefaultAuras.Triggers.WinActive
                 .Subscribe(ApplyProperties)
                 .AddTo(Anchors);
         }
-        
+
+        [AuraProperty]
         public WindowMatchParams TargetWindow
         {
             get => targetWindow;

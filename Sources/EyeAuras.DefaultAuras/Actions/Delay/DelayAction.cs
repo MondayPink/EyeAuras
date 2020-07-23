@@ -15,6 +15,7 @@ namespace EyeAuras.DefaultAuras.Actions.Delay
         {
         }
 
+        [AuraProperty]
         public TimeSpan Delay
         {
             get => delay;

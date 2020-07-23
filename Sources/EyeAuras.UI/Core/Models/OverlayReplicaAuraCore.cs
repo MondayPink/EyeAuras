@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Drawing;
 using System.Reactive;
 using System.Reactive.Linq;
+using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
 using EyeAuras.UI.Overlay.ViewModels;
 using JetBrains.Annotations;
@@ -46,15 +48,23 @@ namespace EyeAuras.UI.Core.Models
                 .OfType<IReplicaOverlayViewModel>()
                 .Subscribe(x => x.AttachedWindow = WindowSelector.ActiveWindow)
                 .AddTo(Anchors);
+
+            this.WhenAnyValue(x => x.Overlay.Region.Bounds)
+                .Subscribe(() => RaisePropertyChanged(nameof(SourceRegionBounds)))
+                .AddTo(Anchors);
         }
         
         public IWindowSelectorService WindowSelector { get; }
 
+        [AuraProperty]
         public WindowMatchParams TargetWindow
         {
             get => targetWindow;
             set => RaiseAndSetIfChanged(ref targetWindow, value);
         }
+
+        [AuraProperty] 
+        public Rectangle SourceRegionBounds => Overlay?.Region.Bounds ?? Rectangle.Empty;
         
         public new IReplicaOverlayViewModel Overlay
         {
@@ -91,15 +101,6 @@ namespace EyeAuras.UI.Core.Models
         protected override IEyeOverlayViewModel CreateOverlay(IOverlayWindowController windowController, IAuraModelController modelController)
         {
             return overlayViewModelFactory.Create(windowController, modelController);
-        }
-
-        protected override void HandleInitialization()
-        {
-            base.HandleInitialization();
-            Observable.Merge(
-                    this.WhenAnyProperty(x => x.TargetWindow).Select(x => $"[{Context?.Name}].{x.EventArgs.PropertyName} property changed"))
-                .Subscribe(reason => RaisePropertyChanged(nameof(Properties)))
-                .AddTo(Anchors);
         }
     }
 }
