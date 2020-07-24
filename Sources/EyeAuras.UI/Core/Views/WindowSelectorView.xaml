@@ -58,6 +58,22 @@
                 materialDesign:HintAssist.Hint="Window title - first matching window will be picked as Overlay source"
                 Text="{Binding WindowTitle, UpdateSourceTrigger=PropertyChanged}" />
             
+            <TextBlock Margin="5,0,0,0"
+                       DockPanel.Dock="Left"
+                       VerticalAlignment="Center"
+                       Style="{StaticResource InformationIconTextBlock}">
+                <TextBlock.ToolTip>
+                    <StackPanel Orientation="Vertical">
+                        <TextBlock Text="Supported expressions:"/>
+                        <TextBlock Text="Text - partial match by window title, process name or process path, e.g. myWindow will match to myWindow and myWindow1"/>
+                        <TextBlock Text="'Text' - exact match by window title, process name or process path, e.g. 'myWindow' will match only to myWindow and will not match to myWindow1"/>
+                        <TextBlock Text="/Text/ - match window title, process name or process path by regular expression, e.g. /myWindow\d/ will match myWindow1 and myWindow2 and will not match to myWindow"/>
+                        <TextBlock Text="0x100 - match by exact window handle in hexadecimal format, e.g. 0x12F will match only to window with handle 0x12F"/>
+                    </StackPanel>
+                    
+                </TextBlock.ToolTip>
+            </TextBlock>
+
             <fa:FontAwesome Icon="ArrowRight" Margin="10,0,0,0" FontSize="14" VerticalAlignment="Center" />
 
             <Border DockPanel.Dock="Right" Margin="10,0,0,0" Width="32" Height="32"
