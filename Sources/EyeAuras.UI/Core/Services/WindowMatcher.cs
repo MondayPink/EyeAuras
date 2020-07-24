@@ -1,4 +1,5 @@
 using System;
+using System.Text.RegularExpressions;
 using EyeAuras.OnTopReplica;
 using EyeAuras.Shared.Services;
 using Guards;
@@ -8,7 +9,7 @@ namespace EyeAuras.UI.Core.Services
 {
     internal sealed class WindowMatcher : IWindowMatcher
     {
-        public bool IsMatch(WindowHandle window, WindowMatchParams matchParams)
+        public bool IsMatch(IWindowHandle window, WindowMatchParams matchParams)
         {
             Guard.ArgumentNotNull(window, nameof(window));
 
@@ -21,7 +22,8 @@ namespace EyeAuras.UI.Core.Services
             {
                 return false;
             }
-            var matchExpression = matchParams.Title.Trim('\"', '\'');
+
+            var matchExpression = matchParams.Title;
 
             if (matchExpression.StartsWith("0x", StringComparison.CurrentCultureIgnoreCase) ||
                 matchExpression.StartsWith("&H", StringComparison.CurrentCultureIgnoreCase))
@@ -36,28 +38,83 @@ namespace EyeAuras.UI.Core.Services
                     }
                 }
             }
+
+            var isExactExpression = IsSurroundedWithValue(matchExpression, "\"") || IsSurroundedWithValue(matchExpression, "'");
+            var isRegexExpression = matchParams.IsRegex || IsSurroundedWithValue(matchExpression, "/");
             
-            var processPathMatches = window.ProcessPath?.Equals(matchExpression, StringComparison.OrdinalIgnoreCase) ?? false;
-            if (processPathMatches)
+            var trimmedExpression = matchExpression.Trim('\"', '\'', '/');
+
+            if (isExactExpression)
             {
-                return true;
+                var exactProcessPathMatch = MatchString(trimmedExpression, window.ProcessPath, true);
+                if (exactProcessPathMatch)
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                var partialProcessPathMatch = isRegexExpression
+                    ? MatchRegex(trimmedExpression, window.ProcessPath, false) 
+                    : MatchString(trimmedExpression, window.ProcessPath, false);
+                if (partialProcessPathMatch)
+                {
+                    return true;
+                }
             }
             
-            var processNameMatches = window.ProcessName?.Equals(matchExpression, StringComparison.OrdinalIgnoreCase) ?? false;
+            var processNameMatches = MatchString(trimmedExpression, window.ProcessName, true);
             if (processNameMatches)
             {
                 return true;
             }
-            
-            var titleMatches = window.Title?.Contains(matchExpression, StringComparison.OrdinalIgnoreCase) ?? false;
-            if (titleMatches)
-            {
-                return true;
-            }
 
+            if (isExactExpression)
+            {
+                var exactTitleMatches = MatchString(trimmedExpression, window.Title, true);
+                if (exactTitleMatches)
+                {
+                    return true;
+                }
+            }
+            else
+            {
+                var partialTitleMatches = isRegexExpression
+                    ? MatchRegex(trimmedExpression, window.Title, false) 
+                    : MatchString(trimmedExpression, window.Title, false);
+                if (partialTitleMatches)
+                {
+                    return true;
+                }
+            }
+            
             return false;   
         }
+
+        private static bool IsSurroundedWithValue(string input, string value)
+        {
+            return input.StartsWith(value) && input.EndsWith(value);
+        }
         
-        
+        private static bool MatchRegex(string regex, string haystack, bool exactMatch)
+        {
+            if (regex == null || haystack == null)
+            {
+                return false;
+            }
+
+            return Regex.IsMatch(haystack, regex, RegexOptions.IgnoreCase);
+        }
+
+        private static bool MatchString(string needle, string haystack, bool exactMatch)
+        {
+            if (needle == null || haystack == null)
+            {
+                return false;
+            }
+            return exactMatch 
+                ? haystack?.Equals(needle, StringComparison.OrdinalIgnoreCase) ?? false
+                : haystack?.Contains(needle, StringComparison.OrdinalIgnoreCase) ?? false;
+        }
     }
 }

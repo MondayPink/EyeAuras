@@ -6,9 +6,9 @@ namespace EyeAuras.Shared.Services
 {
     public interface IWindowSelectorService : IDisposableReactiveObject
     {
-        WindowHandle ActiveWindow { [CanBeNull] get; [CanBeNull] set; }
+        IWindowHandle ActiveWindow { [CanBeNull] get; [CanBeNull] set; }
         
-        WindowHandle[] MatchingWindowList { [NotNull] get; }
+        IWindowHandle[] MatchingWindowList { [NotNull] get; }
         
         WindowMatchParams TargetWindow { get; set; }
     }

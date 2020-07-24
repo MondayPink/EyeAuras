@@ -35,9 +35,9 @@ namespace EyeAuras.UI.MainWindow
 
         public static readonly DependencyProperty SourceWindowProperty = DependencyProperty.Register(
             "SourceWindow",
-            typeof(WindowHandle),
+            typeof(IWindowHandle),
             typeof(ThumbnailPanel),
-            new FrameworkPropertyMetadata(default(WindowHandle)));
+            new FrameworkPropertyMetadata(default(IWindowHandle)));
 
         public static readonly DependencyProperty SourceRegionProperty = DependencyProperty.Register(
             "SourceRegion",
@@ -108,9 +108,9 @@ namespace EyeAuras.UI.MainWindow
             set => SetValue(SourceRegionProperty, value);
         }
 
-        public WindowHandle SourceWindow
+        public IWindowHandle SourceWindow
         {
-            get => (WindowHandle) GetValue(SourceWindowProperty);
+            get => (IWindowHandle) GetValue(SourceWindowProperty);
             set => SetValue(SourceWindowProperty, value);
         }
 
@@ -380,7 +380,7 @@ namespace EyeAuras.UI.MainWindow
         private struct ThumbnailArgs
         {
             public Window Owner { [CanBeNull] get; [CanBeNull] set; }
-            public WindowHandle SourceWindow { [CanBeNull] get; [CanBeNull] set; }
+            public IWindowHandle SourceWindow { [CanBeNull] get; [CanBeNull] set; }
             public bool IsVisible { get; set; }
 
             public override string ToString()

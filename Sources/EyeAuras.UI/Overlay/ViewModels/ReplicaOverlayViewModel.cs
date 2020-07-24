@@ -58,7 +58,7 @@ namespace EyeAuras.UI.Overlay.ViewModels
             
             resetRegionCommand = CommandWrapper.Create(ResetRegionCommandExecuted, ResetRegionCommandCanExecute);
             selectRegionCommand = CommandWrapper.Create(SelectRegionCommandExecuted, SelectRegionCommandCanExecute);
-            setAttachedWindowCommand = CommandWrapper.Create<WindowHandle>(SetAttachedWindowCommandExecuted);
+            setAttachedWindowCommand = CommandWrapper.Create<IWindowHandle>(SetAttachedWindowCommandExecuted);
             closeConfigEditorCommand = CommandWrapper.Create(CloseConfigEditorCommandExecuted);
 
             ResetRegionCommandExecuted();
@@ -69,7 +69,7 @@ namespace EyeAuras.UI.Overlay.ViewModels
         
         public ISelectionAdornerViewModel SelectionAdorner { get; }
         
-        public ReadOnlyObservableCollection<WindowHandle> WindowList => windowListProvider.WindowList;
+        public ReadOnlyObservableCollection<IWindowHandle> WindowList => windowListProvider.WindowList;
         
         public ICommand ResetRegionCommand => resetRegionCommand;
         
@@ -122,7 +122,7 @@ namespace EyeAuras.UI.Overlay.ViewModels
                 .AddTo(selectRegionAnchors);
         }
         
-        private void SetAttachedWindowCommandExecuted(WindowHandle obj)
+        private void SetAttachedWindowCommandExecuted(IWindowHandle obj)
         {
             AttachedWindow = obj;
         }

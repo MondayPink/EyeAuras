@@ -13,11 +13,11 @@ namespace EyeAuras.OnTopReplica.WindowSeekers
     /// </summary>
     public sealed class TaskWindowSeeker : BaseWindowSeeker
     {
-        public override IReadOnlyCollection<WindowHandle> Windows { get; protected set; } = new List<WindowHandle>();
+        public override IReadOnlyCollection<IWindowHandle> Windows { get; protected set; } = new List<IWindowHandle>();
 
         public override void Refresh()
         {
-            var windowsSnapshot = new List<WindowHandle>();
+            var windowsSnapshot = new List<IWindowHandle>();
             WindowManagerMethods.EnumWindows((hwnd, lParam) => RefreshCallback(
                 hwnd,
                 handle =>
@@ -27,10 +27,10 @@ namespace EyeAuras.OnTopReplica.WindowSeekers
                 }), 
                 IntPtr.Zero);
             
-            Windows = new ReadOnlyCollection<WindowHandle>(windowsSnapshot);
+            Windows = new ReadOnlyCollection<IWindowHandle>(windowsSnapshot);
         }
 
-        private bool RefreshCallback(IntPtr hwnd, Action<WindowHandle> addHandler)
+        private bool RefreshCallback(IntPtr hwnd, Action<IWindowHandle> addHandler)
         {
             if (BlacklistedWindows.Contains(hwnd))
             {
@@ -47,7 +47,7 @@ namespace EyeAuras.OnTopReplica.WindowSeekers
             return InspectWindow(handle, addHandler);
         }
 
-        private bool InspectWindow(WindowHandle handle, Action<WindowHandle> addHandler)
+        private bool InspectWindow(IWindowHandle handle, Action<IWindowHandle> addHandler)
         {
             //Code taken from: http://www.thescarms.com/VBasic/alttab.aspx
 

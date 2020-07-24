@@ -5,7 +5,7 @@ namespace EyeAuras.Shared.Services
 {
     public sealed class RegionSelectorResult
     {
-        public WindowHandle Window { get; set; }
+        public IWindowHandle Window { get; set; }
         
         public Rectangle Selection { get; set; }
         

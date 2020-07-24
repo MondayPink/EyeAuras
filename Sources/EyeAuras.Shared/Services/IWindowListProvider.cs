@@ -1,3 +1,4 @@
+using System;
 using System.Collections.ObjectModel;
 using EyeAuras.OnTopReplica;
 using JetBrains.Annotations;
@@ -7,6 +8,9 @@ namespace EyeAuras.Shared.Services
 {
     public interface IWindowListProvider : IDisposableReactiveObject
     {
-        ReadOnlyObservableCollection<WindowHandle> WindowList { [NotNull] get; }
+        [CanBeNull]
+        IWindowHandle ResolveByHandle(IntPtr hWnd);
+        
+        ReadOnlyObservableCollection<IWindowHandle> WindowList { [NotNull] get; }
     }
 }

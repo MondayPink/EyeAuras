@@ -157,7 +157,7 @@
         </Setter>
     </Style>
 
-    <DataTemplate DataType="{x:Type lib:WindowHandle}">
+    <DataTemplate x:Key="WindowHandleTemplate" DataType="{x:Type lib:IWindowHandle}">
         <DockPanel Height="20" Background="Transparent" ToolTipService.ShowDuration="30000">
             <DockPanel.ToolTip>
                 <Grid>
@@ -170,19 +170,23 @@
                         <RowDefinition />
                         <RowDefinition />
                         <RowDefinition />
+                        <RowDefinition />
                     </Grid.RowDefinitions>
 
                     <TextBlock Grid.Column="0" Grid.Row="0" Text="Class:" HorizontalAlignment="Right" />
                     <TextBlock Grid.Column="1" Grid.Row="0" Text="{Binding Class}" Margin="10,0" />
                                     
-                    <TextBlock Grid.Column="0" Grid.Row="1" Text="Process:" HorizontalAlignment="Right" />
-                    <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding ProcessId}" Margin="10,0" />
+                    <TextBlock Grid.Column="0" Grid.Row="1" Text="Process name:" HorizontalAlignment="Right" />
+                    <TextBlock Grid.Column="1" Grid.Row="1" Text="{Binding ProcessName}" Margin="10,0" />
                                     
-                    <TextBlock Grid.Column="0" Grid.Row="2" Text="Client bounds:" HorizontalAlignment="Right" />
-                    <TextBlock Grid.Column="1" Grid.Row="2" Text="{Binding ClientBounds}" Margin="10,0" />
+                    <TextBlock Grid.Column="0" Grid.Row="2" Text="Process:" HorizontalAlignment="Right" />
+                    <TextBlock Grid.Column="1" Grid.Row="2" Text="{Binding ProcessId}" Margin="10,0" />
+                    
+                    <TextBlock Grid.Column="0" Grid.Row="3" Text="Client bounds:" HorizontalAlignment="Right" />
+                    <TextBlock Grid.Column="1" Grid.Row="3" Text="{Binding ClientBounds}" Margin="10,0" />
                                     
-                    <TextBlock Grid.Column="0" Grid.Row="3" Text="Window bounds:" HorizontalAlignment="Right" />
-                    <TextBlock Grid.Column="1" Grid.Row="3" Text="{Binding WindowBounds}" Margin="10,0" />
+                    <TextBlock Grid.Column="0" Grid.Row="4" Text="Window bounds:" HorizontalAlignment="Right" />
+                    <TextBlock Grid.Column="1" Grid.Row="4" Text="{Binding WindowBounds}" Margin="10,0" />
                 </Grid>
             </DockPanel.ToolTip>
             <Image Source="{Binding IconBitmap}" Margin="5,0" Width="14" Height="14" />

@@ -41,7 +41,7 @@ namespace EyeAuras.UI.Overlay.ViewModels
         private readonly ObservableAsPropertyHelper<double> aspectRatio;
 
         private bool maintainAspectRatio = true;
-        private WindowHandle attachedWindow;
+        private IWindowHandle attachedWindow;
         private Size sourceWindowSize;
         private DpiScale dpi;
         private bool isClickThrough;
@@ -235,7 +235,7 @@ namespace EyeAuras.UI.Overlay.ViewModels
             set => thumbnailOpacity.SetDefaultValue(value);
         }
 
-        public WindowHandle AttachedWindow
+        public IWindowHandle AttachedWindow
         {
             get => attachedWindow;
             set => RaiseAndSetIfChanged(ref attachedWindow, value);

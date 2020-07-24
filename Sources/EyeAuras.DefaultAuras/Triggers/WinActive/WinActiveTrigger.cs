@@ -21,14 +21,17 @@ namespace EyeAuras.DefaultAuras.Triggers.WinActive
 
         private readonly SerialDisposable activeTracker = new SerialDisposable();
         private readonly IWindowMatcher windowMatcher;
+        private readonly IWindowListProvider windowListProvider;
         private readonly IFactory<WindowTracker, IStringMatcher> windowTrackerFactory;
         private WindowMatchParams targetWindow;
 
         public WinActiveTrigger(
             IWindowMatcher windowMatcher,
+            IWindowListProvider windowListProvider,
             IFactory<WindowTracker, IStringMatcher> windowTrackerFactory)
         {
             this.windowMatcher = windowMatcher;
+            this.windowListProvider = windowListProvider;
             this.windowTrackerFactory = windowTrackerFactory;
             activeTracker.AddTo(Anchors);
 
@@ -72,8 +75,8 @@ namespace EyeAuras.DefaultAuras.Triggers.WinActive
                         CurrentProcessId
                     })
                 .Do(x => Log.Debug($"WinActiveTrigger data updated(target: {TargetWindow}): {x}"))
-                .Select(x => new WindowHandle(x.ActiveWindowHandle))
-                .Select(x => new { Window = x, IsMatch = windowMatcher.IsMatch(x, targetWindow) })
+                .Select(x => windowListProvider.ResolveByHandle(x.ActiveWindowHandle))
+                .Select(x => new { Window = x, IsMatch = x != null && windowMatcher.IsMatch(x, targetWindow) })
                 .Subscribe(x => TriggerValue = x.IsMatch);
         }
 

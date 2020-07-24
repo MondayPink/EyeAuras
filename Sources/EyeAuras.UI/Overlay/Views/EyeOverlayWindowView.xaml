@@ -30,7 +30,7 @@
             <Grid.ContextMenu>
                 <ContextMenu StaysOpen="False" Style="{StaticResource OverlayContextMenuStyleKey}">
 
-                    <MenuItem Header="Select source" ItemsSource="{Binding WindowList}">
+                    <MenuItem Header="Select source" ItemsSource="{Binding WindowList}" ItemTemplate="{StaticResource WindowHandleTemplate}">
                         <MenuItem.Icon>
                             <TextBlock Text="&#xf24d;" Style="{StaticResource IconTextBlock}" />
                         </MenuItem.Icon>

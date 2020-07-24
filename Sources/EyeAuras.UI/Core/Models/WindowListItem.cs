@@ -7,7 +7,7 @@ namespace EyeAuras.UI.Core.Models
     {
         public bool IsMatching { get; set; }
 
-        public WindowHandle Window { get; set; }
+        public IWindowHandle Window { get; set; }
 
         public string Title => Window?.Title;
 

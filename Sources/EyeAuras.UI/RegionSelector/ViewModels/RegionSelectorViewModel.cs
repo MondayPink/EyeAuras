@@ -117,7 +117,7 @@ namespace EyeAuras.UI.RegionSelector.ViewModels
             return new RegionSelectorResult { Reason = $"Could not find matching window in region {screenRegion}" };
         }
         
-        private static (WindowHandle window, Rectangle selection) FindMatchingWindow(Rectangle selection, IEnumerable<WindowHandle> windows)
+        private static (IWindowHandle window, Rectangle selection) FindMatchingWindow(Rectangle selection, IEnumerable<IWindowHandle> windows)
         {
             var topLeft = new Point(selection.Left, selection.Top);
             var intersections = windows

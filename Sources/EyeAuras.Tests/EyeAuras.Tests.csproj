@@ -19,6 +19,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\EyeAuras.DefaultAuras\EyeAuras.DefaultAuras.csproj" />
+      <ProjectReference Include="..\EyeAuras.UI\EyeAuras.UI.csproj" />
       <ProjectReference Include="..\PoeShared\PoeShared.csproj" />
       <ProjectReference Include="..\PoeShared.Native\PoeShared.Native.csproj" />
     </ItemGroup>

@@ -22,8 +22,8 @@ namespace EyeAuras.UI.Core.ViewModels
 
         private readonly ObservableAsPropertyHelper<bool> enableOverlaySelector;
 
-        private WindowHandle activeWindow;
-        private WindowHandle[] matchingWindowList = Array.Empty<WindowHandle>();
+        private IWindowHandle activeWindow;
+        private IWindowHandle[] matchingWindowList = Array.Empty<IWindowHandle>();
         private WindowMatchParams targetWindow;
         private string windowTitle;
         private bool windowTitleIsRegex;
@@ -105,7 +105,7 @@ namespace EyeAuras.UI.Core.ViewModels
                 .Subscribe(x => TargetWindow = x)
                 .AddTo(Anchors);
             
-            SetWindowTitleCommand = CommandWrapper.Create<WindowHandle>(SetWindowTitleCommandExecuted);
+            SetWindowTitleCommand = CommandWrapper.Create<IWindowHandle>(SetWindowTitleCommandExecuted);
         }
 
         public string WindowTitle
@@ -126,19 +126,19 @@ namespace EyeAuras.UI.Core.ViewModels
             set => this.RaiseAndSetIfChanged(ref windowHandle, value);
         }
 
-        public ReadOnlyObservableCollection<WindowHandle> WindowList { get; }
+        public ReadOnlyObservableCollection<IWindowHandle> WindowList { get; }
 
         public ICommand SetWindowTitleCommand { get; }
 
         public bool EnableOverlaySelector => enableOverlaySelector.Value;
 
-        public WindowHandle ActiveWindow
+        public IWindowHandle ActiveWindow
         {
             get => activeWindow;
             set => RaiseAndSetIfChanged(ref activeWindow, value);
         }
 
-        public WindowHandle[] MatchingWindowList
+        public IWindowHandle[] MatchingWindowList
         {
             get => matchingWindowList;
             private set => RaiseAndSetIfChanged(ref matchingWindowList, value);
@@ -150,14 +150,14 @@ namespace EyeAuras.UI.Core.ViewModels
             set => RaiseAndSetIfChanged(ref targetWindow, value);
         }
         
-        private void SetWindowTitleCommandExecuted(WindowHandle handle)
+        private void SetWindowTitleCommandExecuted(IWindowHandle handle)
         {
             WindowTitle = handle.Title;
         }
 
-        private WindowHandle[] BuildMatches(IEnumerable<WindowHandle> source)
+        private IWindowHandle[] BuildMatches(IEnumerable<IWindowHandle> source)
         {
-            var comparer = new SortExpressionComparer<WindowHandle>()
+            var comparer = new SortExpressionComparer<IWindowHandle>()
                 .ThenByAscending(x => x.Title.Length)
                 .ThenByAscending(x => x.Title);
             var windowList = source

@@ -6,7 +6,7 @@ namespace EyeAuras.UI.Overlay.ViewModels
 {
     internal interface IReplicaOverlayViewModel : IEyeOverlayViewModel
     {
-        WindowHandle AttachedWindow { get; set; }
+        IWindowHandle AttachedWindow { get; set; }
 
         ThumbnailRegion Region { [NotNull] get; }
     }

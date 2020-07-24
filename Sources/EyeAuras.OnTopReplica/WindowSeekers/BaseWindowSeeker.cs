@@ -33,7 +33,7 @@ namespace EyeAuras.OnTopReplica.WindowSeekers
         /// <summary>
         ///     Get the matching windows from the last refresh.
         /// </summary>
-        public abstract IReadOnlyCollection<WindowHandle> Windows { get; protected set; }
+        public abstract IReadOnlyCollection<IWindowHandle> Windows { get; protected set; }
 
         public abstract void Refresh();
     }

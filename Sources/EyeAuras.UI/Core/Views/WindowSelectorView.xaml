@@ -31,8 +31,9 @@
                             </Style>
                         </ItemsControl.ItemContainerStyle>
                         <ItemsControl.ItemTemplate>
-                            <DataTemplate DataType="{x:Type lib:WindowHandle}">
+                            <DataTemplate DataType="{x:Type lib:IWindowHandle}">
                                 <Button Content="{Binding}" Padding="0"
+                                        ContentTemplate="{StaticResource WindowHandleTemplate}"
                                         CommandParameter="{Binding}"
                                         Style="{StaticResource MaterialDesignOutlinedButton}"
                                         BorderThickness="0"
@@ -110,10 +111,10 @@
                     </StackPanel>                    
                 </ComboBox.ToolTip>
                 <ComboBox.ItemTemplate>
-                    <DataTemplate DataType="{x:Type lib:WindowHandle}">
+                    <DataTemplate DataType="{x:Type lib:IWindowHandle}">
                         <ContentControl
                             MaxWidth="{Binding ElementName=OverlayWindowSelector, Path=ActualWidth, Mode=OneWay}"
-                            Content="{Binding}" Background="Transparent" />
+                            Content="{Binding}" Background="Transparent" ContentTemplate="{StaticResource WindowHandleTemplate}" />
                     </DataTemplate>
                 </ComboBox.ItemTemplate>
             </ComboBox>

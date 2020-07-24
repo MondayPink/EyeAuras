@@ -5,6 +5,6 @@ namespace EyeAuras.Shared.Services
 {
     public interface IWindowMatcher
     {
-        bool IsMatch([NotNull] WindowHandle window, WindowMatchParams matchParams);
+        bool IsMatch([NotNull] IWindowHandle window, WindowMatchParams matchParams);
     }
 }

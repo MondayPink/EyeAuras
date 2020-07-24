@@ -1,54 +1,80 @@
 ﻿using System;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
-using System.Runtime.CompilerServices;
 using System.Text;
+using System.Threading;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Media.Imaging;
 using EyeAuras.OnTopReplica.Native;
-using JetBrains.Annotations;
 using log4net;
 using Newtonsoft.Json;
+using PInvoke;
 using PoeShared.Native;
 using PoeShared.Scaffolding;
+using Win32Exception = System.ComponentModel.Win32Exception;
 
 namespace EyeAuras.OnTopReplica
 {
-    public sealed class WindowHandle : IWin32Window
+    internal sealed class WindowHandle : IWindowHandle
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(WindowHandle));
 
+        private readonly Lazy<string> classSupplier;
+        private readonly Lazy<Rectangle> windowBoundsSupplier;
+        private readonly Lazy<Rectangle> clientBoundsSupplier;
+        private readonly Lazy<Icon> iconSupplier;
+        private readonly Lazy<BitmapSource> iconBitmapSupplier;
+        private readonly Lazy<(string processName, string processPath)> processDataSupplier;
+        
         public WindowHandle(IntPtr handle)
         {
-            //FIXME Add Light version of WindowHandle which will be mostly Lazy<> 
             Handle = handle;
             Title = UnsafeNative.GetWindowTitle(handle);
-            Icon = GetWindowIcon(handle);
-            Class = UnsafeNative.GetWindowClass(handle);
-            WindowBounds = UnsafeNative.GetWindowRect(handle);
-            ClientBounds = UnsafeNative.GetClientRect(handle);
-            try
-            {
-                IconBitmap = Icon != null
-                    ? Imaging.CreateBitmapSourceFromHIcon(Icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions())
-                    : null;
-            }
-            catch (Exception ex)
-            {
-                Log.Warn($"Failed to get IconBitmap, window: {Title}, class: {Class}", ex);
-            }
-            IconBitmap?.Freeze();
             ProcessId = UnsafeNative.GetProcessIdByWindowHandle(handle);
-            if (ProcessId > 0)
+            
+            classSupplier = new Lazy<string>(() => UnsafeNative.GetWindowClass(handle), LazyThreadSafetyMode.ExecutionAndPublication);
+            windowBoundsSupplier = new Lazy<Rectangle>(() => UnsafeNative.GetWindowRect(handle), LazyThreadSafetyMode.ExecutionAndPublication);
+            clientBoundsSupplier = new Lazy<Rectangle>(() => UnsafeNative.GetClientRect(handle), LazyThreadSafetyMode.ExecutionAndPublication);
+            iconSupplier = new Lazy<Icon>(() => GetWindowIcon(handle), LazyThreadSafetyMode.ExecutionAndPublication);
+            iconBitmapSupplier = new Lazy<BitmapSource>(() =>
+            {
+                try
+                {
+                    var icon = iconSupplier.Value;
+                    var result = icon != null
+                        ? Imaging.CreateBitmapSourceFromHIcon(Icon.Handle, Int32Rect.Empty, BitmapSizeOptions.FromEmptyOptions())
+                        : default;
+                    result?.Freeze();
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    Log.Warn($"Failed to get IconBitmap, window: {Title}, class: {Class}", ex);
+                    return default;
+                }
+            }, LazyThreadSafetyMode.ExecutionAndPublication);
+            
+            processDataSupplier = new Lazy<(string processName, string processPath)>(() =>
             {
                 try
                 {
                     var process = Process.GetProcessById(ProcessId);
-                    ProcessName = process.ProcessName;
-                    ProcessPath = process.MainModule?.FileName;
+                    var nativeProcessPath = UnsafeNative.QueryFullProcessImageName(ProcessId);
+                    
+                    string processName = nativeProcessPath != null ? Path.GetFileName(nativeProcessPath) : process.ProcessName;
+                    string processPath;
+                    try
+                    {
+                        processPath = process.MainModule?.FileName;
+                    }
+                    catch (Win32Exception)
+                    {
+                        processPath = nativeProcessPath;
+                    }
+                    
+                    return (processName, processPath);
                 }
                 catch (Win32Exception)
                 {
@@ -57,30 +83,29 @@ namespace EyeAuras.OnTopReplica
                 {
                     Log.Warn($"Failed to wrap Process with Id {ProcessId}, window: {Title}, class: {Class}", ex);
                 }
-            }
+                return default;
+            });
         }
         
-        public string Title { get; }
-
-        public Rectangle WindowBounds { get; }
-        
-        public Rectangle ClientBounds { get; }
-
-        [JsonIgnore]
-        public Icon Icon { get; }
-
-        [JsonIgnore]
-        public BitmapSource IconBitmap { get; }
-
-        public string Class { get; }
-
         public IntPtr Handle { get; }
 
+        public string Title { get; }
+
         public int ProcessId { get; }
-        
-        public string ProcessPath  { [CanBeNull] get; }
-        
-        public string ProcessName { [CanBeNull] get; }
+
+        public Rectangle WindowBounds => windowBoundsSupplier.Value;
+
+        public Rectangle ClientBounds => clientBoundsSupplier.Value;
+
+        [JsonIgnore] public Icon Icon => iconSupplier.Value;
+
+        [JsonIgnore] public BitmapSource IconBitmap => iconBitmapSupplier.Value;
+
+        public string Class => classSupplier.Value;
+
+        public string ProcessPath => processDataSupplier.Value.processPath;
+
+        public string ProcessName => processDataSupplier.Value.processName;
         
         public int ZOrder { get; set; }
 
@@ -106,7 +131,6 @@ namespace EyeAuras.OnTopReplica
             }
             else
             {
-                //Fetch icon from window class
                 hIcon = WindowMethods.GetClassLong(handle, WindowMethods.ClassLong.Icon);
 
                 if (hIcon.ToInt64() != 0)
@@ -136,6 +160,15 @@ namespace EyeAuras.OnTopReplica
             return sb.ToString();
         }
 
+        public bool Equals(IWindowHandle other)
+        {
+            if (other == null)
+            {
+                return false;
+            }
+            return Handle.Equals(other.Handle);
+        }
+
         public override bool Equals(object other)
         {
             if (ReferenceEquals(other, this))
@@ -143,18 +176,20 @@ namespace EyeAuras.OnTopReplica
                 return true;
             }
 
-            var win = other as WindowHandle;
-            if (win == null)
-            {
-                return false;
-            }
-
-            return Handle.Equals(win.Handle);
+            return Equals(other as WindowHandle);
         }
 
         public override int GetHashCode()
         {
             return Handle.GetHashCode();
+        }
+
+        public void Dispose()
+        {
+            if (iconSupplier.IsValueCreated)
+            {
+                iconSupplier.Value.Dispose();
+            }
         }
     }
 }
