@@ -186,9 +186,9 @@ namespace EyeAuras.OnTopReplica
 
         public void Dispose()
         {
-            if (iconSupplier.IsValueCreated)
+            if (iconSupplier?.IsValueCreated ?? false)
             {
-                iconSupplier.Value.Dispose();
+                iconSupplier?.Value?.Dispose();
             }
         }
     }

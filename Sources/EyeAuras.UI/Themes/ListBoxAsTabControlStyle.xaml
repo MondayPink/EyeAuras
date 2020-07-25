@@ -42,7 +42,6 @@
                     <Grid x:Name="templateRoot" SnapsToDevicePixels="true">
                         <Border x:Name="mainBorder"
                                 BorderBrush="{TemplateBinding BorderBrush}"
-                                BorderThickness="0,1,0,1"
                                 Background="{TemplateBinding Background}"
                                 ContextMenu="{Binding RelativeSource={RelativeSource Self}, Path=(utils:TabablzHelper.ItemContextMenu)}" />
 

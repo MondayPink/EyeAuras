@@ -45,11 +45,18 @@
         </Setter>
     </Style>
     
+    <AlternationConverter x:Key="BackgroundConverter">
+        <StaticResource ResourceKey="MaterialDesignPaper"/>
+        <StaticResource ResourceKey="OverlayBackgroundBrushKey"/>
+    </AlternationConverter>
+    
     <Style x:Key="AuraDragablzItemStyle" TargetType="{x:Type dragablz:DragablzItem}" BasedOn="{StaticResource DragablzTabItemVerticalStyle}">
+        <Setter Property="Background" Value="{Binding Path=(ItemsControl.AlternationIndex), Converter={StaticResource BackgroundConverter}, RelativeSource={RelativeSource Self}}" />
     </Style>
     
     <Style x:Key="AuraDragablzControlStyle" TargetType="{x:Type dragablz:DragablzItemsControl}" BasedOn="{StaticResource DragablzVerticalItemsControl}">
         <Setter Property="ItemContainerStyle" Value="{StaticResource AuraDragablzItemStyle}"></Setter>
+        <Setter Property="AlternationCount" Value="2"/>
     </Style>
     
     <DataTemplate x:Key="AuraTriggerHeaderTemplateKey" DataType="{x:Type shared:IAuraTrigger}">
@@ -175,21 +182,18 @@
     </DataTemplate>
     
     <DataTemplate x:Key="AuraTriggerItemTemplateKey" DataType="{x:Type viewModels:IPropertyEditorViewModel}">
-        <Border Padding="5" 
-                BorderThickness="0 1 0 1" 
-                Background="{StaticResource OverlayTitleBackgroundBrushKey}"
-                BorderBrush="{StaticResource SecondaryAccentBrush}" 
-                Margin="0,5,0,0">
+        <Border Padding="5" >
             <DockPanel>
                 <DockPanel Dock="Top" Margin="0, 2.5">
-                    <ContentControl DockPanel.Dock="Right"
-                                    Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}"
-                                    Content="{Binding CloseCommand}"
-                                    ToolTip="Remove trigger" x:Name="RemoveTriggerButton"
-                                    eye:CommandWrapperHelper.Icon="&#xf00d;"
-                                    ContentTemplate="{StaticResource CommandWrapperIcon}" />
-                    <Thumb DockPanel.Dock="Right" Margin="5,0" Style="{StaticResource AuraDragablzControlThumbStyle}"
-                           Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}"/>
+                    <DockPanel DockPanel.Dock="Right"
+                               Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type dragablz:DragablzItem}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}">
+                        <Thumb Margin="5,0" Style="{StaticResource AuraDragablzControlThumbStyle}"/>
+                        <ContentControl Content="{Binding CloseCommand}"
+                                        ToolTip="Remove trigger" x:Name="RemoveTriggerButton"
+                                        eye:CommandWrapperHelper.Icon="&#xf00d;"
+                                        ContentTemplate="{StaticResource CommandWrapperIcon}" />
+                    </DockPanel>
+                   
                     <ContentControl DockPanel.Dock="Left" Content="{Binding Value}"
                                     x:Name="TriggerHeader"
                                     ContentTemplate="{StaticResource AuraTriggerHeaderTemplateKey}" />
@@ -200,22 +204,19 @@
     </DataTemplate>
 
     <DataTemplate x:Key="AuraActionItemTemplateKey" DataType="{x:Type viewModels:IPropertyEditorViewModel}">
-        <Border Padding="5" 
-                BorderThickness="0 1 0 1" 
-                Background="{StaticResource OverlayTitleBackgroundBrushKey}"
-                BorderBrush="{StaticResource SecondaryAccentBrush}" 
-                Margin="0,5,0,0">
+        <Border Padding="5" >
             <DockPanel>
                 <DockPanel Dock="Top" Margin="0, 2.5">
-                    <ContentControl DockPanel.Dock="Right"
-                                    Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}"
-                                    Content="{Binding CloseCommand}"
-                                    ToolTip="Remove action" x:Name="RemoveActionButton"
-                                    eye:CommandWrapperHelper.Icon="&#xf00d;"
-                                    ContentTemplate="{StaticResource CommandWrapperIcon}" />
-                    <Thumb DockPanel.Dock="Right" Margin="10,0" Style="{StaticResource AuraDragablzControlThumbStyle}"
-                           Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type Border}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}"/>
-
+                    <DockPanel DockPanel.Dock="Right"
+                               Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type dragablz:DragablzItem}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}">
+                        <Thumb Margin="10,0" Style="{StaticResource AuraDragablzControlThumbStyle}"/>
+                        <ContentControl 
+                            Content="{Binding CloseCommand}"
+                            ToolTip="Remove action" x:Name="RemoveActionButton"
+                            eye:CommandWrapperHelper.Icon="&#xf00d;"
+                            ContentTemplate="{StaticResource CommandWrapperIcon}" />
+                    </DockPanel>
+                   
                     <ContentControl DockPanel.Dock="Left" Content="{Binding Value}"
                                     x:Name="ActionHeader"
                                     ContentTemplate="{StaticResource AuraActionSelectorTemplateKey}" />
@@ -325,8 +326,9 @@
                                                        x:Name="Triggers"
                                                        ItemsSource="{Binding TriggerEditors}"
                                                        PositionMonitor="{Binding TriggersPositionMonitor}"
-                                                       ItemTemplate="{StaticResource AuraTriggerItemTemplateKey}"/>
-                        <Border BorderThickness="1" Background="{StaticResource OverlayTitleBackgroundBrushKey}" Opacity="0.7" Margin="0,5,0,0" BorderBrush="{StaticResource DashedAccentBorderBrush}">
+                                                       ItemTemplate="{StaticResource AuraTriggerItemTemplateKey}">
+                        </dragablz:DragablzItemsControl>
+                    <Border BorderThickness="1" Background="{StaticResource OverlayTitleBackgroundBrushKey}" Opacity="0.7" Margin="0,5,0,0" BorderBrush="{StaticResource DashedAccentBorderBrush}">
                             <materialDesign:PopupBox StaysOpen="False" Height="22" Margin="0,-2,0,1" HorizontalAlignment="Center" PlacementMode="BottomAndAlignCentres">
                                 <materialDesign:PopupBox.ToggleContent>
                                     <DockPanel>
