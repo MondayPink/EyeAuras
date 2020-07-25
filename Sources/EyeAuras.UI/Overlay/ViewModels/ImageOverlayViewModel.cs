@@ -15,6 +15,8 @@ namespace EyeAuras.UI.Overlay.ViewModels
 {
     internal sealed class ImageOverlayViewModel : EyeOverlayViewModel, IImageOverlayViewModel
     {
+        private BitmapSource content;
+
         public ImageOverlayViewModel(
             [NotNull] IAuraModelController auraModelController, 
             [NotNull] [Dependency(WellKnownWindows.AllWindows)] IWindowTracker mainWindowTracker,
@@ -26,8 +28,6 @@ namespace EyeAuras.UI.Overlay.ViewModels
                 .Subscribe(x => ThumbnailSize = x)
                 .AddTo(Anchors);
         }
-
-        private BitmapSource content;
 
         public BitmapSource Content
         {

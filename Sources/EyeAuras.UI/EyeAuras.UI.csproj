@@ -78,6 +78,7 @@
       <PackageReference Include="System.Reactive" Version="4.2.0" />
       <PackageReference Include="Unity" Version="5.10.3" />
       <PackageReference Include="Windows-Forms-Aero" Version="3.1.1" />
+      <PackageReference Include="WpfAnimatedGif" Version="2.0.0" />
     </ItemGroup>
 
     <ItemGroup>
@@ -125,6 +126,9 @@
         <Generator>MSBuild:Compile</Generator>
       </Page>
       <Page Update="Sharing\Views\ImportMessageBoxView.xaml">
+        <Generator>MSBuild:Compile</Generator>
+      </Page>
+      <Page Update="Core\Views\OverlayImageCoreEditor.xaml">
         <Generator>MSBuild:Compile</Generator>
       </Page>
     </ItemGroup>

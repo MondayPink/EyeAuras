@@ -1,0 +1,53 @@
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:viewModels="clr-namespace:EyeAuras.UI.Core.ViewModels"
+                    xmlns:eye="http://coderush.net/poeeye/"
+                    xmlns:system="clr-namespace:System;assembly=System.Runtime"
+                    xmlns:i="http://schemas.microsoft.com/expression/2010/interactivity">
+    <ResourceDictionary.MergedDictionaries>
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Converters.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Themes/Styles.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras;component/Core/Views/OverlayReplicaCoreEditor.xaml" />
+        <ResourceDictionary
+            Source="pack://application:,,,/MaterialDesignThemes.Wpf;component/Themes/materialdesigntheme.textblock.xaml" />
+        <ResourceDictionary Source="pack://application:,,,/EyeAuras.Controls;component/Themes/Styles.xaml" />
+    </ResourceDictionary.MergedDictionaries>
+    
+    <DataTemplate DataType="{x:Type viewModels:OverlayImageCoreEditorViewModel}">
+        <DockPanel>
+            <Border Margin="5,5,0,0" Background="Transparent" Width="64" Height="64"
+                    BorderThickness="1" BorderBrush="{StaticResource SecondaryAccentBrush}"
+                    ToolTipService.ShowOnDisabled="True"
+                    ToolTipService.InitialShowDelay="0"
+                    ToolTipService.ShowDuration="{x:Static system:Int32.MaxValue}">
+                <Image Margin="1" 
+                       Source="{Binding ImageFilePreview}">
+                </Image>
+                <Border.ToolTip>
+                    <ContentControl Content="{Binding ImageFilePreview}" ContentTemplate="{StaticResource BitmapSourceTechnicalDataTemplate}"/>
+                </Border.ToolTip>
+                <i:Interaction.Triggers>
+                    <i:EventTrigger EventName="PreviewMouseLeftButtonDown">
+                        <i:InvokeCommandAction Command="{Binding OpenImageFileSelectorCommand}"/>
+                    </i:EventTrigger>
+                </i:Interaction.Triggers>
+            </Border>
+            <Viewbox Width="32">
+                <ContentControl HorizontalAlignment="Right"
+                                ContentTemplate="{StaticResource CommandWrapperIcon}"
+                                Content="{Binding OpenImageFileSelectorCommand}"
+                                ToolTip="Load from file"
+                                eye:CommandWrapperHelper.Icon="&#xf115;" />
+            </Viewbox>
+            <Viewbox Width="32">
+                <ContentControl DockPanel.Dock="Right"
+                                HorizontalAlignment="Right"
+                                ContentTemplate="{StaticResource CommandWrapperIcon}"
+                                Content="{Binding ResetImageCommand}"
+                                ToolTip="Reset image"
+                                eye:CommandWrapperHelper.Icon="&#xf00d;" />
+            </Viewbox>
+            <ContentControl DockPanel.Dock="Left" Content="{Binding}" ContentTemplate="{StaticResource OverlayConfigurationEditor}"/>
+        </DockPanel>
+    </DataTemplate>
+</ResourceDictionary>

@@ -3,7 +3,9 @@
                     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
                     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
                     xmlns:eye="http://coderush.net/poeeye/"
-                    xmlns:scaffolding="clr-namespace:EyeAuras.Controls.Scaffolding">
+                    xmlns:scaffolding="clr-namespace:EyeAuras.Controls.Scaffolding"
+                    xmlns:gif="http://wpfanimatedgif.codeplex.com"
+                    xmlns:converters="clr-namespace:EyeAuras.Controls.Converters">
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Styles.xaml" />
@@ -123,5 +125,35 @@
             </Setter.Value>
         </Setter>
     </Style>
+    
+    <converters:BitmapImageToNullConverter x:Key="NonBitmapImageToNullConverter"  />
+    <converters:BitmapImageToNullConverter x:Key="BitmapImageToNullConverter" IsInverted="True"/>
+    
+    <DataTemplate x:Key="BitmapSourceTechnicalDataTemplate" DataType="{x:Type BitmapSource}">
+        <Grid>
+            <StackPanel Orientation="Vertical" Visibility="{Binding Converter={StaticResource NullToCollapsedConverter}}">
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock>
+                        <TextBlock.Inlines>
+                            <Run Text="Image: " />
+                            <Run Text="{Binding Width, Mode=OneWay, StringFormat='{}{0:F0}'}" />
+                            <Run Text="x" />
+                            <Run Text="{Binding Height, Mode=OneWay, StringFormat='{}{0:F0}'}" />
+                            <Run Text=" Format: " />
+                            <Run Text="{Binding Format, Mode=OneWay}" />
+                        </TextBlock.Inlines>
+                    </TextBlock>
+                </StackPanel>
+                <Border BorderThickness="1" BorderBrush="{DynamicResource SecondaryAccentBrush}">
+                    <Image Margin="1" MinWidth="128" MinHeight="128" 
+                           gif:ImageBehavior.RepeatBehavior="Forever"
+                           gif:ImageBehavior.AnimatedSource="{Binding Converter={StaticResource NonBitmapImageToNullConverter}}" 
+                           Source="{Binding Converter={StaticResource BitmapImageToNullConverter}}"/>
+                </Border>
+            </StackPanel>
+            
+            <TextBlock Text="Image is not loaded" Visibility="{Binding Converter={StaticResource NotNullToCollapsedConverter}}"/>
+        </Grid>
+    </DataTemplate>
 
 </ResourceDictionary>

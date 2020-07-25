@@ -4,7 +4,8 @@
                     xmlns:eye="http://coderush.net/poeeye/"
                     xmlns:viewModels="clr-namespace:EyeAuras.UI.Overlay.ViewModels"
                     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-                    xmlns:ui="clr-namespace:PoeShared.UI;assembly=PoeShared.Wpf">
+                    xmlns:ui="clr-namespace:PoeShared.UI;assembly=PoeShared.Wpf"
+                    xmlns:gif="http://wpfanimatedgif.codeplex.com">
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Generic.xaml" />
@@ -189,7 +190,9 @@
 
             <Border BorderThickness="{Binding BorderThickness, Converter={StaticResource ThicknessConverter}, ConverterParameter=''}"
                     Background="{StaticResource MaxTransparencyBrush}">
-                <Image Source="{Binding Content}" Stretch="Fill" 
+                <Image Stretch="Fill" 
+                       gif:ImageBehavior.RepeatBehavior="Forever"
+                       gif:ImageBehavior.AnimatedSource="{Binding Content}" 
                        Opacity="{Binding ThumbnailOpacity}"/>
             </Border>
             

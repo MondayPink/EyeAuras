@@ -26,7 +26,7 @@ namespace EyeAuras.Shared
                 {
                     if (Log.IsDebugEnabled)
                     {
-                        Log.Debug($"[{this}] Raising Properties due to {x}");
+                        Log.Debug($"[{this}] Raising {nameof(Properties)} due to {x} change");
                     }
                     RaisePropertyChanged(nameof(Properties));
                 }).AddTo(Anchors);

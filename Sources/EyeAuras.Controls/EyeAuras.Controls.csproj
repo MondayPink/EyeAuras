@@ -26,6 +26,7 @@
         <PackageReference Include="ReactiveUI" Version="10.4.1" />
         <PackageReference Include="System.Reactive" Version="4.2.0" />
         <PackageReference Include="Unity" Version="5.10.3" />
+        <PackageReference Include="WpfAnimatedGif" Version="2.0.0" />
     </ItemGroup>
 
     <ItemGroup>

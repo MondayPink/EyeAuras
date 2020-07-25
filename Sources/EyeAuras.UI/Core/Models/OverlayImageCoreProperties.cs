@@ -4,6 +4,8 @@
     {
         public string ImageFilePath { get; set; }
         
+        public byte[] ImageData { get; set; }
+        
         public override int Version { get; set; } = 1;
     }
 }

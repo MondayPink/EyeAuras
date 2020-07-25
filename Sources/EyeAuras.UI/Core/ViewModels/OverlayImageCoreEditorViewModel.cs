@@ -21,49 +21,30 @@ namespace EyeAuras.UI.Core.ViewModels
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayImageCoreEditorViewModel));
 
-        private readonly SerialDisposable activeSourceAnchors;
         private readonly ObservableAsPropertyHelper<BitmapSource> imagePreview;
 
         public OverlayImageCoreEditorViewModel([NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
             OpenImageFileSelectorCommand = CommandWrapper.Create(OpenImageFileSelectorCommandExecuted);
 
-            activeSourceAnchors = new SerialDisposable().AddTo(Anchors);
-
-            this.WhenAnyValue(x => x.Source)
-                .Subscribe(HandleSourceChange)
-                .AddTo(Anchors);
-            
             imagePreview =
                 this.WhenAnyValue(x => x.Source)
                     .Select(
                         () => Source != null
-                            ? Source.WhenAnyValue(x => x.ImageFilePath)
-                                .SelectSafeOrDefault(x => new BitmapImage(new Uri(x)))
+                            ? Source.WhenAnyValue(x => x.ImageFile)
                             : Observable.Return(default(BitmapSource)))
                     .Switch()
                     .ToPropertyHelper(this, x => x.ImageFilePreview, uiScheduler)
                     .AddTo(Anchors);
+            
+            ResetImageCommand = CommandWrapper.Create(() => Source.ResetImage(), this.WhenAnyValue(x => x.Source).Select(x => x != null));
         }
         
         public BitmapSource ImageFilePreview => imagePreview.Value;
 
         public CommandWrapper OpenImageFileSelectorCommand { get; }
-
-        private void HandleSourceChange()
-        {
-            var sourceAnchors = new CompositeDisposable().AssignTo(activeSourceAnchors);
- 
-            if (Source == null)
-            {
-                return;
-            }
- 
-            Disposable.Create(() =>
-            {
-                Source = null;
-            }).AddTo(sourceAnchors);
-        }
+        
+        public CommandWrapper ResetImageCommand { get; }
         
         private void OpenImageFileSelectorCommandExecuted()
         {
