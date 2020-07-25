@@ -37,8 +37,8 @@ namespace EyeAuras.Tests.UI.Core.Services
             yield return new TestCaseData(Mock.Of<IWindowHandle>(x => x.ProcessPath == @"C:\app.exe"), new WindowMatchParams() { Title = @"""C:\apP.exe""" }, true);
             yield return new TestCaseData(Mock.Of<IWindowHandle>(x => x.ProcessPath == @"C:\dir1\app.exe"), new WindowMatchParams() { Title = @"dir1\app.exe" }, true);
             yield return new TestCaseData(Mock.Of<IWindowHandle>(x => x.ProcessPath == @"C:\dir2\app.exe"), new WindowMatchParams() { Title = @"dir1\app.exe" }, false);
-            yield return new TestCaseData(Mock.Of<IWindowHandle>(x => x.ProcessPath == @"C:\dir1\app.exe"), new WindowMatchParams() { Title = @"dir.*\app.exe", IsRegex = true}, true);
-            yield return new TestCaseData(Mock.Of<IWindowHandle>(x => x.ProcessPath == @"C:\dir2\app.exe"), new WindowMatchParams() { Title = @"dir.*\app.exe", IsRegex = true}, true);
+            yield return new TestCaseData(Mock.Of<IWindowHandle>(x => x.ProcessPath == @"C:\dir1\app.exe"), new WindowMatchParams() { Title = @"dir.*\\app.exe", IsRegex = true}, true);
+            yield return new TestCaseData(Mock.Of<IWindowHandle>(x => x.ProcessPath == @"C:\dir2\app.exe"), new WindowMatchParams() { Title = @"dir.*\\app.exe", IsRegex = true}, true);
             yield return new TestCaseData(Mock.Of<IWindowHandle>(x => x.ProcessName == "app.exe"), new WindowMatchParams() { Title = @"App.exe" }, true);
             yield return new TestCaseData(Mock.Of<IWindowHandle>(x => x.ProcessName == "app.exe"), new WindowMatchParams() { Title = @"'aPp.exe'" }, true);
             yield return new TestCaseData(Mock.Of<IWindowHandle>(x => x.ProcessName == "app.exe"), new WindowMatchParams() { Title = @"""apP.exe""" }, true);
