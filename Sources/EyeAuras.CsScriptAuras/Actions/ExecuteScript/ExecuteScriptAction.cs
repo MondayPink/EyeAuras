@@ -56,7 +56,7 @@ namespace EyeAuras.CsScriptAuras.Actions.ExecuteScript
             codeReadyTrigger = scriptStateMachine.SetTriggerParameters<IScriptExecutor>(ScriptTrigger.Compile);
             
             scriptStateMachine.OnTransitioned(x => this.RaisePropertyChanged(nameof(State)));
-            scriptStateMachine.OnTransitioned(x => Log.Info($"[{Context?.Id} {Context?.Name}] Transitioning to {x.Destination} from {x.Source} via {x.Trigger}"));
+            scriptStateMachine.OnTransitioned(x => Log.Debug($"[{Context?.Id} {Context?.Name}] Transitioning to {x.Destination} from {x.Source} via {x.Trigger}"));
             scriptStateMachine.OnUnhandledTrigger((scriptState, trigger) => Log.Warn($"[{Context?.Id} {Context?.Name}] Failed to change state from {scriptStateMachine.State} to {scriptState} via trigger {trigger}"));
 
             scriptStateMachine.Configure(ScriptState.NotReady)

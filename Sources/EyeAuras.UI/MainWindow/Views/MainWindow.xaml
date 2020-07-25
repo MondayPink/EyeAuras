@@ -245,12 +245,6 @@
                                                 ToolTip="CTRL+T Create new tab" />
                             </DockPanel>
 
-                            <TextBlock DockPanel.Dock="Top" x:Name="NoTabsTip"
-                                       FontSize="16" Text="Add your first Aura &#x2196;" VerticalAlignment="Top"
-                                       IsEnabled="False"
-                                       HorizontalAlignment="Center"
-                                       Visibility="{Binding SelectedAura, Converter={StaticResource NotNullToCollapsedConverter}}" />
-
                             <DockPanel Background="Transparent">
                                 <DockPanel.ContextMenu>
                                     <ContextMenu>

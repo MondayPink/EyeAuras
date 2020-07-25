@@ -43,6 +43,7 @@
                             </ToggleButton>
 
                             <TextBox x:Name="colorBox"
+                                     Margin="0,-5,0,0"
                                      eye:FocusHelper.IsFocused="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=IsFocused}"
                                      Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                      materialDesign:HintAssist.Hint="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=(materialDesign:HintAssist.Hint)}" 

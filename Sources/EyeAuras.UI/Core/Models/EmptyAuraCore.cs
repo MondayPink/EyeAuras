@@ -22,7 +22,7 @@ namespace EyeAuras.UI.Core.Models
         {
         }
 
-        public override string Name { get; } = "No overlay";
+        public override string Name { get; } = "\uf05e No overlay";
         
         public override string Description { get; } = "Do not show overlay, still process Actions and Triggers";
     }

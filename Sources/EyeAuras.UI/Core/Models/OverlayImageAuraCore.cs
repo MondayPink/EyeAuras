@@ -64,7 +64,7 @@ namespace EyeAuras.UI.Core.Models
         
         public new IImageOverlayViewModel Overlay => base.Overlay as IImageOverlayViewModel;
 
-        public override string Name { get; } = "Image";
+        public override string Name { get; } = "\uf03e Image";
 
         public override string Description { get; } = "Show Image overlay";
 

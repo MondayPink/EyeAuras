@@ -232,13 +232,13 @@
         <StackPanel Orientation="Vertical">
             <GroupBox DockPanel.Dock="Top" BorderThickness="0" Margin="0" Padding="0">
                 <GroupBox.Header>
-                    <DockPanel x:Name="GeneralPropertiesHeader" Margin="4">
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Margin="5,0,0,0" Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf013;" />
-                            <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="General" />
+                    <DockPanel x:Name="GeneralPropertiesHeader" Margin="0" Height="26">
+                        <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                            <TextBlock Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf013;" />
+                            <TextBlock Margin="5,0,0,0" FontSize="14" FontWeight="Bold" VerticalAlignment="Center" Text="{Binding Source.Name}" 
+                                       MaxWidth="400"
+                                       TextTrimming="CharacterEllipsis" />
                         </StackPanel>
-                        <TextBlock Margin="5,0,0,0" FontSize="10" VerticalAlignment="Center" Text="{Binding Source.Name}"
-                                   MaxWidth="150" TextTrimming="CharacterEllipsis" />
                         <TextBlock Margin="5,0,0,0" Style="{StaticResource InformationIconTextBlock}" >
                             <TextBlock.ToolTip>
                                 <TextBlock Text="{Binding Source.Id, StringFormat='AuraId {0}, click to Copy'}"/>
@@ -261,7 +261,7 @@
                             <ListBox.ItemTemplate>
                                 <DataTemplate DataType="{x:Type models:IAuraCore}">
                                     <StackPanel Orientation="Horizontal" Background="Transparent" ToolTip="{Binding Description}">
-                                        <TextBlock Margin="5,0"  FontSize="14" Text="{Binding Name}" />
+                                        <TextBlock Margin="5,0"  FontSize="14" Text="{Binding Name}" Style="{StaticResource IconTextBlock}" />
                                     </StackPanel>
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
@@ -286,16 +286,16 @@
 
             <GroupBox DockPanel.Dock="Top" BorderThickness="0" Margin="0,5,0,0" Padding="0">
                 <GroupBox.Header>
-                    <Grid Margin="4">
+                    <Grid x:Name="TriggerListHeader" Height="26">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Margin="5,0,0,0" Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf0e7;" />
-                            <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="Triggers" />
-                            <TextBlock Style="{StaticResource InformationIconTextBlock}" ToolTip="Aura is Active only when ALL triggers are Active"/>
+                        <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                            <TextBlock Margin="2.5,0,0,0" Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf0e7;" />
+                            <TextBlock Margin="5,0,0,0" FontWeight="Bold" FontSize="14" Text="Triggers" />
+                            <TextBlock Margin="5,0,0,0" Style="{StaticResource InformationIconTextBlock}" ToolTip="Aura is Active only when ALL triggers are Active"/>
                         </StackPanel>
 
                         <materialDesign:PopupBox Grid.Column="2"
@@ -359,16 +359,16 @@
 
             <GroupBox x:Name="OnEnterActions"  DockPanel.Dock="Top" BorderThickness="0" Margin="0,5,0,0" Padding="0">
                 <GroupBox.Header>
-                    <Grid Margin="4">
+                    <Grid x:Name="OnEnterActionListHeader" Height="26">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Margin="5,0,0,0" Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf090;" />
-                            <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="On Enter actions" />
-                            <TextBlock Style="{StaticResource InformationIconTextBlock}" ToolTip="these actions will be executed when aura Activates"/>
+                        <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                            <TextBlock Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf090;" />
+                            <TextBlock Margin="5,0,0,0" FontWeight="Bold" FontSize="14" Text="On Enter actions" />
+                            <TextBlock Margin="5,0,0,0" Style="{StaticResource InformationIconTextBlock}" ToolTip="these actions will be executed when aura Activates"/>
                         </StackPanel>
 
                         <materialDesign:PopupBox Grid.Column="2"
@@ -429,7 +429,7 @@
             
             <GroupBox x:Name="WhileActiveActions"  DockPanel.Dock="Top" BorderThickness="0" Margin="0,5,0,0" Padding="0">
                 <GroupBox.Header>
-                    <Grid Margin="4">
+                    <Grid x:Name="WhileActiveListHeader" Height="26">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
@@ -511,16 +511,16 @@
             
             <GroupBox x:Name="OnExitActions" DockPanel.Dock="Top" BorderThickness="0" Margin="0,5,0,5" Padding="0">
                 <GroupBox.Header>
-                    <Grid Margin="4">
+                    <Grid x:Name="OnExitListHeader" Height="26">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
-                        <StackPanel Orientation="Horizontal">
-                            <TextBlock Margin="5,0,0,0" Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf08b;" />
-                            <TextBlock Margin="5,0" FontWeight="Bold" FontSize="14" Text="On Exit actions" />
-                            <TextBlock Style="{StaticResource InformationIconTextBlock}" ToolTip="these actions will be executed when aura Deactivates"/>
+                        <StackPanel Orientation="Horizontal" Margin="5,0,0,0">
+                            <TextBlock Style="{StaticResource IconTextBlock}" FontSize="16" Text="&#xf08b;" />
+                            <TextBlock Margin="5,0,0,0" FontWeight="Bold" FontSize="14" Text="On Exit actions" />
+                            <TextBlock Margin="5,0,0,0" Style="{StaticResource InformationIconTextBlock}" ToolTip="these actions will be executed when aura Deactivates"/>
                         </StackPanel>
 
                         <materialDesign:PopupBox Grid.Column="2"

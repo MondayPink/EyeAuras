@@ -72,7 +72,7 @@ namespace EyeAuras.UI.Core.Models
             private set => base.Overlay = value;
         }
         
-        public override string Name { get; } = "Replica";
+        public override string Name { get; } = "\uf24d Replica";
         
         public override string Description { get; } = "Show selected window Replica";
         

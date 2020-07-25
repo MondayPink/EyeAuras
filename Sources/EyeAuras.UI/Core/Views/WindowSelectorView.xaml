@@ -13,7 +13,7 @@
 
     <DataTemplate DataType="{x:Type viewModels:WindowSelectorService}">
         <DockPanel MinHeight="45" x:Name="WindowTitleSelector" LastChildFill="True">
-            <materialDesign:PopupBox DockPanel.Dock="Left" StaysOpen="False" Margin="5,10,2.5,0"
+            <materialDesign:PopupBox DockPanel.Dock="Left" StaysOpen="False" Margin="5,0,2.5,0"
                                      Padding="0"
                                      x:Name="WindowList">
                 <materialDesign:PopupBox.ToggleContent>
@@ -50,6 +50,7 @@
                 Width="350"
                 Padding="0,2,0,0"
                 Height="43"
+                Margin="0, -10, 0, 0"
                 materialDesign:HintAssist.FloatingOffset="-25,-16"
                 HorizontalAlignment="Stretch"
                 VerticalAlignment="Center"
@@ -83,7 +84,7 @@
                        Source="{Binding ActiveWindow.IconBitmap}" />
             </Border>
             
-            <ComboBox DockPanel.Dock="Left" Margin="10,0,0,0" ItemsSource="{Binding MatchingWindowList}"
+            <ComboBox DockPanel.Dock="Left" Margin="10,-10,0,0" ItemsSource="{Binding MatchingWindowList}"
                       IsEnabled="{Binding EnableOverlaySelector}"
                       ToolTipService.ShowOnDisabled="True"
                       ToolTipService.ShowDuration="{x:Static system:Int32.MaxValue}"
