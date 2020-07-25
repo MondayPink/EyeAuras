@@ -2,7 +2,8 @@
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                     xmlns:xctk="http://schemas.xceed.com/wpf/xaml/toolkit"
                     xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
-                    xmlns:eye="http://coderush.net/poeeye/">
+                    xmlns:eye="http://coderush.net/poeeye/"
+                    xmlns:scaffolding="clr-namespace:EyeAuras.Controls.Scaffolding">
 
     <ResourceDictionary.MergedDictionaries>
         <ResourceDictionary Source="pack://application:,,,/PoeShared.Wpf;component/Themes/Styles.xaml" />
@@ -27,11 +28,11 @@
 
                         <DockPanel >
                             <ToggleButton Height="36" Width="36"
-                                          Margin="5,0,0,0"
                                           Focusable="False" IsTabStop="False"
                                           Style="{StaticResource MaterialDesignFlatPrimaryToggleButton}"
                                           IsHitTestVisible="{Binding RelativeSource={RelativeSource Self}, Path=IsChecked, Converter={StaticResource NotConverter}}"
-                                          DockPanel.Dock="Right" IsChecked="{Binding ElementName=colorPopup, Path=IsOpen}">
+                                          IsChecked="{Binding ElementName=colorPopup, Path=IsOpen}"
+                                          DockPanel.Dock="{Binding Path=(scaffolding:ColorPickerHelper.PickerDock), RelativeSource={RelativeSource TemplatedParent}}">
                                 <Ellipse Width="36" Height="36" StrokeThickness="1" Stroke="{DynamicResource SecondaryAccentBrush}">
                                     <Ellipse.Fill>
                                         <SolidColorBrush Color="{Binding ElementName=colorPicker, Path=Color}" />
@@ -39,7 +40,7 @@
                                 </Ellipse>
                             </ToggleButton>
 
-                            <TextBox x:Name="colorBox" DockPanel.Dock="Left"
+                            <TextBox x:Name="colorBox"
                                      eye:FocusHelper.IsFocused="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=IsFocused}"
                                      Style="{StaticResource MaterialDesignFloatingHintTextBox}"
                                      materialDesign:HintAssist.Hint="{Binding RelativeSource={RelativeSource TemplatedParent}, Path=(materialDesign:HintAssist.Hint)}" 

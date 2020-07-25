@@ -35,6 +35,7 @@ namespace EyeAuras.UI.Core.Services
                 .Connect()
                 .Filter(x => !string.IsNullOrWhiteSpace(x.Title))
                 .Sort(WindowComparer)
+                .DisposeMany()
                 .ObserveOn(uiScheduler)
                 .Bind(out windowList)
                 .Subscribe()
