@@ -14,6 +14,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Forms;
+using System.Windows.Threading;
 using DynamicData;
 using DynamicData.Binding;
 using EyeAuras.DefaultAuras.Triggers.HotkeyIsActive;
@@ -101,7 +102,8 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             [NotNull] ExportMessageBoxViewModel exportMessageBox,
             [NotNull] ImportMessageBoxViewModel importMessageBox,
             [NotNull] [Dependency(WellKnownSchedulers.Background)] IScheduler bgScheduler,
-            [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
+            [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler,
+            [NotNull] [Dependency(WellKnownSchedulers.UIIdle)] IScheduler uiIdleScheduler)
         {
             TreeViewAdapter = treeViewAdapter;
             ExportMessageBox = exportMessageBox;
@@ -304,9 +306,19 @@ namespace EyeAuras.UI.MainWindow.ViewModels
             this.WhenAnyValue(x => x.SelectedAura)
                 .Subscribe(x => Log.Debug($"Selected tab: {x}"))
                 .AddTo(Anchors);
-            
-            Log.Info($"Enabling Auras...");
-            GlobalHotkeyTrigger.TriggerValue = true;
+
+            foreach (var aura in globalContext.TabList.Where(x => x.IsEnabled))
+            {
+                using var profiler = new BenchmarkTimer($"Preloading aura {aura}", Log);
+            }
+
+            uiIdleScheduler.Schedule(() =>
+            {
+                Log.Info($"Enabling Auras...");
+                GlobalHotkeyTrigger.TriggerValue = true;
+                IsLoading = false;
+                SelectedAura = globalContext.TabList.LastOrDefault();
+            }).AddTo(Anchors);
         }
 
         public EyeAurasConfig ActualConfig => configProvider.ActualConfig;
@@ -316,6 +328,14 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         public ReadOnlyObservableCollection<object> StatusBarItems { [NotNull] get; }
 
         public string Title { get; }
+
+        private bool isLoading = true;
+
+        public bool IsLoading
+        {
+            get => isLoading;
+            set => RaiseAndSetIfChanged(ref isLoading, value);
+        }
 
         public bool IsElevated => appArguments.IsElevated;
 

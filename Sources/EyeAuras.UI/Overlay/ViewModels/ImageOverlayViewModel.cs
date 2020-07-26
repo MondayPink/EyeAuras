@@ -27,6 +27,10 @@ namespace EyeAuras.UI.Overlay.ViewModels
                 .ObserveOn(uiScheduler)
                 .Subscribe(x => ThumbnailSize = x)
                 .AddTo(Anchors);
+
+            this.WhenAnyProperty(x => x.Content)
+                .Subscribe(() => this.RaisePropertyChanged(nameof(IsInitialized)))
+                .AddTo(Anchors);
         }
 
         public BitmapSource Content
@@ -34,5 +38,7 @@ namespace EyeAuras.UI.Overlay.ViewModels
             get => content;
             set => RaiseAndSetIfChanged(ref content, value);
         }
+
+        public override bool IsInitialized => Content != null;
     }
 }

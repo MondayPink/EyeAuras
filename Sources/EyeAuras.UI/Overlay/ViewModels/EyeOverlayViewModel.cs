@@ -41,7 +41,6 @@ namespace EyeAuras.UI.Overlay.ViewModels
         private readonly ObservableAsPropertyHelper<double> aspectRatio;
 
         private bool maintainAspectRatio = true;
-        private IWindowHandle attachedWindow;
         private Size sourceWindowSize;
         private DpiScale dpi;
         private bool isClickThrough;
@@ -229,16 +228,12 @@ namespace EyeAuras.UI.Overlay.ViewModels
             Log.Debug($"ScaleOverlay({scaleRatio}) resized window, bounds: {Bounds} (native: {NativeBounds})");
         }
 
+        public abstract bool IsInitialized { get; }
+
         public double ThumbnailOpacity
         {
             get => thumbnailOpacity.DefaultValue ?? DefaultThumbnailOpacity;
             set => thumbnailOpacity.SetDefaultValue(value);
-        }
-
-        public IWindowHandle AttachedWindow
-        {
-            get => attachedWindow;
-            set => RaiseAndSetIfChanged(ref attachedWindow, value);
         }
 
         public string OverlayName
@@ -275,11 +270,6 @@ namespace EyeAuras.UI.Overlay.ViewModels
             ScaleOverlay(scaleRatio.Value);
         }
 
-        private void HandleInitialWindowAttachment()
-        {
-            Title = $"Overlay {AttachedWindow.Title}";
-        }
-
         private void ApplyConfig()
         {
             dpi = VisualTreeHelper.GetDpi(OverlayWindow);
@@ -301,11 +291,6 @@ namespace EyeAuras.UI.Overlay.ViewModels
                         : OverlayMode.Transparent)
                 .DistinctUntilChanged()
                 .Subscribe(x => OverlayMode = x)
-                .AddTo(Anchors);
-
-            this.WhenAnyValue(x => x.AttachedWindow)
-                .Where(x => x != null)
-                .Subscribe(HandleInitialWindowAttachment)
                 .AddTo(Anchors);
 
             this.WhenAnyValue(x => x.ThumbnailSize).ToUnit().Merge(this.WhenAnyValue(x => x.MaintainAspectRatio).ToUnit())

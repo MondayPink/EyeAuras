@@ -12,6 +12,8 @@ namespace EyeAuras.UI.Overlay.ViewModels
         string OverlayName { get; }
 
         bool IsClickThrough { get; set; }
+        
+        bool IsInitialized { get; }
 
         double ThumbnailOpacity { get; set; }
         

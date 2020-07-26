@@ -91,7 +91,7 @@ namespace EyeAuras.UI.Core.Models
             sw.Step($"Overlay view model created: {Overlay}");
             
             Observable.Merge(
-                    this.WhenAnyValue(x => x.Overlay).OfType<IReplicaOverlayViewModel>().Select(x => x.WhenAnyValue(y => y.AttachedWindow)).Switch().ToUnit(),
+                    this.WhenAnyValue(x => x.Overlay.IsInitialized).ToUnit(),
                     Overlay.WhenValueChanged(x => x.IsLocked, false).ToUnit(),
                     Context.WhenValueChanged(x => x.IsActive, false).ToUnit())
                 .StartWithDefault()
@@ -99,9 +99,9 @@ namespace EyeAuras.UI.Core.Models
                     () => new
                     {
                         OverlayShouldBeShown = Context.IsActive || !Overlay.IsLocked,
-                        WindowIsAttached = !(Overlay is IReplicaOverlayViewModel replicaOverlayViewModel) || replicaOverlayViewModel.AttachedWindow != null
+                        OverlayIsInitialized = Overlay.IsInitialized
                     })
-                .Subscribe(x => overlayController.IsEnabled = x.OverlayShouldBeShown && x.WindowIsAttached, Log.HandleUiException)
+                .Subscribe(x => overlayController.IsEnabled = x.OverlayShouldBeShown && x.OverlayIsInitialized, Log.HandleUiException)
                 .AddTo(Anchors);
             sw.Step($"Overlay view model initialized: {Overlay}");
             

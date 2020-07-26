@@ -1,6 +1,7 @@
 using System;
 using System.Collections.ObjectModel;
 using System.Drawing;
+using System.Reactive;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -41,6 +42,7 @@ namespace EyeAuras.UI.Overlay.ViewModels
 
         private readonly SerialDisposable activeConfigEditorAnchors = new SerialDisposable();
         private readonly Lazy<OverlayConfigEditor> configEditorSupplier;
+        private IWindowHandle attachedWindow;
 
         public ReplicaOverlayViewModel(
             [NotNull] [Dependency(WellKnownWindows.AllWindows)] IWindowTracker mainWindowTracker,
@@ -65,8 +67,25 @@ namespace EyeAuras.UI.Overlay.ViewModels
             
             configEditorSupplier = new Lazy<OverlayConfigEditor>(() => CreateConfigEditor(this));
             sw.Step("Initialized Config editor");
+
+            WhenLoaded
+                .Take(1)
+                .Subscribe(ApplyConfig)
+                .AddTo(Anchors);
+            
+            this.WhenAnyProperty(x => x.AttachedWindow)
+                .Subscribe(() => this.RaisePropertyChanged(nameof(IsInitialized)))
+                .AddTo(Anchors);
         }
-        
+
+        private void ApplyConfig(Unit obj)
+        {
+            this.WhenAnyValue(x => x.AttachedWindow)
+                .Where(x => x != null)
+                .Subscribe(HandleInitialWindowAttachment)
+                .AddTo(Anchors);
+        }
+
         public ISelectionAdornerViewModel SelectionAdorner { get; }
         
         public ReadOnlyObservableCollection<IWindowHandle> WindowList => windowListProvider.WindowList;
@@ -79,6 +98,12 @@ namespace EyeAuras.UI.Overlay.ViewModels
         
         public ICommand CloseConfigEditorCommand => closeConfigEditorCommand;
 
+        public IWindowHandle AttachedWindow
+        {
+            get => attachedWindow;
+            set => RaiseAndSetIfChanged(ref attachedWindow, value);
+        }
+
         private bool ResetRegionCommandCanExecute()
         {
             return AttachedWindow != null;
@@ -87,6 +112,11 @@ namespace EyeAuras.UI.Overlay.ViewModels
         private bool SelectRegionCommandCanExecute()
         {
             return AttachedWindow != null && !IsInSelectMode;
+        }
+
+        private void HandleInitialWindowAttachment()
+        {
+            Title = $"Overlay {AttachedWindow.Title}";
         }
 
         protected override void ApplyConfig(IOverlayConfig config)
@@ -252,5 +282,7 @@ namespace EyeAuras.UI.Overlay.ViewModels
 
             Region.SetValue(destinationRegion.ToWinRectangle());
         }
+
+        public override bool IsInitialized => AttachedWindow != null;
     }
 }

@@ -68,7 +68,7 @@ namespace EyeAuras.UI.Prism
                         Log.Debug("Window rendered");
                         Application.Current.MainWindow = window;
                         splashWindow.Close();
-                        Log.Info($"Window+Shell initialization has taken {sw.ElapsedMilliseconds}ms");
+                        Log.Info($"Window initialization(frame + content) has taken {sw.ElapsedMilliseconds}ms");
                     })
                 .AddTo(anchors);
 
@@ -79,10 +79,10 @@ namespace EyeAuras.UI.Prism
                     () =>
                     {
                         Log.Debug("Window loaded");
-                        Log.Info($"Shell initialization has taken {sw.ElapsedMilliseconds}ms");
+                        Log.Info($"Window frame(without content) initialization has taken {sw.ElapsedMilliseconds}ms");
                     })
                 .AddTo(anchors);
-
+            
             Log.Info("Loading main window...");
             Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
             Application.Current.MainWindow = window;

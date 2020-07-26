@@ -490,7 +490,7 @@
 
                                     <i:Interaction.Behaviors>
                                         <behaviors:EyeTreeViewDragAndDropBehavior ItemsSource="{Binding TabsList}" />
-                                        <eye:BindableSelectedItemBehavior SelectedItem="{Binding TreeViewAdapter.SelectedItem, Mode=OneWayToSource}" />
+                                        <eye:BindableSelectedItemBehavior SelectedItem="{Binding TreeViewAdapter.SelectedItem, Mode=TwoWay}" />
                                     </i:Interaction.Behaviors>
 
                                     <treeView:StretchingTreeView.InputBindings>
@@ -524,10 +524,9 @@
                                     <DataTemplate DataType="{x:Type viewModels1:IOverlayAuraTabViewModel}">
                                         <ContentControl Content="{Binding}">
                                             <ContentControl.Visibility>
-                                                <MultiBinding Converter="{StaticResource EqualToVisibleConverter}">
-                                                    <Binding />
-                                                    <Binding Path="DataContext.SelectedAura"
-                                                             ElementName="SelectedTabContent" />
+                                                <MultiBinding Converter="{StaticResource MultiBooleanAnyTrueToVisibleFalseToCollapsedConverter}">
+                                                    <Binding Path="DataContext.IsLoading" ElementName="SelectedTabContent" />
+                                                    <Binding Path="IsSelected" />
                                                 </MultiBinding>
                                             </ContentControl.Visibility>
                                         </ContentControl>

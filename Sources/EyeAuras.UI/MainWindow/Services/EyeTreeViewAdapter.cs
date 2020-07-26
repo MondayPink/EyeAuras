@@ -66,8 +66,8 @@ namespace EyeAuras.UI.MainWindow.Services
                 Path = x.Path
             });
         }
-
-        public IEnumerable<IAuraTabViewModel> EnumerateAuras(string path)
+        
+        public IEnumerable<HolderTreeViewItemViewModel> EnumerateAuraHolders(string path)
         {
             var directory = FindDirectoryByPath(path);
             if (directory == null)
@@ -75,11 +75,15 @@ namespace EyeAuras.UI.MainWindow.Services
                 yield break;
             }
 
-            foreach (var tabViewModel in directory.FindChildren(x => x is HolderTreeViewItemViewModel).Cast<HolderTreeViewItemViewModel>()
-                .Select(x => x.Value))
+            foreach (var tabViewModel in directory.FindChildren(x => x is HolderTreeViewItemViewModel).Cast<HolderTreeViewItemViewModel>())
             {
                 yield return tabViewModel;
             }
+        }
+
+        public IEnumerable<IAuraTabViewModel> EnumerateAuras(string path)
+        {
+            return EnumerateAuraHolders(path).Select(x => x.Value);
         }
 
         public DirectoryTreeViewItemViewModel AddDirectory(string path)

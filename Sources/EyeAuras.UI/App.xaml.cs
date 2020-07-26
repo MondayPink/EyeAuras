@@ -64,7 +64,7 @@ namespace EyeAuras.UI
                 aurasBootstrapper = new EyeAurasBootstrapper(container);
 
                 Log.Debug($"UI Scheduler: {RxApp.MainThreadScheduler}");
-                RxApp.MainThreadScheduler = DispatcherScheduler.Current;
+                RxApp.MainThreadScheduler = container.Resolve<IScheduler>(WellKnownSchedulers.UI);
                 RxApp.TaskpoolScheduler = TaskPoolScheduler.Default;
                 Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
                 Log.Debug($"New UI Scheduler: {RxApp.MainThreadScheduler}");
