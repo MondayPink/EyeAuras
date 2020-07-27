@@ -45,7 +45,7 @@ namespace EyeAuras.DefaultAuras.Actions.PlaySound
                 return;
             }
             Log.Debug($"Playing notification {notification}");
-            notificationsManager.PlayNotification(notification);
+            notificationsManager.PlayNotification(notification).Wait();
         }
     }
 }

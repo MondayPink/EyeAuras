@@ -23,6 +23,8 @@ namespace EyeAuras.UI.Core.ViewModels
         }
 
         public string Error { get; }
+        
+        public bool IsBusy { get; } = false;
 
         public void Execute()
         {

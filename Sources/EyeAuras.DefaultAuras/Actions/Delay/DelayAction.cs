@@ -1,8 +1,10 @@
 using System;
 using System.Threading;
+using System.Threading.Tasks;
 using EyeAuras.DefaultAuras.Actions.PlaySound;
 using EyeAuras.Shared;
 using log4net;
+using PoeShared.Scaffolding;
 
 namespace EyeAuras.DefaultAuras.Actions.Delay
 {
@@ -10,9 +12,13 @@ namespace EyeAuras.DefaultAuras.Actions.Delay
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(DelayAction));
         private TimeSpan delay;
+        private CancellationTokenSource cancellationTokenSource;
 
         public DelayAction()
         {
+            this.WhenAnyProperty(x => x.Properties)
+                .Subscribe(() => cancellationTokenSource?.Cancel())
+                .AddTo(Anchors);
         }
 
         [AuraProperty]
@@ -39,7 +45,15 @@ namespace EyeAuras.DefaultAuras.Actions.Delay
         protected override void ExecuteInternal()
         {
             Log.Debug($"Delaying execution for {Delay}");
-            Thread.Sleep(Delay);
+            cancellationTokenSource = new CancellationTokenSource();
+            try
+            {
+                Task.Delay(Delay, cancellationTokenSource.Token).Wait();
+            }
+            catch (AggregateException)
+            {
+                Log.Debug($"Delay action was cancelled");
+            }
         }
     }
 }

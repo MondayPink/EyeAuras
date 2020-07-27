@@ -7,6 +7,8 @@ namespace EyeAuras.Shared
         string ActionDescription { get; }
         
         string Error { get; }
+        
+        bool IsBusy { get; }
 
         void Execute();
     }

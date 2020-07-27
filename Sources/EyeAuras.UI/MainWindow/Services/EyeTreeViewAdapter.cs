@@ -187,14 +187,13 @@ namespace EyeAuras.UI.MainWindow.Services
                 .WhenPropertyChanged(x => x.Path)
                 .Subscribe(x =>
                 {
-                    Log.Info($"{x.Sender} path updated to {x.Sender.Path}");
-
                     var node = FindItemByTab(x.Sender);
                     if (node == null)
                     {
                         // node is already removed
                         return;
                     }
+                    Log.Info($"{x.Sender} path updated to {x.Sender.Path}"); 
                     var directory = FindOrCreateByPath(node.Value.Path);
                     node.Parent = directory;
                 }, Log.HandleUiException)

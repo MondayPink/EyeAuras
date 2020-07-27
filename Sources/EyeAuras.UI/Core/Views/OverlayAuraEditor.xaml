@@ -167,9 +167,17 @@
     
     <DataTemplate x:Key="AuraActionSelectorTemplateKey" DataType="{x:Type shared:IAuraAction}">
         <DockPanel>
-            <TextBlock Margin="5,0,0,0" DockPanel.Dock="Right"
-                       Style="{StaticResource InformationIconTextBlock}"
-                       ToolTip="{Binding ActionDescription}" />
+            <Grid Margin="5,0,0,0" DockPanel.Dock="Right">
+                <TextBlock Style="{StaticResource InformationIconTextBlock}"
+                           ToolTip="{Binding ActionDescription}" />
+                <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}" Margin="-3,0,0,0"
+                             Value="0" 
+                             Visibility="{Binding IsBusy, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                             HorizontalAlignment="Center" VerticalAlignment="Center"
+                             IsIndeterminate="True">
+                </ProgressBar>
+            </Grid>
+           
             <materialDesign:PackIcon Margin="5,0,0,0"  DockPanel.Dock="Right" VerticalAlignment="Center"
                                      Kind="ShieldWarning"
                                      Foreground="{StaticResource NegativeBrush}"
@@ -177,6 +185,7 @@
                                      ToolTipService.ShowOnDisabled="True"
                                      ToolTipService.ShowDuration="{x:Static system:Int32.MaxValue}"
                                      ToolTip="{Binding Error}"/>
+            
             <TextBlock DockPanel.Dock="Left" FontWeight="Bold" FontSize="14" Text="{Binding ActionName}" />
         </DockPanel>
     </DataTemplate>
