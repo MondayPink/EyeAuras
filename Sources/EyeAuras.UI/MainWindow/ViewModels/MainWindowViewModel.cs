@@ -81,6 +81,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         private Visibility visibility;
         private bool showInTaskbar;
         private bool topmost;
+        private bool isLoading = true;
 
         public MainWindowViewModel(
             [NotNull] IWindowViewController viewController,
@@ -314,10 +315,11 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
             uiIdleScheduler.Schedule(() =>
             {
-                Log.Info($"Enabling Auras...");
+                Log.Info($"Loading Auras...");
+                SelectedAura = globalContext.TabList.LastOrDefault();
                 GlobalHotkeyTrigger.TriggerValue = true;
                 IsLoading = false;
-                SelectedAura = globalContext.TabList.LastOrDefault();
+                Log.Info($"Loading completed");
             }).AddTo(Anchors);
         }
 
@@ -328,8 +330,6 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         public ReadOnlyObservableCollection<object> StatusBarItems { [NotNull] get; }
 
         public string Title { get; }
-
-        private bool isLoading = true;
 
         public bool IsLoading
         {

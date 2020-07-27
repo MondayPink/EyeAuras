@@ -166,7 +166,7 @@ namespace EyeAuras.UI.Prism
             var viewModel = viewModelFactory.Create(viewController).AddTo(anchors);
             window.DataContext = viewModel;
             sw.Stop();
-            Log.Info($"Main window initialization took {sw.ElapsedMilliseconds}ms...");
+            Log.Info($"Main window view model took {sw.ElapsedMilliseconds}ms...");
         }
 
         public void Dispose()

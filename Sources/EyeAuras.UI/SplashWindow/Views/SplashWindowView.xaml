@@ -10,25 +10,13 @@
               TextOptions.TextRenderingMode="Auto"
               TextElement.FontFamily="{StaticResource FontPlayRegular}">
             <Image Source="../../../Resources/Splash.png" />
-            <Image Source="../../../Resources/SplashRing.png"
-                   RenderTransformOrigin="0.5,0.5">
-                <Image.RenderTransform>
-                    <!-- giving the transform a name tells the framework not to freeze it -->
-                    <RotateTransform x:Name="noFreeze" />
-                </Image.RenderTransform>
-                <Image.Triggers>
-                    <EventTrigger RoutedEvent="Image.Loaded">
-                        <BeginStoryboard>
-                            <Storyboard>
-                                <DoubleAnimation
-                                    Storyboard.TargetProperty="(Image.RenderTransform).(RotateTransform.Angle)"
-                                    To="360"
-                                    Duration="0:0:30" RepeatBehavior="Forever" />
-                            </Storyboard>
-                        </BeginStoryboard>
-                    </EventTrigger>
-                </Image.Triggers>
-            </Image>
+            
+            <ProgressBar Style="{StaticResource MaterialDesignCircularProgressBar}"
+                         Value="0" Width="107" Height="107"
+                         HorizontalAlignment="Center" VerticalAlignment="Center"
+                         RenderTransformOrigin="0.5, 0.5"
+                         IsIndeterminate="True">
+            </ProgressBar>
 
             <TextBlock FontSize="30" Text="{Binding ApplicationName}"
                        VerticalAlignment="Top" HorizontalAlignment="Center">
