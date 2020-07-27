@@ -32,7 +32,6 @@ namespace EyeAuras.UI.Core.Models
         private static int GlobalAuraIdx;
         private static readonly TimeSpan PropertiesSamplingTimeout = TimeSpan.FromSeconds(5);
 
-        private readonly IGlobalContext globalContext;
         private readonly IAuraRepository repository;
         private readonly IConfigSerializer configSerializer;
 
@@ -60,11 +59,11 @@ namespace EyeAuras.UI.Core.Models
             [NotNull] ISchedulerProvider schedulerProvider,
             [NotNull] [Dependency(WellKnownSchedulers.UI)] IScheduler uiScheduler)
         {
+            using var profiler = new BenchmarkTimer($"[{this}] OverlayAuraModel initialization", Log, nameof(OverlayAuraModel));
             activeCoreAnchors = new SerialDisposable().AddTo(Anchors);
             var defaultAuraName = $"Aura #{Interlocked.Increment(ref GlobalAuraIdx)}";
             Name = defaultAuraName;
             Id = idGenerator.Next();
-            using var sw = new BenchmarkTimer($"[{this}] OverlayAuraModel initialization", Log, nameof(OverlayAuraModel));
             var bgScheduler = schedulerProvider.GetOrCreate($"{defaultAuraName}");
             Triggers = triggersHolder;
             OnEnterActions = onEnterActionsHolder;
@@ -78,7 +77,6 @@ namespace EyeAuras.UI.Core.Models
             OnExitActions.Connect().OnItemAdded(x => x.Context = this).Subscribe().AddTo(Anchors);
             WhileActiveActions.Connect().OnItemAdded(x => x.Context = this).Subscribe().AddTo(Anchors);
 
-            this.globalContext = globalContext;
             this.repository = repository;
             this.configSerializer = configSerializer;
 
@@ -179,7 +177,7 @@ namespace EyeAuras.UI.Core.Models
                     Log.HandleUiException)
                 .Subscribe(reason => RaisePropertyChanged(nameof(Properties)))
                 .AddTo(Anchors);
-            sw.Step($"Overlay model properties initialized");
+            profiler.Step($"Overlay model properties initialized");
 
             triggersHolder.AddTo(Anchors);
             whileActiveActionsHolder.AddTo(Anchors);

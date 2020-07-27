@@ -4,6 +4,7 @@ using System.Reactive;
 using System.Reactive.Linq;
 using EyeAuras.Shared;
 using EyeAuras.Shared.Services;
+using EyeAuras.UI.Core.Services;
 using EyeAuras.UI.Overlay.ViewModels;
 using JetBrains.Annotations;
 using PoeShared.Native;
@@ -21,10 +22,11 @@ namespace EyeAuras.UI.Core.Models
             overlayViewModelFactory;
 
         public OverlayReplicaAuraCore(
+            [NotNull] IGlobalContext globalContext,
             [NotNull] IWindowSelectorService windowSelector,
             [NotNull] IFactory<IReplicaOverlayViewModel, IOverlayWindowController, IAuraModelController> overlayViewModelFactory,
             [NotNull] IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory, 
-            [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory) : base(overlayWindowControllerFactory, windowTrackerFactory)
+            [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory) : base(globalContext, overlayWindowControllerFactory, windowTrackerFactory)
         {
             WindowSelector = windowSelector.AddTo(Anchors);
             this.overlayViewModelFactory = overlayViewModelFactory;

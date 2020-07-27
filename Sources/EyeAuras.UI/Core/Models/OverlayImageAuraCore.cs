@@ -8,6 +8,7 @@ using System.Drawing;
 using System.IO;
 using System.Windows.Media.Imaging;
 using EyeAuras.Shared;
+using EyeAuras.UI.Core.Services;
 using log4net;
 using PoeShared;
 using PoeShared.Scaffolding;
@@ -24,9 +25,10 @@ namespace EyeAuras.UI.Core.Models
         private byte[] imageData;
 
         public OverlayImageAuraCore(
+            [NotNull] IGlobalContext globalContext,
             [NotNull] IFactory<IImageOverlayViewModel, IOverlayWindowController, IAuraModelController> overlayViewModelFactory,
             [NotNull] IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory, 
-            [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory) : base(overlayWindowControllerFactory, windowTrackerFactory)
+            [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory) : base(globalContext, overlayWindowControllerFactory, windowTrackerFactory)
         {
             this.overlayViewModelFactory = overlayViewModelFactory;
 

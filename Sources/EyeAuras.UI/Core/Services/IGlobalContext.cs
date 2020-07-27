@@ -12,5 +12,7 @@ namespace EyeAuras.UI.Core.Services
         ObservableCollection<IAuraTabViewModel> TabList { get; }
 
         IAuraTabViewModel[] CreateAura(params OverlayAuraProperties[] properties);
+        
+        bool OverlaysAreEnabled { get; set; }
     }
 }

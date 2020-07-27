@@ -8,14 +8,11 @@ using JetBrains.Annotations;
 using log4net;
 using PoeShared.Prism;
 using PoeShared.Scaffolding;
-using Unity;
-using System;
 using System.Linq;
 using DynamicData.Binding;
 using EyeAuras.Shared.Services;
 using EyeAuras.UI.Core.Models;
 using PoeShared;
-using PoeShared.UI;
 
 namespace EyeAuras.UI.Core.Services
 {
@@ -25,6 +22,7 @@ namespace EyeAuras.UI.Core.Services
         
         private readonly IUniqueIdGenerator idGenerator;
         private readonly IFactory<IOverlayAuraTabViewModel, OverlayAuraProperties> auraViewModelFactory;
+        private bool overlaysAreEnabled = true;
 
         public GlobalContext(
             [NotNull] IUniqueIdGenerator idGenerator,
@@ -52,6 +50,12 @@ namespace EyeAuras.UI.Core.Services
         
         public ObservableCollection<IAuraTabViewModel> TabList { get; }
 
+        public bool OverlaysAreEnabled
+        {
+            get => overlaysAreEnabled;
+            set => RaiseAndSetIfChanged(ref overlaysAreEnabled, value);
+        }
+        
         public IAuraTabViewModel[] CreateAura(params OverlayAuraProperties[] properties)
         {
             return properties.Select(CreateAura).ToArray();

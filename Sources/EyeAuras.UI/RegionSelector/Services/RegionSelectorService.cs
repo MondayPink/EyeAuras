@@ -28,14 +28,14 @@ namespace EyeAuras.UI.RegionSelector.Services
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(RegionSelectorService));
 
-        private readonly IGlobalContext sharedContext;
+        private readonly IGlobalContext globalContext;
         private readonly IFactory<RegionSelectorWindow> regionSelectorWindowFactory;
 
         public RegionSelectorService(
-            IGlobalContext sharedContext,
+            IGlobalContext globalContext,
             IFactory<RegionSelectorWindow> regionSelectorWindowFactory)
         {
-            this.sharedContext = sharedContext;
+            this.globalContext = globalContext;
             this.regionSelectorWindowFactory = regionSelectorWindowFactory;
         }
 
@@ -46,9 +46,16 @@ namespace EyeAuras.UI.RegionSelector.Services
                 {
                     var windowAnchors = new CompositeDisposable();
 
-                    var temporarilyDisableAuras = new DefaultTrigger();
-                    Disposable.Create(() => sharedContext.SystemTrigger.Remove(temporarilyDisableAuras)).AddTo(windowAnchors);
-                    sharedContext.SystemTrigger.Add(temporarilyDisableAuras);
+                    if (globalContext.OverlaysAreEnabled)
+                    {
+                        Log.Debug($"Temporarily disabling all overlays");
+                        globalContext.OverlaysAreEnabled = false;
+                        Disposable.Create(() =>
+                        {
+                            Log.Debug($"Enabling all overlays");
+                            globalContext.OverlaysAreEnabled = true;
+                        }).AddTo(windowAnchors);
+                    }
 
                     var window = regionSelectorWindowFactory.Create().AddTo(windowAnchors);
                     Disposable.Create(() => Log.Debug("Disposed selector window: {window}")).AddTo(windowAnchors);

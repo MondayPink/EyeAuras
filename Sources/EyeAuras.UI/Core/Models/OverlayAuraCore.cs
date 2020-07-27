@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Reactive.Linq;
 using DynamicData.Binding;
+using EyeAuras.UI.Core.Services;
 using EyeAuras.UI.Overlay.ViewModels;
 using JetBrains.Annotations;
 using log4net;
@@ -16,15 +17,18 @@ namespace EyeAuras.UI.Core.Models
     {
         private static readonly ILog Log = LogManager.GetLogger(typeof(OverlayAuraCore<>));
 
+        private readonly IGlobalContext globalContext;
         private readonly IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory;
         private readonly IFactory<WindowTracker, IStringMatcher> windowTrackerFactory;
         
         private IEyeOverlayViewModel overlay;
 
         public OverlayAuraCore(
+            [NotNull] IGlobalContext globalContext,
             [NotNull] IFactory<IOverlayWindowController, IWindowTracker> overlayWindowControllerFactory,
             [NotNull] IFactory<WindowTracker, IStringMatcher> windowTrackerFactory)
         {
+            this.globalContext = globalContext;
             this.overlayWindowControllerFactory = overlayWindowControllerFactory;
             this.windowTrackerFactory = windowTrackerFactory;
 
@@ -78,7 +82,7 @@ namespace EyeAuras.UI.Core.Models
         {
             using var sw = new BenchmarkTimer($"[{this}] {Name} initialization", Log, nameof(OverlayAuraModel));
 
-            var matcher = new RegexStringMatcher().AddToWhitelist(".*");
+            var matcher = new FakeStringMatcher(true);
             var windowTracker = windowTrackerFactory
                 .Create(matcher)
                 .AddTo(Anchors);
@@ -93,15 +97,17 @@ namespace EyeAuras.UI.Core.Models
             Observable.Merge(
                     this.WhenAnyValue(x => x.Overlay.IsInitialized).ToUnit(),
                     Overlay.WhenValueChanged(x => x.IsLocked, false).ToUnit(),
+                    globalContext.WhenValueChanged(x => x.OverlaysAreEnabled, false).ToUnit(),
                     Context.WhenValueChanged(x => x.IsActive, false).ToUnit())
                 .StartWithDefault()
                 .Select(
                     () => new
                     {
                         OverlayShouldBeShown = Context.IsActive || !Overlay.IsLocked,
-                        OverlayIsInitialized = Overlay.IsInitialized
+                        OverlayIsInitialized = Overlay.IsInitialized,
+                        globalContext.OverlaysAreEnabled
                     })
-                .Subscribe(x => overlayController.IsEnabled = x.OverlayShouldBeShown && x.OverlayIsInitialized, Log.HandleUiException)
+                .Subscribe(x => overlayController.IsEnabled = x.OverlaysAreEnabled && x.OverlayShouldBeShown && x.OverlayIsInitialized, Log.HandleUiException)
                 .AddTo(Anchors);
             sw.Step($"Overlay view model initialized: {Overlay}");
             
