@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Windows.Input;
 using EyeAuras.Shared;
 using EyeAuras.UI.Core.Models;
-using EyeAuras.UI.MainWindow.Services;
+using Force.DeepCloner;
 using JetBrains.Annotations;
 using log4net;
 using Microsoft.Win32.TaskScheduler;
@@ -32,7 +32,7 @@ namespace EyeAuras.UI.Core.ViewModels
         private bool isEnabled;
         private bool isActive;
         private ICloseController closeController;
-        private IOverlayAuraModel model;
+        private IAuraModel model;
         private string path;
         private string tabName;
 
@@ -46,7 +46,7 @@ namespace EyeAuras.UI.Core.ViewModels
 
             GeneralEditor = propertiesEditorFactory.Create();
 
-            Properties = initialProperties.CloneJson();
+            Properties = initialProperties.DeepClone();
             Id = properties.Id;
             Path = properties.Path;
             TabName = properties.Name;
@@ -65,23 +65,14 @@ namespace EyeAuras.UI.Core.ViewModels
             
             EnableCommand = CommandWrapper.Create(() => ReloadModelAsync(true));
             DisableCommand = CommandWrapper.Create(() => ReloadModelAsync(false));
-            
-            ReloadModelAsync(properties.IsEnabled);
+
+            this.WhenAnyValue(x => x.IsEnabled)
+                .Take(1)
+                .Subscribe(async () => await ReloadModelAsync(properties.IsEnabled))
+                .AddTo(Anchors);
         }
 
-        public bool IsActive
-        {
-            get => isActive;
-            private set => this.RaiseAndSetIfChanged(ref isActive, value);
-        }
-
-        public bool IsEnabled
-        {
-            get => isEnabled;
-            private set => this.RaiseAndSetIfChanged(ref isEnabled, value);
-        }
-
-        IAuraModel IAuraViewModel.Model => Model;
+        public string Id { get; }
 
         public ICommand EnableCommand { get; }
         
@@ -103,15 +94,25 @@ namespace EyeAuras.UI.Core.ViewModels
             set => RaiseAndSetIfChanged(ref isSelected, value);
         }
 
-        public string Id { get; }
-
         public string Path
         {
             get => path;
             set => RaiseAndSetIfChanged(ref path, value);
         }
+        
+        public bool IsActive
+        {
+            get => isActive;
+            private set => this.RaiseAndSetIfChanged(ref isActive, value);
+        }
 
-        public IOverlayAuraModel Model
+        public bool IsEnabled
+        {
+            get => isEnabled;
+            private set => this.RaiseAndSetIfChanged(ref isEnabled, value);
+        }
+
+        public IAuraModel Model
         {
             get => model;
             private set => this.RaiseAndSetIfChanged(ref model, value);
@@ -136,10 +137,11 @@ namespace EyeAuras.UI.Core.ViewModels
             CloseController = closeController;
         }
 
-        private void ReloadModelAsync(bool isEnabled)
+        private async Task ReloadModelAsync(bool isEnabled)
         {
             Log.Debug($"[{this}] Re-initializing model");
-            Model = ReloadModel(isEnabled);
+            Model = null;
+            Model = await Task.Run(() => ReloadModel(isEnabled));
             Log.Debug($"[{this}] New model: {model}");
         }
 
@@ -155,7 +157,7 @@ namespace EyeAuras.UI.Core.ViewModels
                 this.WhenAnyValue(x => x.TabName)
                     .Subscribe(x =>
                     {
-                        var newProperties = properties.CloneJson();
+                        var newProperties = properties.DeepClone();
                         newProperties.Name = x;
                         Properties = newProperties;
                     })
@@ -164,7 +166,7 @@ namespace EyeAuras.UI.Core.ViewModels
                 this.WhenAnyValue(x => x.IsEnabled)
                     .Subscribe(x =>
                     {
-                        var newProperties = properties.CloneJson();
+                        var newProperties = properties.DeepClone();
                         newProperties.IsEnabled = x;
                         Properties = newProperties;
                     })

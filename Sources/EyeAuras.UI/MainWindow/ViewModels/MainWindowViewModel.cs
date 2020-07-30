@@ -27,6 +27,7 @@ using EyeAuras.UI.MainWindow.Models;
 using EyeAuras.UI.MainWindow.Services;
 using EyeAuras.UI.Prism.Modularity;
 using EyeAuras.UI.Sharing.ViewModels;
+using Force.DeepCloner;
 using Humanizer;
 using JetBrains.Annotations;
 using log4net;
@@ -636,7 +637,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                     $"Something went wrong - failed to copy parameter of type {parameter.GetType()}: {parameter}")
             };
 
-            var properties = OverlayAuraProperties.Default.CloneJson();
+            var properties = OverlayAuraProperties.Default.DeepClone();
             properties.Path = path;
             CreateAura(properties);
         }
@@ -742,7 +743,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
         {
             var positionedItems = TabsList;
             Log.Debug($"Preparing config, tabs count: {positionedItems.Count}");
-            var config = configProvider.ActualConfig.CloneJson();
+            var config = configProvider.ActualConfig.DeepClone();
 
             config.Auras = positionedItems.Select(x => x.Properties).ToArray();
             config.MainWindowBounds = new Rect(Left, Top, Width, Height);

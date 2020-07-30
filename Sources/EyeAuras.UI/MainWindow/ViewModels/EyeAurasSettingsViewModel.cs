@@ -3,6 +3,7 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using System.Windows.Input;
 using EyeAuras.UI.Prism.Modularity;
+using Force.DeepCloner;
 using JetBrains.Annotations;
 using log4net;
 using PoeShared.Modularity;
@@ -119,7 +120,7 @@ namespace EyeAuras.UI.MainWindow.ViewModels
 
         public EyeAurasConfig Save()
         {
-            var updatedConfig = configProvider.ActualConfig.CloneJson();
+            var updatedConfig = configProvider.ActualConfig.DeepClone();
             updatedConfig.FreezeAurasHotkey = FreezeAurasHotkey?.ToString();
             updatedConfig.FreezeAurasHotkeyMode = FreezeAurasHotkeyMode;
             updatedConfig.UnlockAurasHotkey = UnlockAurasHotkey?.ToString();
