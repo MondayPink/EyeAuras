@@ -34,8 +34,22 @@ namespace EyeAuras.UI.MainWindow.ViewModels
                 })
                 .AddTo(Anchors);
             
-            EnableAurasCommand = CommandWrapper.Create(() => this.FindChildrenOfType<HolderTreeViewItemViewModel>().Select(x => x.Value).ForEach(x => x.IsEnabled = true));
-            DisableAurasCommand = CommandWrapper.Create(() => this.FindChildrenOfType<HolderTreeViewItemViewModel>().Select(x => x.Value).ForEach(x => x.IsEnabled = false));
+            EnableAurasCommand = CommandWrapper.Create(() => this.FindChildrenOfType<HolderTreeViewItemViewModel>().Select(x => x.Value)
+                .ForEach(x =>
+                {
+                    if (x.EnableCommand.CanExecute(null))
+                    {
+                        x.EnableCommand.Execute(null);
+                    }
+                }));
+            DisableAurasCommand = CommandWrapper.Create(() => this.FindChildrenOfType<HolderTreeViewItemViewModel>().Select(x => x.Value)
+                .ForEach(x =>
+                {
+                    if (x.DisableCommand.CanExecute(null))
+                    {
+                        x.DisableCommand.Execute(null);
+                    }
+                }));
         }
         
         public CommandWrapper EnableAurasCommand { get; }

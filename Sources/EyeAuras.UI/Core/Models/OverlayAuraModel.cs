@@ -21,6 +21,7 @@ using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using ReactiveUI;
 using Unity;
+using ObservableEx = PoeShared.Scaffolding.ObservableEx;
 
 namespace EyeAuras.UI.Core.Models
 {
@@ -80,7 +81,7 @@ namespace EyeAuras.UI.Core.Models
             this.repository = repository;
             this.configSerializer = configSerializer;
 
-            var triggerIsActive = Observable.CombineLatest(
+            var triggerShouldBeActive = Observable.CombineLatest(
                     triggersHolder.WhenAnyValue(x => x.IsActive),
                     globalContext.SystemTrigger.WhenAnyValue(x => x.IsActive))
                 .Select(x => (Triggers.Count > 0 && Triggers.IsActive || Triggers.Count == 0) && globalContext.SystemTrigger.IsActive)
@@ -94,9 +95,7 @@ namespace EyeAuras.UI.Core.Models
                 })
                 .Throttle(TriggerDefaultThrottle, bgScheduler);
             
-            //FIXME Move Trigger processing to BG scheduler
-            triggerIsActive
-                .ObserveOn(uiScheduler)
+            triggerShouldBeActive
                 .Subscribe(x =>
                 {
                     Log.Debug($"[{this}] Updating IsActive {IsActive} => {x.curr}, change: {x}");
@@ -104,44 +103,19 @@ namespace EyeAuras.UI.Core.Models
                 })
                 .AddTo(Anchors);
 
-            var triggerActivates =
-                triggerIsActive
-                    .Where(x => x.prev == false && x.curr)
-                    .Publish();
-            
-            var triggerDeactivates = 
-                triggerIsActive
-                    .Where(x => x.prev == true && !x.curr)
-                    .Publish();
-            
-            triggerActivates
-                .Where(x => OnEnterActions.Count > 0)
-                .ObserveOn(bgScheduler)
-                .Subscribe(ExecuteOnEnterActions, Log.HandleUiException)
-                .AddTo(Anchors);
-            triggerDeactivates
-                .Where(x => OnExitActions.Count > 0)
-                .ObserveOn(bgScheduler)
-                .Subscribe(ExecuteOnExitActions, Log.HandleUiException)
+            Log.Debug($"[{this}] Reinitializing executor");
+            var executor = new ThreadExecutor(bgScheduler).AddTo(Anchors);
+            executor.WhenActivated.Subscribe(ExecuteOnEnterActions).AddTo(Anchors);
+            executor.WhileActive.Subscribe(ExecuteWhileActiveActions).AddTo(Anchors);
+            executor.WhenDeactivated.Subscribe(ExecuteOnExitActions).AddTo(Anchors);
+
+            this.WhenAnyValue(x => x.IsActive)
+                .Subscribe(x => executor.IsActive = x)
                 .AddTo(Anchors);
             
-            //FIXME Fix WhileActive mess - remove timer, make it event-driven
-            triggerIsActive
-                .Select(
-                    x =>
-                    {
-                        Log.Debug($"[{this}] IsActive changed, IsActive: {x}");
-                        return x.curr
-                            ? Observable.Timer(DateTimeOffset.Now, TimeSpan.FromMilliseconds(50), bgScheduler).ToUnit()
-                            : Observable.Empty<Unit>();
-                    })
-                .Switch()
-                .Where(x => WhileActiveActions.Count > 0)
-                .ObserveOn(bgScheduler)
-                .Subscribe(ExecuteWhileActiveActions, Log.HandleUiException)
+            this.WhenAnyValue(x => x.WhileActiveActionsTimeout)
+                .Subscribe(x => executor.WhileActivePeriod = x)
                 .AddTo(Anchors);
-            triggerActivates.Connect().AddTo(Anchors);
-            triggerDeactivates.Connect().AddTo(Anchors);
             
             this.repository.KnownEntities
                 .ToObservableChangeSet()
@@ -178,7 +152,6 @@ namespace EyeAuras.UI.Core.Models
                 .Subscribe(reason => RaisePropertyChanged(nameof(Properties)))
                 .AddTo(Anchors);
             profiler.Step($"Overlay model properties initialized");
-
             triggersHolder.AddTo(Anchors);
             whileActiveActionsHolder.AddTo(Anchors);
             onEnterActionsHolder.AddTo(Anchors);
@@ -192,31 +165,39 @@ namespace EyeAuras.UI.Core.Models
 
         private void ExecuteOnEnterActions()
         {
+            if (!isActive || !OnEnterActions.Items.Any())
+            {
+                return;
+            }
             Log.Debug($"[{this}] Executing OnEnter actions: {OnEnterActions.Items.Select(x => x.ToString()).DumpToTextRaw()}, triggers: {Triggers.Items.Select(x => x.ToString()).DumpToTextRaw()}");
             OnEnterActions.Items.ForEach(x => x.Execute());
         }
         
         private void ExecuteOnExitActions()
         {
+            if (isActive || !OnExitActions.Items.Any())
+            {
+                return;
+            }
             Log.Debug($"[{this}] Executing OnExit actions: {OnExitActions.Items.Select(x => x.ToString()).DumpToTextRaw()}, triggers: {Triggers.Items.Select(x => x.ToString()).DumpToTextRaw()}");
             OnExitActions.Items.ForEach(x => x.Execute());
         }
         
         private void ExecuteWhileActiveActions()
         {
+            if (!WhileActiveActions.Items.Any())
+            {
+                return;
+            }
             Log.Debug($"[{this}] Executing WhileActive actions: {WhileActiveActions.Items.Select(x => x.ToString()).DumpToTextRaw()}, triggers: {Triggers.Items.Select(x => x.ToString()).DumpToTextRaw()}");
             foreach (var action in WhileActiveActions.Items)
             {
-                if (!IsActive)
+                if (!isActive)
                 {
                     break;
                 }
                 action.Execute();
             }
-            if (IsActive)
-            {
-                Thread.Sleep(WhileActiveActionsTimeout);
-            }  
         }
         
         public bool IsActive

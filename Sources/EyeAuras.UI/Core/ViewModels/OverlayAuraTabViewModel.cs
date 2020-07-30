@@ -1,18 +1,22 @@
 using System;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Windows.Input;
 using EyeAuras.Shared;
 using EyeAuras.UI.Core.Models;
 using EyeAuras.UI.MainWindow.Services;
 using JetBrains.Annotations;
 using log4net;
+using Microsoft.Win32.TaskScheduler;
 using PoeShared;
 using PoeShared.Native;
 using PoeShared.Prism;
 using PoeShared.Scaffolding;
 using PoeShared.Scaffolding.WPF;
 using ReactiveUI;
+using Task = System.Threading.Tasks.Task;
 
 namespace EyeAuras.UI.Core.ViewModels
 {
@@ -23,7 +27,6 @@ namespace EyeAuras.UI.Core.ViewModels
         private readonly SerialDisposable loadedModelAnchors = new SerialDisposable();
         private readonly IFactory<IOverlayAuraModel> auraModelFactory;
 
-        private bool isFlipped;
         private bool isSelected;
         private OverlayAuraProperties properties;
         private bool isEnabled;
@@ -44,24 +47,26 @@ namespace EyeAuras.UI.Core.ViewModels
             GeneralEditor = propertiesEditorFactory.Create();
 
             Properties = initialProperties.CloneJson();
-            IsEnabled = properties.IsEnabled;
             Id = properties.Id;
             Path = properties.Path;
             TabName = properties.Name;
 
-            this.WhenAnyValue(x => x.TabName)
-                .Subscribe(x => Properties.Name = x)
-                .AddTo(Anchors);
-            
-            this.WhenAnyValue(x => x.IsEnabled)
-                .Subscribe(() => Model = ReloadModel())
-                .AddTo(Anchors);
-
             this.WhenAnyProperty(x => x.Path, x => x.TabName)
                 .Subscribe(x => RaisePropertyChanged(nameof(FullPath)))
                 .AddTo(Anchors);
+
+            this.WhenAnyValue(x => x.Model)
+                .Subscribe(x =>
+                {
+                    GeneralEditor.Value = x;
+                    IsEnabled = x != null;
+                })
+                .AddTo(Anchors);
             
-            EnableCommand = CommandWrapper.Create(() => IsEnabled = true);
+            EnableCommand = CommandWrapper.Create(() => ReloadModelAsync(true));
+            DisableCommand = CommandWrapper.Create(() => ReloadModelAsync(false));
+            
+            ReloadModelAsync(properties.IsEnabled);
         }
 
         public bool IsActive
@@ -73,12 +78,14 @@ namespace EyeAuras.UI.Core.ViewModels
         public bool IsEnabled
         {
             get => isEnabled;
-            set => this.RaiseAndSetIfChanged(ref isEnabled, value);
+            private set => this.RaiseAndSetIfChanged(ref isEnabled, value);
         }
 
         IAuraModel IAuraViewModel.Model => Model;
 
         public ICommand EnableCommand { get; }
+        
+        public ICommand DisableCommand { get; }
 
         public IPropertyEditorViewModel GeneralEditor { get; }
 
@@ -86,12 +93,6 @@ namespace EyeAuras.UI.Core.ViewModels
         {
             get => tabName;
             set => RaiseAndSetIfChanged(ref tabName, value);
-        }
-
-        public bool IsFlipped
-        {
-            get => isFlipped;
-            set => RaiseAndSetIfChanged(ref isFlipped, value);
         }
 
         public string FullPath => System.IO.Path.Combine(Path ?? string.Empty, TabName);
@@ -135,28 +136,51 @@ namespace EyeAuras.UI.Core.ViewModels
             CloseController = closeController;
         }
 
-        private IOverlayAuraModel ReloadModel()
+        private void ReloadModelAsync(bool isEnabled)
+        {
+            Log.Debug($"[{this}] Re-initializing model");
+            Model = ReloadModel(isEnabled);
+            Log.Debug($"[{this}] New model: {model}");
+        }
+
+        private IOverlayAuraModel ReloadModel(bool isEnabled)
         {
             using var sw = new BenchmarkTimer(isEnabled ? $"[{TabName}({Id})] Loading new model" : $"[{TabName}({Id})] Unloading model", Log, $"{nameof(OverlayAuraTabViewModel)}.{nameof(ReloadModel)}");
 
             var modelAnchors = new CompositeDisposable().AssignTo(loadedModelAnchors);
             sw.Step($"Disposed previous model");
-
-            Properties.IsEnabled = isEnabled;
+            
             if (!isEnabled)
             {
-                GeneralEditor.Value = null;
+                this.WhenAnyValue(x => x.TabName)
+                    .Subscribe(x =>
+                    {
+                        var newProperties = properties.CloneJson();
+                        newProperties.Name = x;
+                        Properties = newProperties;
+                    })
+                    .AddTo(modelAnchors);
+                
+                this.WhenAnyValue(x => x.IsEnabled)
+                    .Subscribe(x =>
+                    {
+                        var newProperties = properties.CloneJson();
+                        newProperties.IsEnabled = x;
+                        Properties = newProperties;
+                    })
+                    .AddTo(modelAnchors);
+                
                 IsActive = false;
                 return null;
             }
-            
+
             var model = auraModelFactory.Create();
             sw.Step($"Created new model: {model}");
-            GeneralEditor.Value = model;
             sw.Step($"Initialized model Editor");
 
             model.AddTo(modelAnchors);
-            model.Properties = Properties;
+            model.Properties = properties;
+            model.IsEnabled = true;
             sw.Step($"Loaded model Properties");
 
             model.WhenAnyValue(x => x.Name)
@@ -169,10 +193,6 @@ namespace EyeAuras.UI.Core.ViewModels
             
             model.WhenAnyProperty(x => x.Properties)
                 .Subscribe(modelProperties => Properties = model.Properties)
-                .AddTo(modelAnchors);
-            
-            model.WhenAnyProperty(x => x.IsEnabled)
-                .Subscribe(modelIsEnabled => IsEnabled = model.IsEnabled)
                 .AddTo(modelAnchors);
             
             this.WhenAnyValue(x => x.TabName)

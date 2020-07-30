@@ -1,3 +1,4 @@
+using System.Windows.Input;
 using JetBrains.Annotations;
 using PoeShared.Scaffolding;
 
@@ -17,8 +18,12 @@ namespace EyeAuras.Shared
         
         bool IsActive { get; }
         
-        bool IsEnabled { get; set; }
+        bool IsEnabled { get; }
         
         IAuraModel Model { [NotNull] get; }
+        
+        ICommand EnableCommand { [NotNull] get; }
+        
+        ICommand DisableCommand { [NotNull] get; }
     }
 }

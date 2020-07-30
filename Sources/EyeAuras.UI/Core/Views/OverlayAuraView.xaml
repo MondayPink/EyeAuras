@@ -11,10 +11,9 @@
     </ResourceDictionary.MergedDictionaries>
 
     <DataTemplate DataType="{x:Type viewModels:OverlayAuraTabViewModel}">
-        
-        
         <Grid>
             <ContentControl x:Name="GeneralPropertiesBody" 
+                            IsEnabled="{Binding IsEnabled}"
                             Visibility="{Binding GeneralEditor.Value, Converter={StaticResource NullToCollapsedConverter}}"
                             Content="{Binding GeneralEditor}" />
             <DockPanel Visibility="{Binding GeneralEditor.Value, Converter={StaticResource NotNullToCollapsedConverter}}"

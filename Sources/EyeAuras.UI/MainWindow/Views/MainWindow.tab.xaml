@@ -37,21 +37,24 @@
                     <TextBlock Text="&#xf070;" Foreground="{StaticResource NegativeBrush}" IsHitTestVisible="True" ToolTip="Aura is disabled" Style="{StaticResource IconTextBlock}" HorizontalAlignment="Center" />
                 </Grid>
             </Grid>
-
-            <ToggleButton DockPanel.Dock="Right"
-                          Style="{StaticResource MaterialDesignActionToggleButton}"
-                          Focusable="False" IsTabStop="False"
-                          Width="20" Height="20" Margin="0,0,10,0"
-                          Visibility="{Binding Path=IsMouseOver, RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
-                          IsChecked="{Binding Value.IsEnabled}"
-                          Background="{StaticResource PrimaryHueMidBrush}" >
-                <ToggleButton.Content>
-                    <TextBlock x:Name="EyeOn" Text="&#xf06e;" IsHitTestVisible="True" ToolTip="Enable Aura" Style="{StaticResource IconTextBlock}" Foreground="{StaticResource PositiveBrush}"/>
-                </ToggleButton.Content>
-                <materialDesign:ToggleButtonAssist.OnContent>
-                    <TextBlock x:Name="EyeOff" Text="&#xf070;" IsHitTestVisible="True" ToolTip="Disable Aura" Style="{StaticResource IconTextBlock}" Foreground="{StaticResource NegativeBrush}"/>
-                </materialDesign:ToggleButtonAssist.OnContent>
-            </ToggleButton>
+            
+            <DockPanel DockPanel.Dock="Right" Margin="0,0,10,0" Focusable="False" 
+                       Visibility="{Binding RelativeSource={RelativeSource AncestorType={x:Type TreeViewItem}}, Path=IsMouseOver, Converter={StaticResource TrueToVisibleFalseToHiddenConverter}}">
+                <ContentControl x:Name="EyeOn" 
+                                ContentTemplate="{StaticResource CommandWrapperIcon}"
+                                Content="{Binding Value.EnableCommand}"
+                                ToolTip="Enable Aura"
+                                Visibility="{Binding Value.IsEnabled, Converter={StaticResource TrueToCollapsedFalseToVisibleConverter}}"
+                                Foreground="{StaticResource PositiveBrush}"
+                                eye:CommandWrapperHelper.Icon="&#xf06e;" />
+                <ContentControl x:Name="EyeOff" 
+                                ContentTemplate="{StaticResource CommandWrapperIcon}"
+                                Content="{Binding Value.DisableCommand}"
+                                ToolTip="Disable Aura"
+                                Visibility="{Binding Value.IsEnabled, Converter={StaticResource TrueToVisibleFalseToCollapsedConverter}}"
+                                Foreground="{StaticResource NegativeBrush}"
+                                eye:CommandWrapperHelper.Icon="&#xf070;" />
+            </DockPanel>
 
             <materialDesign:Flipper DockPanel.Dock="Left"
                                     VerticalAlignment="Stretch" HorizontalAlignment="Stretch"
